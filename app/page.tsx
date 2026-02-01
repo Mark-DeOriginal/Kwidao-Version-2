@@ -1,96 +1,46 @@
-"use client";
+import Link from "next/link";
 
-import { useState, FormEvent, ChangeEvent } from "react";
-
-interface FormState {
-  name: string;
-  surname: string;
-  email: string;
-}
-
-type StatusType = "loading" | "success" | "error" | string | null;
-
-export default function Home() {
-  const [form, setForm] = useState<FormState>({
-    name: "",
-    surname: "",
-    email: "",
-  });
-  const [status, setStatus] = useState<StatusType>(null);
-
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setStatus("loading");
-    const res = await fetch("/api/subscribe", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    const data = await res.json();
-    if (res.ok) setStatus("success");
-    else setStatus(data.error || "error");
-  };
-
+export default function ComingSoon() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <main className="w-full max-w-md p-6 bg-white rounded shadow">
-        <h1 className="text-2xl font-semibold mb-4">Subscribe</h1>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium">Name</label>
-            <input
-              value={form.name}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setForm({ ...form, name: e.target.value })
-              }
-              className="mt-1 block w-full rounded border-gray-300 shadow-sm"
-              required
-            />
+    <main className="px-8 py-8 lg:px-12 scroll-smooth">
+      {/* Hero Section */}
+      <section className="snap-section">
+        <div className="mt-10">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] border border-[#fff2b0]/50 bg-secondary/50 mb-8">
+            <span className="text-xs tracking-wide text-[#fff2b0]">
+              Powered by Kwidao
+            </span>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium">Surname</label>
-            <input
-              value={form.surname}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setForm({ ...form, surname: e.target.value })
-              }
-              className="mt-1 block w-full rounded border-gray-300 shadow-sm"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium">Email</label>
-            <input
-              type="email"
-              value={form.email}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setForm({ ...form, email: e.target.value })
-              }
-              className="mt-1 block w-full rounded border-gray-300 shadow-sm"
-              required
-            />
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700"
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-[#fff2b0] leading-[1.05] tracking-tight mb-6">
+            We are coming soon
+          </h1>
+          <p className="text-base sm:text-lg max-w-md leading-relaxed mb-10">
+            Ready to get started? Join the waitlist and experience the future of
+            finance.
+          </p>
+          <Link
+            href="/waitlist"
+            className="flex items-center gap-2 w-fit text-[#fff2b0] active:scale-95 font-medium bg-[#fff2b0]/10 px-4 py-2 rounded-[50px] hover:bg-[#fff2b0]/20 transition-colors"
+          >
+            <span>Join Waitlist</span>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="animate-pulse"
             >
-              {status === "loading" ? "Saving..." : "Subscribe"}
-            </button>
-          </div>
-
-          {status === "success" && (
-            <p className="text-green-600">Thanks — saved!</p>
-          )}
-          {status && status !== "success" && status !== "loading" && (
-            <p className="text-red-600">{String(status)}</p>
-          )}
-        </form>
-      </main>
-    </div>
+              <path
+                d="M9 5l7 7-7 7"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              ></path>
+            </svg>
+          </Link>
+        </div>
+      </section>
+    </main>
   );
 }

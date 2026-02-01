@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body {
+    font-family: var(--font-inter), Inter, sans-serif;
+  }
+}
+
+/* #5E5D3C
+#D9E260
+ #97B915
+#2D411C */
