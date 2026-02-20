@@ -49,9 +49,9 @@ export default function HeroSection() {
             variants={itemVariants}
             className="text-5xl md:text-7xl lg:text-8xl font-bold text-[#fff2b0] leading-[0.9] tracking-tight"
           >
-            Earn Smarter Yield
+            Earn Better Yields
             <br />
-            Across Chains
+            Safely Onchain
           </motion.h1>
 
           {/* Subheadline */}

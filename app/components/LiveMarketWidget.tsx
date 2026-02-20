@@ -18,20 +18,23 @@ const STORAGE_KEY = "kwidao_market_prices";
 const REFRESH_INTERVAL = 3000; // 3 seconds
 
 // Helper to generate realistic sparkline data
-const generateSparkline = (current: number, changePercent: number): number[] => {
+const generateSparkline = (
+  current: number,
+  changePercent: number,
+): number[] => {
   const sparkline: number[] = [];
   const change = (changePercent / 100) * current;
   const low = current - Math.abs(change) * 1.5;
   const high = current + Math.abs(change) * 1.5;
-  
+
   for (let i = 0; i < 24; i++) {
     // Create a more realistic chart with some trend
     const trend = (i / 24) * (change / 2);
     const noise = (Math.random() - 0.5) * Math.abs(change);
-    const basePrice = low + ((high - low) / 2) + trend + noise;
+    const basePrice = low + (high - low) / 2 + trend + noise;
     sparkline.push(Math.max(low, Math.min(high, basePrice)));
   }
-  
+
   return sparkline;
 };
 
@@ -256,7 +259,7 @@ export default function LiveMarketWidget() {
 
   const getMiniChart = (sparkline: number[], isPositive: boolean) => {
     if (!sparkline || sparkline.length < 2) return null;
-    
+
     const max = Math.max(...sparkline);
     const min = Math.min(...sparkline);
     const range = max - min || 1;
@@ -274,9 +277,19 @@ export default function LiveMarketWidget() {
     const fillColor = isPositive ? "#10b98120" : "#ef444420";
 
     return (
-      <svg viewBox="0 0 40 16" className="w-full h-6 mt-2" preserveAspectRatio="none">
+      <svg
+        viewBox="0 0 40 16"
+        className="w-full h-6 mt-2"
+        preserveAspectRatio="none"
+      >
         <defs>
-          <linearGradient id={`gradient-${isPositive}`} x1="0%" y1="0%" x2="0%" y2="100%">
+          <linearGradient
+            id={`gradient-${isPositive}`}
+            x1="0%"
+            y1="0%"
+            x2="0%"
+            y2="100%"
+          >
             <stop offset="0%" stopColor={strokeColor} stopOpacity="0.3" />
             <stop offset="100%" stopColor={strokeColor} stopOpacity="0" />
           </linearGradient>
