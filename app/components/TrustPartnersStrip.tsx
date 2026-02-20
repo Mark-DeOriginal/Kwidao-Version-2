@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { fetchBlockchainLogos } from "@/app/lib/blockchainLogos";
 
 export default function TrustPartnersStrip() {
   const blockchainNames = ["Avalanche", "Ethereum", "Solana", "Sui", "Polygon"];
@@ -11,9 +10,31 @@ export default function TrustPartnersStrip() {
 
   useEffect(() => {
     const loadLogos = async () => {
-      const fetchedLogos = await fetchBlockchainLogos(blockchainNames);
-      setLogos(fetchedLogos);
-      setIsLoadingLogos(false);
+      try {
+        const response = await fetch(
+          `/api/blockchain-logos?blockchains=avalanche-2,ethereum,solana,sui,matic-network`,
+          {
+            method: "GET",
+            headers: {
+              "Cache-Control": "no-store",
+            },
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+          setLogos(result.data);
+        }
+      } catch (error) {
+        console.error("Failed to load blockchain logos:", error);
+      } finally {
+        setIsLoadingLogos(false);
+      }
     };
 
     loadLogos();
@@ -49,29 +70,44 @@ export default function TrustPartnersStrip() {
               Supported Blockchains
             </p>
             <div className="flex flex-wrap gap-4 items-center">
-              {ecosystems.map((eco, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: i * 0.1 }}
-                  className="flex items-center gap-3 px-4 py-2 rounded-lg border border-[#fff2b0]/20 bg-[#363523]/50"
-                >
-                  {eco.logo ? (
-                    <img
-                      src={eco.logo}
-                      alt={eco.name}
-                      className="w-6 h-6 rounded-full"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                  ) : (
-                    <span className="text-lg opacity-50">◆</span>
-                  )}
-                  <span className="text-[#c1c0bc] font-medium">{eco.name}</span>
-                </motion.div>
-              ))}
+              {isLoadingLogos
+                ? // Loading skeleton
+                  [...Array(5)].map((_, i) => (
+                    <div
+                      key={`skeleton-${i}`}
+                      className="flex items-center gap-3 px-4 py-2 rounded-lg border border-[#fff2b0]/20 bg-[#363523]/50 animate-pulse"
+                    >
+                      <div className="w-6 h-6 bg-[#c1c0bc]/20 rounded-full"></div>
+                      <div className="h-4 bg-[#c1c0bc]/20 rounded w-20"></div>
+                    </div>
+                  ))
+                : ecosystems.map((eco, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.1 }}
+                      className="flex items-center gap-3 px-4 py-2 rounded-lg border border-[#fff2b0]/20 bg-[#363523]/50 hover:border-[#fff2b0]/40 transition-colors"
+                    >
+                      {eco.logo ? (
+                        <img
+                          src={eco.logo}
+                          alt={eco.name}
+                          className="w-6 h-6 rounded-full object-cover"
+                          loading="lazy"
+                          onError={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            img.style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <span className="text-lg opacity-30">◆</span>
+                      )}
+                      <span className="text-[#c1c0bc] font-medium text-sm">
+                        {eco.name}
+                      </span>
+                    </motion.div>
+                  ))}
             </div>
           </div>
 
