@@ -17,32 +17,50 @@ const COINS_TO_TRACK = ["bitcoin", "ethereum", "avalanche-2", "solana", "sui"];
 const STORAGE_KEY = "kwidao_market_prices";
 const REFRESH_INTERVAL = 3000; // 3 seconds
 
+// Helper to generate realistic sparkline data
+const generateSparkline = (current: number, changePercent: number): number[] => {
+  const sparkline: number[] = [];
+  const change = (changePercent / 100) * current;
+  const low = current - Math.abs(change) * 1.5;
+  const high = current + Math.abs(change) * 1.5;
+  
+  for (let i = 0; i < 24; i++) {
+    // Create a more realistic chart with some trend
+    const trend = (i / 24) * (change / 2);
+    const noise = (Math.random() - 0.5) * Math.abs(change);
+    const basePrice = low + ((high - low) / 2) + trend + noise;
+    sparkline.push(Math.max(low, Math.min(high, basePrice)));
+  }
+  
+  return sparkline;
+};
+
 // Fallback data in case API fails completely
 const FALLBACK_PRICES: Record<string, any> = {
   bitcoin: {
     usd: 42500,
     usd_24h_change: 2.5,
-    usd_sparkline_7d: Array(24).fill(42000),
+    usd_sparkline_7d: generateSparkline(42500, 2.5),
   },
   ethereum: {
     usd: 2850,
     usd_24h_change: 1.8,
-    usd_sparkline_7d: Array(24).fill(2800),
+    usd_sparkline_7d: generateSparkline(2850, 1.8),
   },
   "avalanche-2": {
     usd: 38.5,
     usd_24h_change: 3.2,
-    usd_sparkline_7d: Array(24).fill(37.5),
+    usd_sparkline_7d: generateSparkline(38.5, 3.2),
   },
   solana: {
     usd: 168.75,
     usd_24h_change: 4.1,
-    usd_sparkline_7d: Array(24).fill(162),
+    usd_sparkline_7d: generateSparkline(168.75, 4.1),
   },
   sui: {
     usd: 3.45,
     usd_24h_change: 2.9,
-    usd_sparkline_7d: Array(24).fill(3.35),
+    usd_sparkline_7d: generateSparkline(3.45, 2.9),
   },
 };
 
@@ -237,23 +255,44 @@ export default function LiveMarketWidget() {
   }
 
   const getMiniChart = (sparkline: number[], isPositive: boolean) => {
+    if (!sparkline || sparkline.length < 2) return null;
+    
     const max = Math.max(...sparkline);
     const min = Math.min(...sparkline);
     const range = max - min || 1;
 
+    const points = sparkline.map((price, i) => {
+      const x = (i / (sparkline.length - 1)) * 40;
+      const y = 16 - ((price - min) / range) * 14 - 1;
+      return { x, y, price };
+    });
+
+    const pathPoints = points.map((p) => `${p.x},${p.y}`).join(" ");
+    const fillPath = `M ${pathPoints} L ${points[points.length - 1].x},16 L ${points[0].x},16 Z`;
+
+    const strokeColor = isPositive ? "#10b981" : "#ef4444";
+    const fillColor = isPositive ? "#10b98120" : "#ef444420";
+
     return (
-      <svg viewBox="0 0 40 16" className="w-full h-6 mt-2">
+      <svg viewBox="0 0 40 16" className="w-full h-6 mt-2" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id={`gradient-${isPositive}`} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor={strokeColor} stopOpacity="0.3" />
+            <stop offset="100%" stopColor={strokeColor} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path
+          d={fillPath}
+          fill={`url(#gradient-${isPositive})`}
+          opacity="0.5"
+        />
         <polyline
           fill="none"
-          stroke={isPositive ? "#10b981" : "#ef4444"}
-          strokeWidth="1"
-          points={sparkline
-            .map((price, i) => {
-              const x = (i / (sparkline.length - 1)) * 40;
-              const y = 16 - ((price - min) / range) * 14 - 1;
-              return `${x},${y}`;
-            })
-            .join(" ")}
+          stroke={strokeColor}
+          strokeWidth="1.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          points={pathPoints}
         />
       </svg>
     );
