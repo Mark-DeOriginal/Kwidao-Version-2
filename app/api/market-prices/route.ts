@@ -8,7 +8,7 @@ async function fetchFromCoinGecko(coinIds: string[]) {
   try {
     const ids = coinIds.join(",");
     const response = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&sparkline=true`,
+      `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&sparkline=true`,
       {
         headers: {
           "User-Agent":
@@ -26,6 +26,38 @@ async function fetchFromCoinGecko(coinIds: string[]) {
   } catch (error) {
     console.error("Failed to fetch from CoinGecko:", error);
     throw error;
+  }
+}
+
+async function fetchCoinImages(coinIds: string[]) {
+  try {
+    const ids = coinIds.join(",");
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/coins/markets?ids=${ids}&vs_currency=usd&order=market_cap_desc&per_page=250&sparkline=false&locale=en`,
+      {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        },
+        next: { revalidate: 10 },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`CoinGecko markets API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const images: Record<string, string> = {};
+
+    data.forEach((coin: { id: string; image: string }) => {
+      images[coin.id] = coin.image;
+    });
+
+    return images;
+  } catch (error) {
+    console.error("Failed to fetch coin images:", error);
+    return {};
   }
 }
 
@@ -51,14 +83,23 @@ export async function GET(request: Request) {
     }
 
     // Fetch fresh data
-    const data = await fetchFromCoinGecko(coinIds);
+    const [priceData, imageData] = await Promise.all([
+      fetchFromCoinGecko(coinIds),
+      fetchCoinImages(coinIds),
+    ]);
+
+    // Combine price and image data
+    const combinedData = {
+      ...priceData,
+      images: imageData,
+    };
 
     // Update cache
-    priceCache.set(cacheKey, { data, timestamp: now });
+    priceCache.set(cacheKey, { data: combinedData, timestamp: now });
 
     return NextResponse.json({
       success: true,
-      data,
+      data: combinedData,
       cached: false,
       timestamp: now,
     });

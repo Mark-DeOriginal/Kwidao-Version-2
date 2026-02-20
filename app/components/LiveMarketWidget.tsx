@@ -10,6 +10,7 @@ interface PriceData {
   current_price: number;
   price_change_percentage_24h: number;
   sparkline: number[];
+  image?: string;
 }
 
 const COINS_TO_TRACK = ["bitcoin", "ethereum", "avalanche-2", "solana", "sui"];
@@ -53,7 +54,10 @@ export default function LiveMarketWidget() {
 
   // Format raw data into PriceData
   const formatPriceData = useCallback(
-    (data: Record<string, any>): PriceData[] => {
+    (
+      data: Record<string, any>,
+      images: Record<string, string> = {},
+    ): PriceData[] => {
       return [
         {
           id: "bitcoin",
@@ -67,6 +71,7 @@ export default function LiveMarketWidget() {
             data.bitcoin?.usd_sparkline_7d ||
             FALLBACK_PRICES.bitcoin.usd_sparkline_7d
           ).slice(-24),
+          image: images["bitcoin"],
         },
         {
           id: "ethereum",
@@ -80,6 +85,7 @@ export default function LiveMarketWidget() {
             data.ethereum?.usd_sparkline_7d ||
             FALLBACK_PRICES.ethereum.usd_sparkline_7d
           ).slice(-24),
+          image: images["ethereum"],
         },
         {
           id: "avalanche-2",
@@ -94,6 +100,7 @@ export default function LiveMarketWidget() {
             data["avalanche-2"]?.usd_sparkline_7d ||
             FALLBACK_PRICES["avalanche-2"].usd_sparkline_7d
           ).slice(-24),
+          image: images["avalanche-2"],
         },
         {
           id: "solana",
@@ -107,6 +114,7 @@ export default function LiveMarketWidget() {
             data.solana?.usd_sparkline_7d ||
             FALLBACK_PRICES.solana.usd_sparkline_7d
           ).slice(-24),
+          image: images["solana"],
         },
         {
           id: "sui",
@@ -118,6 +126,7 @@ export default function LiveMarketWidget() {
           sparkline: (
             data.sui?.usd_sparkline_7d || FALLBACK_PRICES.sui.usd_sparkline_7d
           ).slice(-24),
+          image: images["sui"],
         },
       ];
     },
@@ -168,7 +177,11 @@ export default function LiveMarketWidget() {
           throw new Error(result.message || "Failed to fetch prices");
         }
 
-        const formattedData = formatPriceData(result.data);
+        const images = result.data.images || {};
+        const priceData = { ...result.data };
+        delete priceData.images;
+
+        const formattedData = formatPriceData(priceData, images);
         setPrices(formattedData);
         saveToCache(formattedData);
         setError(null);
@@ -258,10 +271,22 @@ export default function LiveMarketWidget() {
             transition={{ delay: i * 0.1 }}
             className="bg-gradient-to-br from-[#363523] to-[#2a2820] border border-[#fff2b0]/10 rounded-lg p-4 hover:border-[#fff2b0]/30 transition-colors"
           >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-mono text-[#fff2b0]">
-                {coin.symbol}
-              </span>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                {coin.image && (
+                  <img
+                    src={coin.image}
+                    alt={coin.name}
+                    className="w-5 h-5 rounded-full"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                )}
+                <span className="text-xs font-mono text-[#fff2b0] font-semibold">
+                  {coin.symbol}
+                </span>
+              </div>
               <span
                 className={`text-xs font-semibold ${isPositive ? "text-green-400" : "text-red-400"}`}
               >

@@ -1,15 +1,28 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { fetchBlockchainLogos } from "@/app/lib/blockchainLogos";
 
 export default function TrustPartnersStrip() {
-  const ecosystems = [
-    { name: "Avalanche", logo: "⛓️" },
-    { name: "Ethereum", logo: "♦️" },
-    { name: "Solana", logo: "◎" },
-    { name: "Sui", logo: "⬢" },
-    { name: "Polygon", logo: "▲" },
-  ];
+  const blockchainNames = ["Avalanche", "Ethereum", "Solana", "Sui", "Polygon"];
+  const [logos, setLogos] = useState<Record<string, string>>({});
+  const [isLoadingLogos, setIsLoadingLogos] = useState(true);
+
+  useEffect(() => {
+    const loadLogos = async () => {
+      const fetchedLogos = await fetchBlockchainLogos(blockchainNames);
+      setLogos(fetchedLogos);
+      setIsLoadingLogos(false);
+    };
+
+    loadLogos();
+  }, []);
+
+  const ecosystems = blockchainNames.map((name) => ({
+    name,
+    logo: logos[name],
+  }));
 
   const protocols = [
     "Trader Joe",
@@ -44,7 +57,18 @@ export default function TrustPartnersStrip() {
                   transition={{ delay: i * 0.1 }}
                   className="flex items-center gap-3 px-4 py-2 rounded-lg border border-[#fff2b0]/20 bg-[#363523]/50"
                 >
-                  <span className="text-xl">{eco.logo}</span>
+                  {eco.logo ? (
+                    <img
+                      src={eco.logo}
+                      alt={eco.name}
+                      className="w-6 h-6 rounded-full"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <span className="text-lg opacity-50">◆</span>
+                  )}
                   <span className="text-[#c1c0bc] font-medium">{eco.name}</span>
                 </motion.div>
               ))}

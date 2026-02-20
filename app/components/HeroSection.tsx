@@ -40,7 +40,7 @@ export default function HeroSection() {
           >
             <span className="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
             <span className="text-xs tracking-wide text-[#fff2b0] font-medium">
-              AI-Powered Yield Optimization Live
+              Powered by Kwizerana Finance
             </span>
           </motion.div>
 
