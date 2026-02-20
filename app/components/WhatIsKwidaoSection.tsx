@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
 export default function WhatIsKwidaoSection() {
   return (
@@ -37,7 +37,11 @@ export default function WhatIsKwidaoSection() {
                 What is Kwidao?
               </h2>
               <p className="text-lg text-[#c1c0bc] leading-relaxed">
-                Kwidao is a decentralized platform that finds, analyzes, and optimizes yield opportunities across multiple blockchains. Using AI models and on-chain data, Kwidao helps users farm, track, and manage DeFi positions from one dashboard instead of navigating multiple protocols.
+                Kwidao is a decentralized platform that finds, analyzes, and
+                optimizes yield opportunities across multiple blockchains. Using
+                AI models and on-chain data, Kwidao helps users farm, track, and
+                manage DeFi positions from one dashboard instead of navigating
+                multiple protocols.
               </p>
             </div>
 
@@ -45,19 +49,19 @@ export default function WhatIsKwidaoSection() {
             <div className="space-y-4 pt-4">
               {[
                 {
-                  icon: '🔍',
-                  title: 'Discover Yields',
-                  desc: 'Real-time scanning of protocols across chains for optimal opportunities',
+                  icon: "🔍",
+                  title: "Discover Yields",
+                  desc: "Real-time scanning of protocols across chains for optimal opportunities",
                 },
                 {
-                  icon: '⚙️',
-                  title: 'Optimize Strategies',
-                  desc: 'AI-powered recommendations tailored to your risk profile',
+                  icon: "⚙️",
+                  title: "Optimize Strategies",
+                  desc: "AI-powered recommendations tailored to your risk profile",
                 },
                 {
-                  icon: '🎁',
-                  title: 'Earn Rewards',
-                  desc: 'Points toward airdrops and governance participation',
+                  icon: "🎁",
+                  title: "Earn Rewards",
+                  desc: "Points toward airdrops and governance participation",
                 },
               ].map((pillar, i) => (
                 <motion.div
@@ -69,7 +73,9 @@ export default function WhatIsKwidaoSection() {
                 >
                   <div className="text-2xl flex-shrink-0">{pillar.icon}</div>
                   <div>
-                    <h4 className="font-bold text-[#fff2b0] mb-1">{pillar.title}</h4>
+                    <h4 className="font-bold text-[#fff2b0] mb-1">
+                      {pillar.title}
+                    </h4>
                     <p className="text-sm text-[#c1c0bc]">{pillar.desc}</p>
                   </div>
                 </motion.div>

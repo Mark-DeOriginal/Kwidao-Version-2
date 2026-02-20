@@ -1,28 +1,29 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
 export default function DAOTokenSection() {
   const utilities = [
     {
-      icon: '🗳️',
-      title: 'Governance Voting',
-      description: 'Vote on protocol decisions and feature prioritization',
+      icon: "🗳️",
+      title: "Governance Voting",
+      description: "Vote on protocol decisions and feature prioritization",
     },
     {
-      icon: '💧',
-      title: 'Liquidity Incentives',
-      description: 'Earn rewards for providing liquidity and participating',
+      icon: "💧",
+      title: "Liquidity Incentives",
+      description: "Earn rewards for providing liquidity and participating",
     },
     {
-      icon: '🔑',
-      title: 'Premium Access',
-      description: 'Unlock exclusive tools, early features, and advanced analytics',
+      icon: "🔑",
+      title: "Premium Access",
+      description:
+        "Unlock exclusive tools, early features, and advanced analytics",
     },
     {
-      icon: '📊',
-      title: 'Treasury Growth',
-      description: 'Benefits from protocol revenue and sustainable growth',
+      icon: "📊",
+      title: "Treasury Growth",
+      description: "Benefits from protocol revenue and sustainable growth",
     },
   ];
 
@@ -52,10 +53,14 @@ export default function DAOTokenSection() {
                   {/* Outer circles */}
                   <motion.div
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                    transition={{
+                      duration: 20,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
                     className="absolute inset-0"
                   >
-                    {['Users', 'Yield', 'Growth', 'Value'].map((label, i) => {
+                    {["Users", "Yield", "Growth", "Value"].map((label, i) => {
                       const angle = (i / 4) * Math.PI * 2;
                       const x = Math.cos(angle) * 80;
                       const y = Math.sin(angle) * 80;
@@ -93,7 +98,8 @@ export default function DAOTokenSection() {
                 $KWI Token
               </h2>
               <p className="text-lg text-[#c1c0bc] leading-relaxed">
-                The Kwidao ecosystem token that aligns incentives across users, governance, and protocol growth.
+                The Kwidao ecosystem token that aligns incentives across users,
+                governance, and protocol growth.
               </p>
             </div>
 
@@ -118,8 +124,18 @@ export default function DAOTokenSection() {
 
             <button className="px-6 py-3 bg-[#fff2b0] text-[#363523] font-bold rounded-lg hover:bg-[#fff2b0]/90 transition-colors inline-flex items-center gap-2">
               <span>Join the DAO</span>
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </button>
           </motion.div>

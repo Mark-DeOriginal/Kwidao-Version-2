@@ -1,28 +1,28 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
 export default function SecuritySafetySection() {
   const features = [
     {
-      icon: '🔐',
-      title: 'Non-Custodial',
-      description: 'Your wallet, your keys, your assets. We never hold funds.',
+      icon: "🔐",
+      title: "Non-Custodial",
+      description: "Your wallet, your keys, your assets. We never hold funds.",
     },
     {
-      icon: '✓',
-      title: 'Smart Contract Transparency',
-      description: 'All code audited and publicly verified on chain.',
+      icon: "✓",
+      title: "Smart Contract Transparency",
+      description: "All code audited and publicly verified on chain.",
     },
     {
-      icon: '📚',
-      title: 'Risk Education',
-      description: 'Learn to identify and manage DeFi risks effectively.',
+      icon: "📚",
+      title: "Risk Education",
+      description: "Learn to identify and manage DeFi risks effectively.",
     },
     {
-      icon: '🛡️',
-      title: 'Best Practices',
-      description: 'Follow security guidelines to protect your assets.',
+      icon: "🛡️",
+      title: "Best Practices",
+      description: "Follow security guidelines to protect your assets.",
     },
   ];
 
@@ -57,7 +57,9 @@ export default function SecuritySafetySection() {
               className="bg-gradient-to-br from-[#363523] to-[#2a2820] border border-[#fff2b0]/10 rounded-lg p-6 text-center hover:border-[#fff2b0]/30 transition-colors"
             >
               <div className="text-4xl mb-4">{feature.icon}</div>
-              <h3 className="text-lg font-bold text-[#fff2b0] mb-2">{feature.title}</h3>
+              <h3 className="text-lg font-bold text-[#fff2b0] mb-2">
+                {feature.title}
+              </h3>
               <p className="text-sm text-[#c1c0bc]">{feature.description}</p>
             </motion.div>
           ))}
@@ -71,21 +73,30 @@ export default function SecuritySafetySection() {
         >
           <div className="grid md:grid-cols-3 gap-8">
             <div>
-              <h4 className="text-sm font-bold uppercase tracking-widest text-[#fff2b0] mb-3">Audits</h4>
+              <h4 className="text-sm font-bold uppercase tracking-widest text-[#fff2b0] mb-3">
+                Audits
+              </h4>
               <p className="text-[#c1c0bc]">
-                Smart contract audits and security assessments coming soon. Transparency reports available.
+                Smart contract audits and security assessments coming soon.
+                Transparency reports available.
               </p>
             </div>
             <div>
-              <h4 className="text-sm font-bold uppercase tracking-widest text-[#fff2b0] mb-3">Documentation</h4>
+              <h4 className="text-sm font-bold uppercase tracking-widest text-[#fff2b0] mb-3">
+                Documentation
+              </h4>
               <p className="text-[#c1c0bc]">
-                Comprehensive technical documentation and API guides available in our docs portal.
+                Comprehensive technical documentation and API guides available
+                in our docs portal.
               </p>
             </div>
             <div>
-              <h4 className="text-sm font-bold uppercase tracking-widest text-[#fff2b0] mb-3">Risk Disclaimer</h4>
+              <h4 className="text-sm font-bold uppercase tracking-widest text-[#fff2b0] mb-3">
+                Risk Disclaimer
+              </h4>
               <p className="text-[#c1c0bc]">
-                DeFi involves risk. Always do your own research and only invest what you can afford to lose.
+                DeFi involves risk. Always do your own research and only invest
+                what you can afford to lose.
               </p>
             </div>
           </div>

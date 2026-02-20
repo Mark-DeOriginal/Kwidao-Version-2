@@ -1,16 +1,16 @@
-import HeroSection from './components/HeroSection';
-import LiveMarketWidget from './components/LiveMarketWidget';
-import TrustPartnersStrip from './components/TrustPartnersStrip';
-import WhatIsKwidaoSection from './components/WhatIsKwidaoSection';
-import EcosystemSection from './components/EcosystemSection';
-import LiveMarketAnalyticsSection from './components/LiveMarketAnalyticsSection';
-import HowItWorksSection from './components/HowItWorksSection';
-import ToolsPreviewSection from './components/ToolsPreviewSection';
-import EducationAlphaHubSection from './components/EducationAlphaHubSection';
-import DAOTokenSection from './components/DAOTokenSection';
-import SecuritySafetySection from './components/SecuritySafetySection';
-import CommunitySection from './components/CommunitySection';
-import FinalCTASection from './components/FinalCTASection';
+import HeroSection from "./components/HeroSection";
+import LiveMarketWidget from "./components/LiveMarketWidget";
+import TrustPartnersStrip from "./components/TrustPartnersStrip";
+import WhatIsKwidaoSection from "./components/WhatIsKwidaoSection";
+import EcosystemSection from "./components/EcosystemSection";
+import LiveMarketAnalyticsSection from "./components/LiveMarketAnalyticsSection";
+import HowItWorksSection from "./components/HowItWorksSection";
+import ToolsPreviewSection from "./components/ToolsPreviewSection";
+import EducationAlphaHubSection from "./components/EducationAlphaHubSection";
+import DAOTokenSection from "./components/DAOTokenSection";
+import SecuritySafetySection from "./components/SecuritySafetySection";
+import CommunitySection from "./components/CommunitySection";
+import FinalCTASection from "./components/FinalCTASection";
 
 export default function Home() {
   return (

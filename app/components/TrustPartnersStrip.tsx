@@ -1,23 +1,23 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
 export default function TrustPartnersStrip() {
   const ecosystems = [
-    { name: 'Avalanche', logo: '⛓️' },
-    { name: 'Ethereum', logo: '♦️' },
-    { name: 'Solana', logo: '◎' },
-    { name: 'Sui', logo: '⬢' },
-    { name: 'Polygon', logo: '▲' },
+    { name: "Avalanche", logo: "⛓️" },
+    { name: "Ethereum", logo: "♦️" },
+    { name: "Solana", logo: "◎" },
+    { name: "Sui", logo: "⬢" },
+    { name: "Polygon", logo: "▲" },
   ];
 
   const protocols = [
-    'Trader Joe',
-    'Pharaoh',
-    'Benqi',
-    'GMX',
-    'Aave',
-    'Uniswap',
+    "Trader Joe",
+    "Pharaoh",
+    "Benqi",
+    "GMX",
+    "Aave",
+    "Uniswap",
   ];
 
   return (

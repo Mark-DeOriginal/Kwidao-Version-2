@@ -1,32 +1,36 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
 export default function HowItWorksSection() {
   const steps = [
     {
-      number: '1',
-      title: 'Connect Wallet',
-      description: 'Link your EVM-compatible wallet securely. Your private keys remain yours.',
-      icon: '🔗',
+      number: "1",
+      title: "Connect Wallet",
+      description:
+        "Link your EVM-compatible wallet securely. Your private keys remain yours.",
+      icon: "🔗",
     },
     {
-      number: '2',
-      title: 'Explore Strategies',
-      description: 'Kwidao analyzes and recommends best yield opportunities for your profile.',
-      icon: '🔍',
+      number: "2",
+      title: "Explore Strategies",
+      description:
+        "Kwidao analyzes and recommends best yield opportunities for your profile.",
+      icon: "🔍",
     },
     {
-      number: '3',
-      title: 'Deposit or Track',
-      description: 'Deposit into vaults or monitor existing positions from your dashboard.',
-      icon: '💼',
+      number: "3",
+      title: "Deposit or Track",
+      description:
+        "Deposit into vaults or monitor existing positions from your dashboard.",
+      icon: "💼",
     },
     {
-      number: '4',
-      title: 'Earn Rewards',
-      description: 'Earn yield on deposits + points toward airdrops and governance.',
-      icon: '🏆',
+      number: "4",
+      title: "Earn Rewards",
+      description:
+        "Earn yield on deposits + points toward airdrops and governance.",
+      icon: "🏆",
     },
   ];
 
@@ -68,8 +72,12 @@ export default function HowItWorksSection() {
                 <div className="absolute top-6 right-6 w-10 h-10 rounded-full bg-gradient-to-br from-[#fff2b0] to-[#fff2b0]/70 flex items-center justify-center font-bold text-[#363523] text-lg">
                   {step.number}
                 </div>
-                <h3 className="text-xl font-bold text-[#fff2b0] mb-3">{step.title}</h3>
-                <p className="text-sm text-[#c1c0bc] leading-relaxed">{step.description}</p>
+                <h3 className="text-xl font-bold text-[#fff2b0] mb-3">
+                  {step.title}
+                </h3>
+                <p className="text-sm text-[#c1c0bc] leading-relaxed">
+                  {step.description}
+                </p>
               </div>
             </motion.div>
           ))}

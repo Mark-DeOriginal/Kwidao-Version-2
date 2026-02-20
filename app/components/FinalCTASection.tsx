@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import Link from 'next/link';
+import { motion } from "framer-motion";
+import Link from "next/link";
 
 export default function FinalCTASection() {
   return (
@@ -15,12 +15,15 @@ export default function FinalCTASection() {
         >
           {/* Headline */}
           <h2 className="text-5xl md:text-6xl font-bold text-[#fff2b0] leading-[1.1]">
-            Start Your DeFi Journey<br />With Confidence
+            Start Your DeFi Journey
+            <br />
+            With Confidence
           </h2>
 
           {/* Subtext */}
           <p className="text-lg text-[#c1c0bc] max-w-2xl mx-auto">
-            Whether you're a DeFi beginner or an experienced trader, Kwidao has the tools and guidance you need to maximize your yield safely.
+            Whether you're a DeFi beginner or an experienced trader, Kwidao has
+            the tools and guidance you need to maximize your yield safely.
           </p>
 
           {/* CTA Buttons */}
@@ -34,8 +37,18 @@ export default function FinalCTASection() {
               href="#"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-[#fff2b0] text-[#363523] font-bold rounded-lg hover:bg-[#fff2b0]/90 transition-colors text-lg"
             >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
               </svg>
               Connect Wallet Now
             </Link>
@@ -43,8 +56,18 @@ export default function FinalCTASection() {
               href="/waitlist"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-[#fff2b0]/30 text-[#fff2b0] font-bold rounded-lg hover:border-[#fff2b0]/50 hover:bg-[#fff2b0]/5 transition-colors text-lg"
             >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 01-5 0V12m0 0V9.5a2.5 2.5 0 015 0V12" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 01-5 0V12m0 0V9.5a2.5 2.5 0 015 0V12"
+                />
               </svg>
               Join Whitelist
             </Link>
@@ -61,21 +84,24 @@ export default function FinalCTASection() {
               <div className="text-center">
                 <div className="text-2xl mb-2">🔐</div>
                 <p className="text-sm text-[#c1c0bc]">
-                  <strong className="text-[#fff2b0]">Non-Custodial</strong><br />
+                  <strong className="text-[#fff2b0]">Non-Custodial</strong>
+                  <br />
                   Your keys, your funds
                 </p>
               </div>
               <div className="text-center">
                 <div className="text-2xl mb-2">✓</div>
                 <p className="text-sm text-[#c1c0bc]">
-                  <strong className="text-[#fff2b0]">Transparent</strong><br />
+                  <strong className="text-[#fff2b0]">Transparent</strong>
+                  <br />
                   All code audited
                 </p>
               </div>
               <div className="text-center">
                 <div className="text-2xl mb-2">🌍</div>
                 <p className="text-sm text-[#c1c0bc]">
-                  <strong className="text-[#fff2b0]">Multichain</strong><br />
+                  <strong className="text-[#fff2b0]">Multichain</strong>
+                  <br />
                   5+ blockchains
                 </p>
               </div>

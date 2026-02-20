@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { ReactNode } from 'react';
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { ReactNode } from "react";
 
 interface FeatureCardProps {
   icon: ReactNode;
@@ -22,15 +22,27 @@ function FeatureCard({ icon, title, description, link }: FeatureCardProps) {
     >
       <div className="text-3xl mb-4">{icon}</div>
       <h3 className="text-lg font-bold text-[#fff2b0] mb-2">{title}</h3>
-      <p className="text-sm text-[#c1c0bc] mb-4 leading-relaxed">{description}</p>
+      <p className="text-sm text-[#c1c0bc] mb-4 leading-relaxed">
+        {description}
+      </p>
       {link && (
         <Link
           href={link}
           className="inline-flex items-center gap-2 text-[#fff2b0] hover:text-[#fff2b0] text-xs font-semibold uppercase tracking-wider group"
         >
           Learn More
-          <svg className="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          <svg
+            className="w-3 h-3 group-hover:translate-x-1 transition-transform"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
           </svg>
         </Link>
       )}
@@ -41,28 +53,32 @@ function FeatureCard({ icon, title, description, link }: FeatureCardProps) {
 export default function EcosystemSection() {
   const features = [
     {
-      icon: '🤖',
-      title: 'Kwizerana AI',
-      description: 'AI analyzes liquidity flow and farming performance to identify optimal yield strategies across multiple chains.',
-      link: '#',
+      icon: "🤖",
+      title: "Kwizerana AI",
+      description:
+        "AI analyzes liquidity flow and farming performance to identify optimal yield strategies across multiple chains.",
+      link: "#",
     },
     {
-      icon: '💰',
-      title: 'Yield Vaults',
-      description: 'Optimized liquidity pools and farming strategies you can deposit into with single-click transactions.',
-      link: '#',
+      icon: "💰",
+      title: "Yield Vaults",
+      description:
+        "Optimized liquidity pools and farming strategies you can deposit into with single-click transactions.",
+      link: "#",
     },
     {
-      icon: '📊',
-      title: 'Analytics Dashboard',
-      description: 'Portfolio tracking, risk metrics, and real-time performance monitoring across all your positions.',
-      link: '#',
+      icon: "📊",
+      title: "Analytics Dashboard",
+      description:
+        "Portfolio tracking, risk metrics, and real-time performance monitoring across all your positions.",
+      link: "#",
     },
     {
-      icon: '⭐',
-      title: 'Points & Rewards',
-      description: 'Earn points for activity → future airdrops, governance participation, and TGE eligibility.',
-      link: '#',
+      icon: "⭐",
+      title: "Points & Rewards",
+      description:
+        "Earn points for activity → future airdrops, governance participation, and TGE eligibility.",
+      link: "#",
     },
   ];
 

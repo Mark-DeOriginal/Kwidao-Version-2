@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useState, useCallback } from "react";
+import { motion } from "framer-motion";
 
 interface PriceData {
   id: string;
@@ -12,17 +12,37 @@ interface PriceData {
   sparkline: number[];
 }
 
-const COINS_TO_TRACK = ['bitcoin', 'ethereum', 'avalanche-2', 'solana', 'sui'];
-const STORAGE_KEY = 'kwidao_market_prices';
+const COINS_TO_TRACK = ["bitcoin", "ethereum", "avalanche-2", "solana", "sui"];
+const STORAGE_KEY = "kwidao_market_prices";
 const REFRESH_INTERVAL = 3000; // 3 seconds
 
 // Fallback data in case API fails completely
 const FALLBACK_PRICES: Record<string, any> = {
-  bitcoin: { usd: 42500, usd_24h_change: 2.5, usd_sparkline_7d: Array(24).fill(42000) },
-  ethereum: { usd: 2850, usd_24h_change: 1.8, usd_sparkline_7d: Array(24).fill(2800) },
-  'avalanche-2': { usd: 38.5, usd_24h_change: 3.2, usd_sparkline_7d: Array(24).fill(37.5) },
-  solana: { usd: 168.75, usd_24h_change: 4.1, usd_sparkline_7d: Array(24).fill(162) },
-  sui: { usd: 3.45, usd_24h_change: 2.9, usd_sparkline_7d: Array(24).fill(3.35) },
+  bitcoin: {
+    usd: 42500,
+    usd_24h_change: 2.5,
+    usd_sparkline_7d: Array(24).fill(42000),
+  },
+  ethereum: {
+    usd: 2850,
+    usd_24h_change: 1.8,
+    usd_sparkline_7d: Array(24).fill(2800),
+  },
+  "avalanche-2": {
+    usd: 38.5,
+    usd_24h_change: 3.2,
+    usd_sparkline_7d: Array(24).fill(37.5),
+  },
+  solana: {
+    usd: 168.75,
+    usd_24h_change: 4.1,
+    usd_sparkline_7d: Array(24).fill(162),
+  },
+  sui: {
+    usd: 3.45,
+    usd_24h_change: 2.9,
+    usd_sparkline_7d: Array(24).fill(3.35),
+  },
 };
 
 export default function LiveMarketWidget() {
@@ -32,55 +52,82 @@ export default function LiveMarketWidget() {
   const [isCached, setIsCached] = useState(false);
 
   // Format raw data into PriceData
-  const formatPriceData = useCallback((data: Record<string, any>): PriceData[] => {
-    return [
-      {
-        id: 'bitcoin',
-        symbol: 'BTC',
-        name: 'Bitcoin',
-        current_price: data.bitcoin?.usd || FALLBACK_PRICES.bitcoin.usd,
-        price_change_percentage_24h: data.bitcoin?.usd_24h_change || FALLBACK_PRICES.bitcoin.usd_24h_change,
-        sparkline: (data.bitcoin?.usd_sparkline_7d || FALLBACK_PRICES.bitcoin.usd_sparkline_7d).slice(-24),
-      },
-      {
-        id: 'ethereum',
-        symbol: 'ETH',
-        name: 'Ethereum',
-        current_price: data.ethereum?.usd || FALLBACK_PRICES.ethereum.usd,
-        price_change_percentage_24h: data.ethereum?.usd_24h_change || FALLBACK_PRICES.ethereum.usd_24h_change,
-        sparkline: (data.ethereum?.usd_sparkline_7d || FALLBACK_PRICES.ethereum.usd_sparkline_7d).slice(-24),
-      },
-      {
-        id: 'avalanche-2',
-        symbol: 'AVAX',
-        name: 'Avalanche',
-        current_price: data['avalanche-2']?.usd || FALLBACK_PRICES['avalanche-2'].usd,
-        price_change_percentage_24h: data['avalanche-2']?.usd_24h_change || FALLBACK_PRICES['avalanche-2'].usd_24h_change,
-        sparkline: (data['avalanche-2']?.usd_sparkline_7d || FALLBACK_PRICES['avalanche-2'].usd_sparkline_7d).slice(-24),
-      },
-      {
-        id: 'solana',
-        symbol: 'SOL',
-        name: 'Solana',
-        current_price: data.solana?.usd || FALLBACK_PRICES.solana.usd,
-        price_change_percentage_24h: data.solana?.usd_24h_change || FALLBACK_PRICES.solana.usd_24h_change,
-        sparkline: (data.solana?.usd_sparkline_7d || FALLBACK_PRICES.solana.usd_sparkline_7d).slice(-24),
-      },
-      {
-        id: 'sui',
-        symbol: 'SUI',
-        name: 'Sui',
-        current_price: data.sui?.usd || FALLBACK_PRICES.sui.usd,
-        price_change_percentage_24h: data.sui?.usd_24h_change || FALLBACK_PRICES.sui.usd_24h_change,
-        sparkline: (data.sui?.usd_sparkline_7d || FALLBACK_PRICES.sui.usd_sparkline_7d).slice(-24),
-      },
-    ];
-  }, []);
+  const formatPriceData = useCallback(
+    (data: Record<string, any>): PriceData[] => {
+      return [
+        {
+          id: "bitcoin",
+          symbol: "BTC",
+          name: "Bitcoin",
+          current_price: data.bitcoin?.usd || FALLBACK_PRICES.bitcoin.usd,
+          price_change_percentage_24h:
+            data.bitcoin?.usd_24h_change ||
+            FALLBACK_PRICES.bitcoin.usd_24h_change,
+          sparkline: (
+            data.bitcoin?.usd_sparkline_7d ||
+            FALLBACK_PRICES.bitcoin.usd_sparkline_7d
+          ).slice(-24),
+        },
+        {
+          id: "ethereum",
+          symbol: "ETH",
+          name: "Ethereum",
+          current_price: data.ethereum?.usd || FALLBACK_PRICES.ethereum.usd,
+          price_change_percentage_24h:
+            data.ethereum?.usd_24h_change ||
+            FALLBACK_PRICES.ethereum.usd_24h_change,
+          sparkline: (
+            data.ethereum?.usd_sparkline_7d ||
+            FALLBACK_PRICES.ethereum.usd_sparkline_7d
+          ).slice(-24),
+        },
+        {
+          id: "avalanche-2",
+          symbol: "AVAX",
+          name: "Avalanche",
+          current_price:
+            data["avalanche-2"]?.usd || FALLBACK_PRICES["avalanche-2"].usd,
+          price_change_percentage_24h:
+            data["avalanche-2"]?.usd_24h_change ||
+            FALLBACK_PRICES["avalanche-2"].usd_24h_change,
+          sparkline: (
+            data["avalanche-2"]?.usd_sparkline_7d ||
+            FALLBACK_PRICES["avalanche-2"].usd_sparkline_7d
+          ).slice(-24),
+        },
+        {
+          id: "solana",
+          symbol: "SOL",
+          name: "Solana",
+          current_price: data.solana?.usd || FALLBACK_PRICES.solana.usd,
+          price_change_percentage_24h:
+            data.solana?.usd_24h_change ||
+            FALLBACK_PRICES.solana.usd_24h_change,
+          sparkline: (
+            data.solana?.usd_sparkline_7d ||
+            FALLBACK_PRICES.solana.usd_sparkline_7d
+          ).slice(-24),
+        },
+        {
+          id: "sui",
+          symbol: "SUI",
+          name: "Sui",
+          current_price: data.sui?.usd || FALLBACK_PRICES.sui.usd,
+          price_change_percentage_24h:
+            data.sui?.usd_24h_change || FALLBACK_PRICES.sui.usd_24h_change,
+          sparkline: (
+            data.sui?.usd_sparkline_7d || FALLBACK_PRICES.sui.usd_sparkline_7d
+          ).slice(-24),
+        },
+      ];
+    },
+    [],
+  );
 
   // Load from localStorage
   const loadFromCache = useCallback(() => {
     try {
-      if (typeof window === 'undefined') return null;
+      if (typeof window === "undefined") return null;
       const cached = localStorage.getItem(STORAGE_KEY);
       return cached ? JSON.parse(cached) : null;
     } catch (err) {
@@ -91,7 +138,7 @@ export default function LiveMarketWidget() {
   // Save to localStorage
   const saveToCache = useCallback((data: PriceData[]) => {
     try {
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       }
     } catch (err) {
@@ -100,58 +147,61 @@ export default function LiveMarketWidget() {
   }, []);
 
   // Fetch prices with retry logic
-  const fetchPrices = useCallback(async (retries = 0) => {
-    try {
-      const coins = COINS_TO_TRACK.join(',');
-      const response = await fetch(`/api/market-prices?coins=${coins}`, {
-        method: 'GET',
-        headers: {
-          'Cache-Control': 'no-store',
-        },
-      });
+  const fetchPrices = useCallback(
+    async (retries = 0) => {
+      try {
+        const coins = COINS_TO_TRACK.join(",");
+        const response = await fetch(`/api/market-prices?coins=${coins}`, {
+          method: "GET",
+          headers: {
+            "Cache-Control": "no-store",
+          },
+        });
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
 
-      const result = await response.json();
+        const result = await response.json();
 
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to fetch prices');
-      }
+        if (!result.success) {
+          throw new Error(result.message || "Failed to fetch prices");
+        }
 
-      const formattedData = formatPriceData(result.data);
-      setPrices(formattedData);
-      saveToCache(formattedData);
-      setError(null);
-      setIsCached(result.cached || false);
-      setIsLoading(false);
-    } catch (err) {
-      // Try to load from cache
-      const cachedData = loadFromCache();
-      if (cachedData && cachedData.length > 0) {
-        setPrices(cachedData);
-        setIsCached(true);
-        setIsLoading(false);
+        const formattedData = formatPriceData(result.data);
+        setPrices(formattedData);
+        saveToCache(formattedData);
         setError(null);
-        return;
-      }
-
-      // Retry with exponential backoff
-      if (retries < 3) {
-        const delay = Math.pow(2, retries) * 1000; // 1s, 2s, 4s exponential backoff
-        setTimeout(() => {
-          fetchPrices(retries + 1);
-        }, delay);
-      } else {
-        // Use fallback data after all retries fail
-        const fallbackData = formatPriceData(FALLBACK_PRICES);
-        setPrices(fallbackData);
+        setIsCached(result.cached || false);
         setIsLoading(false);
-        setError(null); // Don't show error, just use fallback
+      } catch (err) {
+        // Try to load from cache
+        const cachedData = loadFromCache();
+        if (cachedData && cachedData.length > 0) {
+          setPrices(cachedData);
+          setIsCached(true);
+          setIsLoading(false);
+          setError(null);
+          return;
+        }
+
+        // Retry with exponential backoff
+        if (retries < 3) {
+          const delay = Math.pow(2, retries) * 1000; // 1s, 2s, 4s exponential backoff
+          setTimeout(() => {
+            fetchPrices(retries + 1);
+          }, delay);
+        } else {
+          // Use fallback data after all retries fail
+          const fallbackData = formatPriceData(FALLBACK_PRICES);
+          setPrices(fallbackData);
+          setIsLoading(false);
+          setError(null); // Don't show error, just use fallback
+        }
       }
-    }
-  }, [formatPriceData, saveToCache, loadFromCache]);
+    },
+    [formatPriceData, saveToCache, loadFromCache],
+  );
 
   useEffect(() => {
     fetchPrices();
@@ -182,7 +232,7 @@ export default function LiveMarketWidget() {
       <svg viewBox="0 0 40 16" className="w-full h-6 mt-2">
         <polyline
           fill="none"
-          stroke={isPositive ? '#10b981' : '#ef4444'}
+          stroke={isPositive ? "#10b981" : "#ef4444"}
           strokeWidth="1"
           points={sparkline
             .map((price, i) => {
@@ -190,7 +240,7 @@ export default function LiveMarketWidget() {
               const y = 16 - ((price - min) / range) * 14 - 1;
               return `${x},${y}`;
             })
-            .join(' ')}
+            .join(" ")}
         />
       </svg>
     );
@@ -209,18 +259,25 @@ export default function LiveMarketWidget() {
             className="bg-gradient-to-br from-[#363523] to-[#2a2820] border border-[#fff2b0]/10 rounded-lg p-4 hover:border-[#fff2b0]/30 transition-colors"
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-mono text-[#fff2b0]">{coin.symbol}</span>
-              <span className={`text-xs font-semibold ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                {isPositive ? '+' : ''}{coin.price_change_percentage_24h.toFixed(2)}%
+              <span className="text-xs font-mono text-[#fff2b0]">
+                {coin.symbol}
+              </span>
+              <span
+                className={`text-xs font-semibold ${isPositive ? "text-green-400" : "text-red-400"}`}
+              >
+                {isPositive ? "+" : ""}
+                {coin.price_change_percentage_24h.toFixed(2)}%
               </span>
             </div>
             <div className="text-lg font-bold text-[#c1c0bc] font-mono">
-              ${coin.current_price.toLocaleString('en-US', {
+              $
+              {coin.current_price.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
             </div>
-            {coin.sparkline.length > 1 && getMiniChart(coin.sparkline, isPositive)}
+            {coin.sparkline.length > 1 &&
+              getMiniChart(coin.sparkline, isPositive)}
           </motion.div>
         );
       })}
