@@ -1,0 +1,5463 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KWIZERANA Intelligence v2 — DeFi Agent</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+      :root {
+        --bg: #0d0818;
+        --bg2: #160f28;
+        --bg3: #1e1438;
+        --core: #e07040;
+        --flesh: #9060d0;
+        --flesh2: #7040a8;
+        --seed: #08040e;
+        --gold: #e8904a;
+        --white: #f0eeff;
+        --muted: #9078c0;
+        --border: rgba(150, 90, 220, 0.2);
+        --card: rgba(22, 15, 40, 0.85);
+        --glow: rgba(200, 140, 255, 0.1);
+        --red: #e05c5c;
+        --blue: #5c9be0;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: var(--bg);
+        color: var(--white);
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      /* GLOW */
+      body::before {
+        content: "";
+        position: fixed;
+        top: -200px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 900px;
+        height: 600px;
+        background: radial-gradient(
+          ellipse,
+          rgba(150, 90, 220, 0.14) 0%,
+          transparent 70%
+        );
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* TICKER */
+      .ticker {
+        background: var(--bg2);
+        border-bottom: 1px solid var(--border);
+        padding: 6px 0;
+        overflow: hidden;
+        position: sticky;
+        top: 0;
+        z-index: 200;
+      }
+      .ticker-track {
+        display: flex;
+        gap: 0;
+        animation: ticker 40s linear infinite;
+        width: max-content;
+      }
+      .ticker-track:hover {
+        animation-play-state: paused;
+      }
+      @keyframes ticker {
+        0% {
+          transform: translateX(0);
+        }
+        100% {
+          transform: translateX(-50%);
+        }
+      }
+      .ticker-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 28px;
+        font-size: 12px;
+        white-space: nowrap;
+        border-right: 1px solid var(--border);
+      }
+      .ticker-sym {
+        font-weight: 700;
+        color: var(--core);
+        letter-spacing: 0.04em;
+      }
+      .ticker-price {
+        color: var(--white);
+      }
+      .ticker-chg {
+        font-weight: 600;
+      }
+      .ticker-chg.up {
+        color: var(--flesh);
+      }
+      .ticker-chg.down {
+        color: var(--red);
+      }
+      .ticker-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--flesh);
+        animation: pulse 2s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+
+      /* HEADER */
+      header {
+        position: relative;
+        z-index: 100;
+        padding: 14px 40px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border);
+        background: rgba(13, 8, 24, 0.92);
+        backdrop-filter: blur(16px);
+      }
+      .logo-area {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+      }
+      .logo-icon {
+        width: 34px;
+        height: 34px;
+        flex-shrink: 0;
+      }
+      .logo-name {
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: var(--core);
+      }
+      .logo-sub {
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+        text-transform: uppercase;
+      }
+      .header-tabs {
+        display: flex;
+        gap: 4px;
+      }
+      .htab {
+        padding: 6px 18px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: all 0.2s;
+        background: transparent;
+        color: var(--muted);
+      }
+      .htab.active {
+        background: rgba(150, 90, 220, 0.15);
+        border-color: rgba(150, 90, 220, 0.3);
+        color: var(--flesh);
+      }
+      .htab:hover:not(.active) {
+        color: var(--white);
+      }
+      .v-badge {
+        background: linear-gradient(135deg, var(--flesh), var(--gold));
+        color: var(--seed);
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 10px;
+        letter-spacing: 0.04em;
+      }
+
+      /* PANELS */
+      .panel {
+        display: none;
+        position: relative;
+        z-index: 1;
+      }
+      .panel.active {
+        display: block;
+        animation: panelIn 0.35s cubic-bezier(0.22, 0.68, 0, 1.2);
+      }
+      @keyframes panelIn {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* ── INTELLIGENCE PANEL ── */
+      .hero {
+        min-height: calc(100vh - 120px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 80px 24px 60px;
+        text-align: center;
+      }
+      .hero-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(200, 140, 255, 0.07);
+        border: 1px solid rgba(200, 140, 255, 0.18);
+        border-radius: 20px;
+        padding: 5px 16px;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        color: var(--core);
+        text-transform: uppercase;
+        margin-bottom: 24px;
+      }
+      .hero-title {
+        font-size: clamp(34px, 5.5vw, 66px);
+        font-weight: 800;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        max-width: 780px;
+        margin-bottom: 16px;
+      }
+      .hero-title .hl {
+        background: linear-gradient(
+          135deg,
+          var(--core),
+          var(--flesh),
+          var(--gold)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .hero-sub {
+        font-size: 16px;
+        color: var(--muted);
+        max-width: 520px;
+        line-height: 1.7;
+        margin-bottom: 44px;
+      }
+
+      .search-wrap {
+        width: 100%;
+        max-width: 760px;
+        position: relative;
+        margin-bottom: 18px;
+      }
+      .search-box {
+        width: 100%;
+        background: var(--bg2);
+        border: 1.5px solid rgba(150, 90, 220, 0.22);
+        border-radius: 18px;
+        padding: 0 72px 0 26px;
+        height: 68px;
+        font-size: 16px;
+        color: var(--white);
+        outline: none;
+        transition: all 0.3s;
+        caret-color: var(--core);
+      }
+      .search-box::placeholder {
+        color: rgba(144, 108, 192, 0.4);
+      }
+      .search-box:focus {
+        border-color: rgba(150, 90, 220, 0.5);
+        box-shadow:
+          0 0 0 4px rgba(150, 90, 220, 0.07),
+          0 8px 40px rgba(0, 0, 0, 0.4);
+      }
+      .search-btn {
+        position: absolute;
+        right: 9px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, var(--flesh), var(--flesh2));
+        border: none;
+        border-radius: 13px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      }
+      .search-btn:hover {
+        transform: translateY(-50%) scale(1.06);
+        box-shadow: 0 4px 20px rgba(144, 96, 208, 0.5);
+      }
+      .search-btn svg {
+        width: 21px;
+        height: 21px;
+        stroke: var(--seed);
+        fill: none;
+        stroke-width: 2.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+        justify-content: center;
+        max-width: 760px;
+        margin-bottom: 20px;
+      }
+      .chip {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 100px;
+        padding: 8px 16px;
+        font-size: 12px;
+        color: var(--white);
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+      .chip:hover {
+        background: rgba(150, 90, 220, 0.1);
+        border-color: rgba(150, 90, 220, 0.38);
+        color: var(--core);
+        transform: translateY(-1px);
+      }
+
+      .response-area {
+        display: none;
+        margin-top: 16px;
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 15px;
+        padding: 22px 26px;
+        text-align: left;
+        font-size: 14px;
+        color: var(--white);
+        line-height: 1.75;
+        max-width: 760px;
+        width: 100%;
+      }
+      .response-hdr {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--flesh);
+      }
+      .rdot {
+        width: 7px;
+        height: 7px;
+        background: var(--flesh);
+        border-radius: 50%;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+      .typing-dots span {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        background: var(--muted);
+        border-radius: 50%;
+        animation: tdot 1.4s infinite ease-in-out;
+        margin: 0 2px;
+      }
+      .typing-dots span:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .typing-dots span:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+      @keyframes tdot {
+        0%,
+        80%,
+        100% {
+          transform: scale(0.6);
+          opacity: 0.4;
+        }
+        40% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      .chain-badges {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 10px;
+        opacity: 0.45;
+        font-size: 11px;
+        letter-spacing: 0.07em;
+        color: var(--muted);
+      }
+      .cdot {
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: var(--muted);
+      }
+
+      /* ── COMPARE PANEL ── */
+      .compare-panel {
+        padding: 60px 40px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .sec-label {
+        font-size: 11px;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--flesh);
+        margin-bottom: 10px;
+      }
+      .sec-title {
+        font-size: clamp(26px, 3.5vw, 42px);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+        margin-bottom: 12px;
+      }
+      .sec-desc {
+        font-size: 15px;
+        color: var(--muted);
+        max-width: 520px;
+        line-height: 1.7;
+        margin-bottom: 36px;
+      }
+
+      .compare-controls {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 28px;
+        margin-bottom: 32px;
+      }
+      .ctrl-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: flex-end;
+        margin-bottom: 20px;
+      }
+      .ctrl-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .ctrl-label {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .ctrl-input {
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+        color: var(--white);
+        outline: none;
+        transition: border-color 0.2s;
+        min-width: 280px;
+      }
+      .ctrl-input:focus {
+        border-color: rgba(150, 90, 220, 0.4);
+      }
+      .ctrl-input::placeholder {
+        color: rgba(138, 173, 106, 0.4);
+      }
+      select.ctrl-sel {
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+        color: var(--white);
+        outline: none;
+        cursor: pointer;
+      }
+      select.ctrl-sel:focus {
+        border-color: rgba(150, 90, 220, 0.4);
+      }
+      .preset-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .preset-chip {
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 5px 12px;
+        font-size: 12px;
+        color: var(--muted);
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .preset-chip:hover {
+        border-color: rgba(150, 90, 220, 0.35);
+        color: var(--flesh);
+      }
+      .compare-btn {
+        padding: 10px 30px;
+        background: linear-gradient(135deg, var(--flesh), var(--flesh2));
+        border: none;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--seed);
+        cursor: pointer;
+        transition: all 0.2s;
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+      }
+      .compare-btn:hover {
+        box-shadow: 0 4px 20px rgba(144, 96, 208, 0.5);
+        transform: translateY(-1px);
+      }
+      .compare-btn:disabled {
+        opacity: 0.4;
+        cursor: default;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .chart-type-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+      }
+      .ctype-btn {
+        padding: 6px 16px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        border: 1px solid var(--border);
+        cursor: pointer;
+        background: transparent;
+        color: var(--muted);
+        transition: all 0.15s;
+      }
+      .ctype-btn.active {
+        background: rgba(150, 90, 220, 0.15);
+        border-color: rgba(150, 90, 220, 0.35);
+        color: var(--flesh);
+      }
+
+      .compare-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 32px;
+      }
+      @media (max-width: 860px) {
+        .compare-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .chart-card {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 24px;
+        position: relative;
+        overflow: hidden;
+      }
+      .chart-card h3 {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 18px;
+      }
+      .chart-card canvas {
+        max-height: 280px;
+      }
+
+      .compare-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      .compare-table th {
+        background: var(--bg2);
+        padding: 10px 14px;
+        text-align: left;
+        font-size: 11px;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: var(--muted);
+        border-bottom: 1px solid var(--border);
+      }
+      .compare-table td {
+        padding: 12px 14px;
+        border-bottom: 1px solid rgba(150, 90, 220, 0.06);
+        color: var(--white);
+      }
+      .compare-table tr:hover td {
+        background: rgba(150, 90, 220, 0.03);
+      }
+      .coin-name-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .coin-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .pos {
+        color: var(--flesh);
+        font-weight: 600;
+      }
+      .neg {
+        color: var(--red);
+        font-weight: 600;
+      }
+      .neu {
+        color: var(--muted);
+      }
+
+      .loading-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .loading-spin {
+        font-size: 32px;
+        animation: spin 1s linear infinite;
+        display: block;
+        margin: 0 auto 16px;
+      }
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .error-state {
+        text-align: center;
+        padding: 40px;
+        color: var(--red);
+        font-size: 14px;
+        background: rgba(224, 92, 92, 0.05);
+        border: 1px solid rgba(224, 92, 92, 0.15);
+        border-radius: 12px;
+      }
+
+      /* ── HEATMAP PANEL ── */
+      .heatmap-panel {
+        padding: 60px 40px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .heatmap-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+        margin-bottom: 32px;
+      }
+      .heat-cell {
+        border-radius: 12px;
+        padding: 16px 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+        overflow: hidden;
+      }
+      .heat-cell:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.1);
+      }
+      .heat-sym {
+        font-size: 14px;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        margin-bottom: 4px;
+      }
+      .heat-price {
+        font-size: 12px;
+        opacity: 0.85;
+        margin-bottom: 2px;
+      }
+      .heat-chg {
+        font-size: 15px;
+        font-weight: 700;
+      }
+      .heat-mcap {
+        font-size: 10px;
+        opacity: 0.65;
+        margin-top: 4px;
+      }
+
+      .heatmap-legend {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 28px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .leg-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .leg-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+      }
+
+      .heatmap-controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+      }
+      .hmap-filter-btn {
+        padding: 6px 14px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        border: 1px solid var(--border);
+        cursor: pointer;
+        background: transparent;
+        color: var(--muted);
+        transition: all 0.15s;
+      }
+      .hmap-filter-btn.active {
+        background: rgba(150, 90, 220, 0.15);
+        border-color: rgba(150, 90, 220, 0.35);
+        color: var(--flesh);
+      }
+
+      .refresh-btn {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 16px;
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 12px;
+        color: var(--muted);
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .refresh-btn:hover {
+        border-color: var(--flesh);
+        color: var(--flesh);
+      }
+
+      .last-update {
+        font-size: 11px;
+        color: var(--muted);
+        opacity: 0.5;
+        text-align: right;
+        margin-top: 10px;
+      }
+
+      /* AGENTS SECTION */
+      .agents-section {
+        background: var(--bg2);
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        padding: 80px 40px;
+      }
+      .agents-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .agents-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+        gap: 18px;
+        margin-top: 40px;
+      }
+      .agent-card {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 26px;
+        transition: all 0.22s;
+        position: relative;
+        overflow: hidden;
+      }
+      .agent-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at 20% 20%,
+          var(--glow),
+          transparent 60%
+        );
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .agent-card:hover {
+        border-color: rgba(150, 90, 220, 0.38);
+        transform: translateY(-3px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+      }
+      .agent-card:hover::before {
+        opacity: 1;
+      }
+      .agent-icon {
+        width: 46px;
+        height: 46px;
+        background: linear-gradient(
+          135deg,
+          rgba(150, 90, 220, 0.18),
+          rgba(150, 90, 220, 0.04)
+        );
+        border: 1px solid rgba(150, 90, 220, 0.22);
+        border-radius: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 21px;
+        margin-bottom: 16px;
+      }
+      .agent-name {
+        font-size: 15px;
+        font-weight: 700;
+        margin-bottom: 7px;
+      }
+      .agent-desc {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.65;
+        margin-bottom: 14px;
+      }
+      .agent-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+      .atag {
+        background: rgba(200, 140, 255, 0.06);
+        border: 1px solid rgba(200, 140, 255, 0.12);
+        border-radius: 5px;
+        padding: 2px 8px;
+        font-size: 10px;
+        color: var(--core);
+        letter-spacing: 0.04em;
+      }
+
+      /* STATS */
+      .stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1px;
+        background: var(--border);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        overflow: hidden;
+        margin: 0 40px 80px;
+      }
+      .stat-item {
+        background: var(--bg2);
+        padding: 32px;
+        text-align: center;
+      }
+      .stat-value {
+        font-size: clamp(26px, 3.5vw, 42px);
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--core), var(--flesh));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+        margin-bottom: 6px;
+      }
+      .stat-label {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      /* DATA SOURCES */
+      .sources-section {
+        padding: 60px 40px 80px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .sources-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+        gap: 12px;
+      }
+      .src-card {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.18s;
+      }
+      .src-card:hover {
+        border-color: rgba(150, 90, 220, 0.32);
+        transform: translateY(-2px);
+      }
+      .src-logo {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 17px;
+        flex-shrink: 0;
+      }
+      .src-name {
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .src-type {
+        font-size: 10px;
+        color: var(--muted);
+      }
+
+      /* FOOTER */
+      footer {
+        border-top: 1px solid var(--border);
+        padding: 36px 40px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 14px;
+        position: relative;
+        z-index: 1;
+      }
+      .ft-brand {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: var(--core);
+      }
+      .ft-tag {
+        font-size: 11px;
+        color: var(--muted);
+        max-width: 360px;
+        line-height: 1.5;
+        margin-top: 3px;
+      }
+      .ft-links {
+        display: flex;
+        gap: 20px;
+      }
+      .ft-links a {
+        font-size: 11px;
+        color: var(--muted);
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .ft-links a:hover {
+        color: var(--white);
+      }
+
+      /* ── SIGNALS PANEL ── */
+      .signals-panel {
+        padding: 60px 40px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .signals-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 32px;
+      }
+      @media (max-width: 860px) {
+        .signals-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* Fear & Greed gauge */
+      .fg-card {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 32px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+      }
+      .fg-arc-wrap {
+        position: relative;
+        width: 220px;
+        height: 120px;
+        margin-bottom: 16px;
+      }
+      .fg-arc-wrap svg {
+        width: 220px;
+        height: 120px;
+        overflow: visible;
+      }
+      .fg-val {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 48px;
+        font-weight: 800;
+        line-height: 1;
+        color: var(--white);
+      }
+      .fg-label-text {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+      .fg-subtitle {
+        font-size: 11px;
+        color: var(--muted);
+        text-align: center;
+        max-width: 180px;
+        line-height: 1.5;
+      }
+      .fg-bands {
+        display: flex;
+        gap: 0;
+        width: 100%;
+        margin-top: 16px;
+        border-radius: 6px;
+        overflow: hidden;
+        height: 6px;
+      }
+      .fg-band {
+        flex: 1;
+        height: 6px;
+      }
+
+      /* Trending tokens */
+      .trending-card {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 28px;
+      }
+      .trending-card h3 {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 18px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .trending-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .trend-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        background: var(--bg3);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        transition: all 0.18s;
+        cursor: default;
+      }
+      .trend-item:hover {
+        border-color: rgba(150, 90, 220, 0.3);
+        background: rgba(150, 90, 220, 0.04);
+      }
+      .trend-rank {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--muted);
+        width: 18px;
+        text-align: center;
+        flex-shrink: 0;
+      }
+      .trend-thumb {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+        background: var(--bg2);
+      }
+      .trend-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .trend-name {
+        font-size: 13px;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .trend-sym {
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+      }
+      .trend-price {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--white);
+        text-align: right;
+        flex-shrink: 0;
+      }
+      .trend-chg {
+        font-size: 11px;
+        font-weight: 600;
+        text-align: right;
+        flex-shrink: 0;
+        min-width: 52px;
+      }
+
+      /* Market pulse row */
+      .pulse-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1px;
+        background: var(--border);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        overflow: hidden;
+        margin-bottom: 32px;
+      }
+      .pulse-item {
+        background: var(--bg2);
+        padding: 24px;
+        text-align: center;
+      }
+      .pulse-val {
+        font-size: clamp(20px, 2.5vw, 32px);
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 6px;
+      }
+      .pulse-lbl {
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      @media (max-width: 700px) {
+        header {
+          padding: 12px 18px;
+        }
+        .htab span {
+          display: none;
+        }
+        .compare-panel,
+        .heatmap-panel,
+        .sources-section,
+        .signals-panel {
+          padding: 40px 20px;
+        }
+        .stats-row {
+          grid-template-columns: repeat(2, 1fr);
+          margin: 0 16px 40px;
+        }
+        .agents-section {
+          padding: 50px 20px;
+        }
+        footer {
+          padding: 24px 20px;
+        }
+        .pulse-row {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      /* SCROLL REVEAL */
+      .reveal {
+        opacity: 0;
+        transform: translateY(28px);
+        transition:
+          opacity 0.55s ease,
+          transform 0.55s ease;
+      }
+      .reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .reveal-delay-1 {
+        transition-delay: 0.08s;
+      }
+      .reveal-delay-2 {
+        transition-delay: 0.16s;
+      }
+      .reveal-delay-3 {
+        transition-delay: 0.24s;
+      }
+      .reveal-delay-4 {
+        transition-delay: 0.32s;
+      }
+      .reveal-delay-5 {
+        transition-delay: 0.4s;
+      }
+      .reveal-delay-6 {
+        transition-delay: 0.48s;
+      }
+
+      /* NAV INDICATOR */
+      .header-tabs {
+        position: relative;
+      }
+      .nav-indicator {
+        position: absolute;
+        bottom: -1px;
+        height: 2px;
+        background: linear-gradient(90deg, var(--flesh), var(--core));
+        border-radius: 2px;
+        transition:
+          left 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+          width 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+        pointer-events: none;
+      }
+
+      /* MOBILE NAV */
+      .ham-btn {
+        display: none;
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 6px 9px;
+        cursor: pointer;
+        color: var(--muted);
+      }
+      .ham-btn svg {
+        width: 18px;
+        height: 18px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+      }
+      .mobile-nav {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(13, 8, 24, 0.96);
+        backdrop-filter: blur(20px);
+        z-index: 999;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+      }
+      .mobile-nav.open {
+        display: flex;
+      }
+      .mobile-nav .htab {
+        font-size: 22px;
+        padding: 14px 32px;
+        border-radius: 14px;
+      }
+      .mobile-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 12px;
+        cursor: pointer;
+        color: var(--muted);
+        font-size: 20px;
+      }
+      @media (max-width: 600px) {
+        .header-tabs {
+          display: none;
+        }
+        .ham-btn {
+          display: flex;
+        }
+        .nav-indicator {
+          display: none;
+        }
+      }
+
+      /* HERO COUNTER ANIMATION */
+      .stat-value {
+        transition: all 0.3s;
+      }
+
+      /* HTAB POLISH */
+      .htab {
+        position: relative;
+        transition: all 0.22s;
+      }
+      .htab.active {
+        color: var(--white) !important;
+      }
+
+      /* SEARCH focus ring – purple */
+      .search-box:focus {
+        border-color: rgba(150, 90, 220, 0.55);
+        box-shadow:
+          0 0 0 4px rgba(150, 90, 220, 0.09),
+          0 8px 40px rgba(0, 0, 0, 0.4);
+      }
+
+      /* ── PERPS PANEL ── */
+      .perps-panel {
+        padding: 60px 40px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .perps-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1px;
+        background: var(--border);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        overflow: hidden;
+        margin-bottom: 32px;
+      }
+      .pstat {
+        background: var(--bg2);
+        padding: 28px;
+        text-align: center;
+      }
+      .pstat-val {
+        font-size: clamp(22px, 3vw, 38px);
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--core), var(--flesh));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+        margin-bottom: 6px;
+      }
+      .pstat-lbl {
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .pstat-chg {
+        font-size: 12px;
+        font-weight: 600;
+        margin-top: 4px;
+      }
+
+      .perps-table-wrap {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        overflow: hidden;
+        margin-bottom: 24px;
+      }
+      .perps-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      .perps-table th {
+        background: var(--bg3);
+        padding: 11px 16px;
+        text-align: left;
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        border-bottom: 1px solid var(--border);
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+      }
+      .perps-table th:hover {
+        color: var(--white);
+      }
+      .perps-table th.sort-asc::after {
+        content: " ↑";
+      }
+      .perps-table th.sort-desc::after {
+        content: " ↓";
+      }
+      .perps-table td {
+        padding: 13px 16px;
+        border-bottom: 1px solid rgba(150, 90, 220, 0.06);
+        vertical-align: middle;
+      }
+      .perps-table tr:last-child td {
+        border-bottom: none;
+      }
+      .perps-table tr:hover td {
+        background: rgba(150, 90, 220, 0.04);
+      }
+      .perp-rank {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 600;
+        width: 32px;
+      }
+      .perp-name-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .perp-logo {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        object-fit: cover;
+        background: var(--bg3);
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--muted);
+      }
+      .perp-dname {
+        font-weight: 700;
+        font-size: 13px;
+        color: var(--white);
+      }
+      .perp-chain {
+        font-size: 10px;
+        color: var(--muted);
+        margin-top: 1px;
+      }
+      .perp-vol {
+        font-weight: 700;
+        color: var(--white);
+      }
+      .perp-oi {
+        color: var(--muted);
+      }
+      .perp-dom {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--flesh);
+      }
+      .perp-fee-mk {
+        color: var(--flesh);
+        font-weight: 600;
+      }
+      .perp-fee-mk.neg {
+        color: var(--core);
+      }
+      .perp-fee-tk {
+        color: var(--muted);
+      }
+      .perp-token {
+        font-size: 11px;
+        font-weight: 700;
+        background: rgba(200, 140, 255, 0.08);
+        border: 1px solid rgba(200, 140, 255, 0.15);
+        border-radius: 5px;
+        padding: 2px 7px;
+        color: var(--white);
+        white-space: nowrap;
+      }
+      .perp-token.none {
+        background: transparent;
+        border: none;
+        color: var(--muted);
+      }
+      .perp-bar-wrap {
+        width: 80px;
+        height: 5px;
+        background: rgba(150, 90, 220, 0.12);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .perp-bar {
+        height: 5px;
+        background: linear-gradient(90deg, var(--flesh), var(--core));
+        border-radius: 3px;
+        transition: width 0.6s ease;
+      }
+
+      .perps-filters {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      .pfilt-btn {
+        padding: 6px 14px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        border: 1px solid var(--border);
+        cursor: pointer;
+        background: transparent;
+        color: var(--muted);
+        transition: all 0.15s;
+      }
+      .pfilt-btn.active {
+        background: rgba(150, 90, 220, 0.15);
+        border-color: rgba(150, 90, 220, 0.35);
+        color: var(--flesh);
+      }
+
+      /* ── DEXSCREENER SECTION ── */
+      .dex-trending-card {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 28px;
+        margin-bottom: 24px;
+      }
+      .dex-trending-card h3 {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 18px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .dex-pair-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .dex-pair-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        background: var(--bg3);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        transition: all 0.18s;
+        cursor: default;
+      }
+      .dex-pair-item:hover {
+        border-color: rgba(150, 90, 220, 0.3);
+        background: rgba(150, 90, 220, 0.05);
+      }
+      .dex-chain-badge {
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: rgba(150, 90, 220, 0.15);
+        color: var(--flesh);
+        flex-shrink: 0;
+        text-transform: uppercase;
+      }
+      .dex-sym {
+        font-size: 13px;
+        font-weight: 700;
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .dex-price {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--white);
+        flex-shrink: 0;
+      }
+      .dex-chg {
+        font-size: 11px;
+        font-weight: 700;
+        flex-shrink: 0;
+        min-width: 52px;
+        text-align: right;
+      }
+      .dex-vol {
+        font-size: 10px;
+        color: var(--muted);
+        flex-shrink: 0;
+      }
+      .dex-liq {
+        font-size: 10px;
+        color: var(--muted);
+        flex-shrink: 0;
+      }
+
+      @media (max-width: 700px) {
+        .perps-panel {
+          padding: 40px 20px;
+        }
+        .perps-stats {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .perps-table th:nth-child(n + 6),
+        .perps-table td:nth-child(n + 6) {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- LIVE TICKER (populated via JS) -->
+    <div class="ticker">
+      <div class="ticker-track" id="tickerTrack">
+        <div class="ticker-item">
+          <span class="ticker-dot"></span><span class="ticker-sym">BTC</span
+          ><span class="ticker-price">Loading…</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- HEADER + NAV -->
+    <header>
+      <a class="logo-area" href="#">
+        <div
+          id="logo-placeholder"
+          style="
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #7b2fbe 60%, #c96a35 100%);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 20px;
+            color: #fff;
+            letter-spacing: -1px;
+          "
+        >
+          K
+        </div>
+        <div>
+          <div class="logo-name">KWIZERANA</div>
+          <div class="logo-sub">DeFi Intelligence</div>
+        </div>
+      </a>
+      <div class="header-tabs">
+        <button class="htab active" onclick="showPanel('intel', this)">
+          <span>🧠 </span>Intelligence
+        </button>
+        <button class="htab" onclick="showPanel('compare', this)">
+          <span>📊 </span>Compare
+        </button>
+        <button class="htab" onclick="showPanel('heatmap', this)">
+          <span>🔥 </span>Heatmap
+        </button>
+        <button class="htab" onclick="showPanel('signals', this)">
+          <span>⚡ </span>Signals
+        </button>
+        <button class="htab" onclick="showPanel('perps', this)">
+          <span>📋 </span>Perp DEXes
+        </button>
+      </div>
+      <div class="v-badge">v2.0</div>
+      <button class="ham-btn" onclick="toggleMobileNav()" aria-label="Menu">
+        <svg viewBox="0 0 24 24">
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+    </header>
+
+    <!-- MOBILE NAV DRAWER -->
+    <div class="mobile-nav" id="mobileNav">
+      <button class="mobile-close" onclick="toggleMobileNav()">✕</button>
+      <button class="htab" onclick="showPanelMobile('intel')">
+        🧠 Intelligence
+      </button>
+      <button class="htab" onclick="showPanelMobile('compare')">
+        📊 Compare
+      </button>
+      <button class="htab" onclick="showPanelMobile('heatmap')">
+        🔥 Heatmap
+      </button>
+      <button class="htab" onclick="showPanelMobile('signals')">
+        ⚡ Signals
+      </button>
+      <button class="htab" onclick="showPanelMobile('perps')">
+        📋 Perp DEXes
+      </button>
+    </div>
+
+    <!-- ══ PANEL 1: INTELLIGENCE ══════════════════════════════════════════════ -->
+    <div class="panel active" id="panel-intel">
+      <div class="hero">
+        <div class="hero-eyebrow">
+          <span class="rdot"></span>6 Agents · DeFiLlama · DexScreener ·
+          CoinGecko · Perp DEXes
+        </div>
+        <h1 class="hero-title">
+          All DeFi tasks in<br /><span class="hl">one ask</span>
+        </h1>
+        <p class="hero-sub">
+          Ask anything — market signals, on-chain TVL, Messari research, yield
+          farms, stablecoin pegs, grid bot status, or news.
+        </p>
+
+        <div class="search-wrap">
+          <input
+            class="search-box"
+            id="mainSearch"
+            type="text"
+            placeholder="Ask KWIZERANA Intelligence anything…"
+            autocomplete="off"
+          />
+          <button class="search-btn" onclick="handleSearch()">
+            <svg viewBox="0 0 24 24">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="chips">
+          <span class="chip" onclick="fc(this)"
+            >📋 Top perpetual DEXes by volume &amp; OI</span
+          >
+          <span class="chip" onclick="fc(this)"
+            >🦅 DexScreener new &amp; hot token pairs</span
+          >
+          <span class="chip" onclick="fc(this)"
+            >🔬 Messari deep metrics for AVAX</span
+          >
+          <span class="chip" onclick="fc(this)"
+            >💧 Top AVAX yield farms right now</span
+          >
+          <span class="chip" onclick="fc(this)"
+            >🔐 Stablecoin peg health check</span
+          >
+          <span class="chip" onclick="fc(this)"
+            >🛡️ DeFi hacks & security alerts</span
+          >
+          <span class="chip" onclick="fc(this)"
+            >📈 CoinGecko trending narratives</span
+          >
+          <span class="chip" onclick="fc(this)"
+            >😰 Fear & Greed + NVT signal</span
+          >
+          <span class="chip" onclick="fc(this)"
+            >⚡ Short signal XAU/USD now</span
+          >
+        </div>
+
+        <div class="response-area" id="responseArea">
+          <div class="response-hdr">
+            <span class="rdot"></span>KWIZERANA Intelligence
+          </div>
+          <div id="responseText">
+            <div class="typing-dots">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chain-badges">
+          <span>Avalanche</span><span class="cdot"></span><span>DeFiLlama</span
+          ><span class="cdot"></span> <span>Pharaoh Exchange · P33</span
+          ><span class="cdot"></span><span>CoinGecko</span
+          ><span class="cdot"></span> <span>Moats</span
+          ><span class="cdot"></span><span>AERO · BTC · XAU</span>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row">
+        <div class="stat-item reveal reveal-delay-1">
+          <div class="stat-value" data-target="6">6</div>
+          <div class="stat-label">AI Agents</div>
+        </div>
+        <div class="stat-item reveal reveal-delay-2">
+          <div class="stat-value">11+</div>
+          <div class="stat-label">Data Sources</div>
+        </div>
+        <div class="stat-item reveal reveal-delay-3">
+          <div class="stat-value">24/7</div>
+          <div class="stat-label">Coverage</div>
+        </div>
+        <div class="stat-item reveal reveal-delay-4">
+          <div class="stat-value" id="tvlStat">—</div>
+          <div class="stat-label">Total DeFi TVL</div>
+        </div>
+      </div>
+
+      <!-- AGENTS -->
+      <div class="agents-section">
+        <div class="agents-inner">
+          <p class="sec-label reveal">The Intelligence Layer</p>
+          <h2 class="sec-title reveal">Six agents. One hive mind.</h2>
+          <div class="agents-grid">
+            <div class="agent-card reveal reveal-delay-1">
+              <div class="agent-icon">📰</div>
+              <div class="agent-name">News Scanner</div>
+              <div class="agent-desc">
+                CryptoPanic headlines, Fear & Greed index, BTC dominance, and
+                Messari institutional research — the sentiment layer.
+              </div>
+              <div class="agent-tags">
+                <span class="atag">CryptoPanic</span
+                ><span class="atag">Messari</span
+                ><span class="atag">Fear &amp; Greed</span>
+              </div>
+            </div>
+            <div
+              class="agent-card reveal reveal-delay-2"
+              style="border-color: rgba(150, 90, 220, 0.3)"
+            >
+              <div class="agent-icon">🔗</div>
+              <div class="agent-name">
+                On-Chain Intel
+                <span
+                  style="
+                    font-size: 10px;
+                    background: linear-gradient(
+                      135deg,
+                      var(--flesh),
+                      var(--gold)
+                    );
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    font-weight: 700;
+                  "
+                  >NEW v3</span
+                >
+              </div>
+              <div class="agent-desc">
+                DeFiLlama TVL across chains, yield farms, stablecoin peg health,
+                hack tracker, and Messari NVT ratios.
+              </div>
+              <div class="agent-tags">
+                <span class="atag">DeFiLlama</span
+                ><span class="atag">Messari</span
+                ><span class="atag">TVL · NVT</span>
+              </div>
+            </div>
+            <div class="agent-card reveal reveal-delay-2">
+              <div class="agent-icon">📊</div>
+              <div class="agent-name">Market Data</div>
+              <div class="agent-desc">
+                Live prices, trending tokens, full token detail from CoinGecko.
+                Tracks PHAR, P33, AERO, HEFE, JOE, QI and all AVAX ecosystem
+                tokens.
+              </div>
+              <div class="agent-tags">
+                <span class="atag">CoinGecko</span
+                ><span class="atag">GeckoTerminal</span
+                ><span class="atag">AVAX</span>
+              </div>
+            </div>
+            <div class="agent-card reveal reveal-delay-3">
+              <div class="agent-icon">🏰</div>
+              <div class="agent-name">Moats Intel</div>
+              <div class="agent-desc">
+                Moats Protocol, Pharaoh Exchange, Pharou DEX — reward pools,
+                PHAR/P33 emissions, fort weight rankings, and on-chain event
+                feed.
+              </div>
+              <div class="agent-tags">
+                <span class="atag">Moats.app</span><span class="atag">PHAR</span
+                ><span class="atag">Pharou</span>
+              </div>
+            </div>
+            <div class="agent-card reveal reveal-delay-4">
+              <div class="agent-icon">🔮</div>
+              <div class="agent-name">Prediction</div>
+              <div class="agent-desc">
+                Synthesises all signals → KWI Scores (0–100), buy/hold/sell per
+                token, confidence levels, and risk alerts.
+              </div>
+              <div class="agent-tags">
+                <span class="atag">KWI Score</span
+                ><span class="atag">Predictions</span
+                ><span class="atag">Synthesis</span>
+              </div>
+            </div>
+            <div class="agent-card reveal reveal-delay-5">
+              <div class="agent-icon">⚡</div>
+              <div class="agent-name">Grid Strategy</div>
+              <div class="agent-desc">
+                GridKeeper + Coinbase bot status, ATR-based grid optimisation,
+                and market condition scoring for PHAR/P33/AERO/WAVAX.
+              </div>
+              <div class="agent-tags">
+                <span class="atag">GridKeeper</span
+                ><span class="atag">PHAR/P33</span
+                ><span class="atag">AERO</span>
+              </div>
+            </div>
+            <div
+              class="agent-card reveal reveal-delay-6"
+              style="border-color: rgba(150, 90, 220, 0.3)"
+            >
+              <div class="agent-icon">🦅</div>
+              <div class="agent-name">
+                DexScreener Intel
+                <span
+                  style="
+                    font-size: 10px;
+                    background: linear-gradient(
+                      135deg,
+                      var(--flesh),
+                      var(--core)
+                    );
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    font-weight: 700;
+                  "
+                  >NEW</span
+                >
+              </div>
+              <div class="agent-desc">
+                Trending &amp; boosted token pairs across 60+ chains. New token
+                discovery, on-chain pair data, live liquidity and volume in real
+                time.
+              </div>
+              <div class="agent-tags">
+                <span class="atag">DexScreener</span
+                ><span class="atag">New Pairs</span
+                ><span class="atag">60+ Chains</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DATA SOURCES -->
+      <div class="sources-section">
+        <p class="sec-label">Data Sources</p>
+        <h2 class="sec-title" style="margin-bottom: 32px">
+          Every chain. Every signal.
+        </h2>
+        <div class="sources-grid">
+          <div class="src-card">
+            <div class="src-logo" style="background: rgba(232, 65, 66, 0.13)">
+              🔴
+            </div>
+            <div>
+              <div class="src-name">Avalanche</div>
+              <div class="src-type">C-Chain · EVM</div>
+            </div>
+          </div>
+          <div class="src-card" style="border-color: rgba(150, 90, 220, 0.3)">
+            <div class="src-logo" style="background: rgba(0, 200, 150, 0.12)">
+              🦙
+            </div>
+            <div>
+              <div class="src-name">DeFiLlama</div>
+              <div class="src-type">TVL · Yields · Hacks</div>
+            </div>
+          </div>
+          <div class="src-card" style="border-color: rgba(150, 90, 220, 0.3)">
+            <div class="src-logo" style="background: rgba(120, 80, 200, 0.12)">
+              🔬
+            </div>
+            <div>
+              <div class="src-name">Messari</div>
+              <div class="src-type">Metrics · NVT · Research</div>
+            </div>
+          </div>
+          <div class="src-card">
+            <div class="src-logo" style="background: rgba(150, 90, 220, 0.12)">
+              🦎
+            </div>
+            <div>
+              <div class="src-name">CoinGecko</div>
+              <div class="src-type">Market Data · Trending</div>
+            </div>
+          </div>
+          <div class="src-card">
+            <div class="src-logo" style="background: rgba(150, 90, 220, 0.12)">
+              🏰
+            </div>
+            <div>
+              <div class="src-name">Moats.app</div>
+              <div class="src-type">Protocol Data</div>
+            </div>
+          </div>
+          <div class="src-card">
+            <div class="src-logo" style="background: rgba(255, 100, 50, 0.12)">
+              📡
+            </div>
+            <div>
+              <div class="src-name">CryptoPanic</div>
+              <div class="src-type">News Feed</div>
+            </div>
+          </div>
+          <div class="src-card">
+            <div class="src-logo" style="background: rgba(240, 250, 64, 0.1)">
+              😰
+            </div>
+            <div>
+              <div class="src-name">Fear & Greed</div>
+              <div class="src-type">Sentiment Index</div>
+            </div>
+          </div>
+          <div class="src-card">
+            <div class="src-logo" style="background: rgba(0, 82, 255, 0.12)">
+              🔵
+            </div>
+            <div>
+              <div class="src-name">Base</div>
+              <div class="src-type">Coinbase L2</div>
+            </div>
+          </div>
+          <div class="src-card">
+            <div class="src-logo" style="background: rgba(247, 147, 26, 0.12)">
+              ₿
+            </div>
+            <div>
+              <div class="src-name">Bitcoin</div>
+              <div class="src-type">BTC/USD</div>
+            </div>
+          </div>
+          <div class="src-card">
+            <div class="src-logo" style="background: rgba(240, 180, 41, 0.12)">
+              🥇
+            </div>
+            <div>
+              <div class="src-name">Gold</div>
+              <div class="src-type">XAU/USD</div>
+            </div>
+          </div>
+          <div class="src-card">
+            <div class="src-logo" style="background: rgba(150, 90, 220, 0.1)">
+              📈
+            </div>
+            <div>
+              <div class="src-name">GeckoTerminal</div>
+              <div class="src-type">On-chain Pairs</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PANEL 2: COMPARE ══════════════════════════════════════════════════ -->
+    <div class="panel" id="panel-compare">
+      <div class="compare-panel">
+        <p class="sec-label">Asset Comparison Engine</p>
+        <h2 class="sec-title">Compare any 2–6 assets<br />side by side</h2>
+        <p class="sec-desc">
+          Live data from CoinGecko. Compare price performance, market cap,
+          volume, and 7-day sparklines.
+        </p>
+
+        <div class="compare-controls">
+          <div class="ctrl-row">
+            <div class="ctrl-group" style="flex: 1">
+              <span class="ctrl-label"
+                >Assets (comma separated — names or symbols)</span
+              >
+              <input
+                class="ctrl-input"
+                id="assetInput"
+                placeholder="e.g. bitcoin, ethereum, avalanche, solana, chainlink"
+                value="bitcoin, ethereum, avalanche-2, solana"
+              />
+            </div>
+            <div class="ctrl-group">
+              <span class="ctrl-label">Metric</span>
+              <select class="ctrl-sel" id="metricSel">
+                <option value="24h">24h % Change</option>
+                <option value="7d">7d % Change</option>
+                <option value="30d">30d % Change</option>
+                <option value="mcap">Market Cap</option>
+                <option value="vol">24h Volume</option>
+              </select>
+            </div>
+            <button class="compare-btn" id="compareBtn" onclick="runCompare()">
+              Compare →
+            </button>
+          </div>
+
+          <div>
+            <span class="ctrl-label" style="display: block; margin-bottom: 8px"
+              >Quick presets</span
+            >
+            <div class="preset-row">
+              <span
+                class="preset-chip"
+                onclick="setPreset('bitcoin,ethereum,avalanche-2,solana')"
+                >BTC vs ETH vs AVAX vs SOL</span
+              >
+              <span
+                class="preset-chip"
+                onclick="
+                  setPreset(
+                    'bitcoin,ethereum,avalanche-2,chainlink,uniswap,aave',
+                  )
+                "
+                >DeFi Blue Chips</span
+              >
+              <span
+                class="preset-chip"
+                onclick="setPreset('avalanche-2,near,fantom,cosmos,polkadot')"
+                >Layer 1 Battle</span
+              >
+              <span
+                class="preset-chip"
+                onclick="
+                  setPreset(
+                    'pharaoh-exchange,aerodrome-finance,uniswap,traderjoe,curve-dao-token',
+                  )
+                "
+                >DEX Battle</span
+              >
+              <span
+                class="preset-chip"
+                onclick="
+                  setPreset(
+                    'uniswap,aave,chainlink,maker,curve-dao-token,compound-governance-token',
+                  )
+                "
+                >DeFi Protocols</span
+              >
+              <span
+                class="preset-chip"
+                onclick="
+                  setPreset(
+                    'bitcoin,ethereum,solana,binancecoin,ripple,cardano',
+                  )
+                "
+                >Top 6 by MCap</span
+              >
+              <span
+                class="preset-chip"
+                onclick="
+                  setPreset('avalanche-2,arbitrum,optimism,matic-network,base')
+                "
+                >L2 vs AVAX</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <div id="compareResults" style="display: none">
+          <div class="chart-type-row">
+            <button
+              class="ctype-btn active"
+              onclick="switchChartType('bar', this)"
+            >
+              Bar Chart
+            </button>
+            <button class="ctype-btn" onclick="switchChartType('radar', this)">
+              Radar
+            </button>
+            <button
+              class="ctype-btn"
+              onclick="switchChartType('sparkline', this)"
+            >
+              7d Sparklines
+            </button>
+          </div>
+          <div class="compare-grid" id="chartsArea"></div>
+          <div class="chart-card" style="margin-bottom: 24px">
+            <h3>Full Comparison Table</h3>
+            <div style="overflow-x: auto">
+              <table class="compare-table" id="compareTable">
+                <thead></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="last-update" id="lastUpdate"></div>
+        </div>
+        <div id="compareLoading" style="display: none" class="loading-state">
+          <span class="loading-spin">🔄</span>Fetching live data from CoinGecko…
+        </div>
+        <div id="compareError" style="display: none" class="error-state"></div>
+      </div>
+    </div>
+
+    <!-- ══ PANEL 3: HEATMAP ══════════════════════════════════════════════════ -->
+    <div class="panel" id="panel-heatmap">
+      <div class="heatmap-panel">
+        <p class="sec-label">Market Heatmap</p>
+        <h2 class="sec-title">Live DeFi performance map</h2>
+        <p class="sec-desc">
+          Top tokens sized by market cap, coloured by 24h performance. Live from
+          CoinGecko.
+        </p>
+
+        <div class="heatmap-controls">
+          <button
+            class="hmap-filter-btn active"
+            onclick="loadHeatmap('decentralized-finance-defi', this)"
+          >
+            DeFi Tokens
+          </button>
+          <button
+            class="hmap-filter-btn"
+            onclick="loadHeatmap('layer-1', this)"
+          >
+            Layer 1
+          </button>
+          <button
+            class="hmap-filter-btn"
+            onclick="loadHeatmap('layer-2', this)"
+          >
+            Layer 2
+          </button>
+          <button
+            class="hmap-filter-btn"
+            onclick="loadHeatmap('avalanche-ecosystem', this)"
+          >
+            AVAX Ecosystem
+          </button>
+          <button class="refresh-btn" onclick="refreshHeatmap()">
+            🔄 Refresh
+          </button>
+        </div>
+
+        <div class="heatmap-legend">
+          <div class="leg-item">
+            <div class="leg-dot" style="background: #5a1010"></div>
+            &lt; −5%
+          </div>
+          <div class="leg-item">
+            <div class="leg-dot" style="background: #7a2020"></div>
+            −5% to −1%
+          </div>
+          <div class="leg-item">
+            <div class="leg-dot" style="background: #241840"></div>
+            ≈ Flat
+          </div>
+          <div class="leg-item">
+            <div class="leg-dot" style="background: #1a5522"></div>
+            +1% to +5%
+          </div>
+          <div class="leg-item">
+            <div class="leg-dot" style="background: #2eaa3a"></div>
+            &gt; +5%
+          </div>
+        </div>
+
+        <div id="heatmapGrid" class="heatmap-grid">
+          <div class="loading-state" style="grid-column: 1/-1">
+            <span class="loading-spin">🔄</span>Loading heatmap…
+          </div>
+        </div>
+        <div class="last-update" id="heatmapUpdate"></div>
+      </div>
+    </div>
+
+    <!-- ══ PANEL 4: SIGNALS ══════════════════════════════════════════════════ -->
+    <div class="panel" id="panel-signals">
+      <div class="signals-panel">
+        <p class="sec-label">Market Signals</p>
+        <h2 class="sec-title">Live sentiment &amp; trending</h2>
+        <p class="sec-desc">
+          Fear &amp; Greed index, CoinGecko trending tokens, and key market
+          pulse metrics — all live.
+        </p>
+
+        <!-- pulse row -->
+        <div class="pulse-row" id="pulseRow">
+          <div class="pulse-item">
+            <div
+              class="pulse-val"
+              id="pulseBTC"
+              style="
+                background: linear-gradient(135deg, var(--gold), var(--flesh));
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+              "
+            >
+              —
+            </div>
+            <div class="pulse-lbl">BTC Price</div>
+          </div>
+          <div class="pulse-item">
+            <div
+              class="pulse-val"
+              id="pulseETH"
+              style="
+                background: linear-gradient(135deg, var(--core), var(--flesh));
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+              "
+            >
+              —
+            </div>
+            <div class="pulse-lbl">ETH Price</div>
+          </div>
+          <div class="pulse-item">
+            <div
+              class="pulse-val"
+              id="pulseAVAX"
+              style="
+                background: linear-gradient(
+                  135deg,
+                  var(--flesh),
+                  var(--flesh2)
+                );
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+              "
+            >
+              —
+            </div>
+            <div class="pulse-lbl">AVAX Price</div>
+          </div>
+          <div class="pulse-item">
+            <div
+              class="pulse-val"
+              id="pulseDom"
+              style="
+                background: linear-gradient(135deg, var(--gold), var(--white));
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+              "
+            >
+              —
+            </div>
+            <div class="pulse-lbl">BTC Dominance</div>
+          </div>
+        </div>
+
+        <div class="signals-grid">
+          <!-- Fear & Greed -->
+          <div class="fg-card" id="fgCard">
+            <div
+              style="
+                font-size: 13px;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--muted);
+                margin-bottom: 20px;
+                width: 100%;
+                text-align: left;
+              "
+            >
+              😰 Fear &amp; Greed Index
+            </div>
+            <div class="fg-arc-wrap">
+              <svg viewBox="0 0 220 120">
+                <!-- background arc -->
+                <path
+                  d="M 20 110 A 90 90 0 0 1 200 110"
+                  fill="none"
+                  stroke="rgba(150,90,220,.12)"
+                  stroke-width="16"
+                  stroke-linecap="round"
+                />
+                <!-- coloured arc (filled by JS) -->
+                <path
+                  id="fgArc"
+                  d="M 20 110 A 90 90 0 0 1 200 110"
+                  fill="none"
+                  stroke="var(--muted)"
+                  stroke-width="16"
+                  stroke-linecap="round"
+                  stroke-dasharray="0 283"
+                />
+              </svg>
+              <div class="fg-val" id="fgVal">—</div>
+            </div>
+            <div class="fg-label-text" id="fgLabel" style="color: var(--muted)">
+              Loading…
+            </div>
+            <div class="fg-subtitle" id="fgSubtitle">
+              Fetching from Alternative.me…
+            </div>
+            <div class="fg-bands">
+              <div class="fg-band" style="background: #c0392b"></div>
+              <div class="fg-band" style="background: #e67e22"></div>
+              <div
+                class="fg-band"
+                style="background: #f0fa40; opacity: 0.6"
+              ></div>
+              <div class="fg-band" style="background: #6ab814"></div>
+              <div class="fg-band" style="background: #27ae60"></div>
+            </div>
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                width: 100%;
+                font-size: 10px;
+                color: var(--muted);
+                margin-top: 6px;
+                padding: 0 2px;
+              "
+            >
+              <span>Extreme Fear</span><span>Fear</span><span>Neutral</span
+              ><span>Greed</span><span>Extreme Greed</span>
+            </div>
+          </div>
+
+          <!-- Trending tokens -->
+          <div class="trending-card">
+            <h3>
+              🔥 Trending on CoinGecko
+              <span
+                style="
+                  margin-left: auto;
+                  font-size: 10px;
+                  font-weight: 400;
+                  color: var(--muted);
+                  text-transform: none;
+                "
+                id="trendTime"
+              ></span>
+            </h3>
+            <div class="trending-list" id="trendingList">
+              <div class="loading-state" style="padding: 30px 0">
+                <span class="loading-spin">🔄</span>Fetching trending tokens…
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top gainers / losers -->
+        <div
+          style="
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 24px;
+          "
+        >
+          <h3
+            style="
+              font-size: 13px;
+              font-weight: 700;
+              letter-spacing: 0.06em;
+              text-transform: uppercase;
+              color: var(--muted);
+              margin-bottom: 18px;
+            "
+          >
+            📈 Top Gainers &amp; Losers — 24h (Top 250)
+          </h3>
+          <div
+            style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px"
+            id="glGrid"
+          >
+            <div class="loading-state" style="grid-column: 1/-1; padding: 30px">
+              <span class="loading-spin">🔄</span>Loading…
+            </div>
+          </div>
+        </div>
+
+        <!-- DexScreener Hot Pairs -->
+        <div class="dex-trending-card">
+          <h3>
+            🦅 Hot on DexScreener
+            <span
+              id="dexsTime"
+              style="
+                margin-left: auto;
+                font-size: 10px;
+                font-weight: 400;
+                color: var(--muted);
+                text-transform: none;
+              "
+            ></span>
+          </h3>
+          <div class="dex-pair-list" id="dexsList">
+            <div class="loading-state" style="padding: 24px 0">
+              <span class="loading-spin">🔄</span> Fetching from DexScreener…
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Arbitrage Scanner ────────────────────────────────────────────────── -->
+        <div style="margin-top: 32px">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 12px;
+              flex-wrap: wrap;
+              gap: 8px;
+            "
+          >
+            <div>
+              <h3 style="margin: 0; font-size: 15px; color: var(--white)">
+                ⚡ Price Arbitrage Scanner
+              </h3>
+              <p style="margin: 4px 0 0; font-size: 12px; color: var(--muted)">
+                Cross-DEX price spreads + perp basis (premium vs spot) — via
+                CoinGecko derivatives.
+                <strong style="color: #4ade80">Long</strong> cheaper venue ·
+                <strong style="color: #f87171">Short</strong> pricier venue ·
+                Delta-neutral, no directional risk.
+              </p>
+            </div>
+            <button
+              onclick="loadArbitrage()"
+              style="
+                background: var(--bg3);
+                border: 1px solid var(--border);
+                color: var(--muted);
+                border-radius: 8px;
+                padding: 6px 14px;
+                font-size: 12px;
+                cursor: pointer;
+              "
+            >
+              🔄 Refresh
+            </button>
+          </div>
+          <div
+            style="
+              overflow-x: auto;
+              border-radius: 12px;
+              border: 1px solid var(--border);
+            "
+          >
+            <table
+              style="width: 100%; border-collapse: collapse; font-size: 13px"
+              id="arbTable"
+            >
+              <thead>
+                <tr
+                  style="
+                    border-bottom: 2px solid var(--border);
+                    background: var(--bg2);
+                  "
+                >
+                  <th
+                    style="
+                      text-align: left;
+                      padding: 10px 14px;
+                      font-size: 11px;
+                      color: var(--muted);
+                      text-transform: uppercase;
+                      letter-spacing: 0.06em;
+                      white-space: nowrap;
+                    "
+                  >
+                    Token
+                  </th>
+                  <th
+                    style="
+                      text-align: left;
+                      padding: 10px 14px;
+                      font-size: 11px;
+                      color: var(--muted);
+                      text-transform: uppercase;
+                      letter-spacing: 0.06em;
+                    "
+                  >
+                    Spread %
+                  </th>
+                  <th
+                    style="
+                      text-align: left;
+                      padding: 10px 14px;
+                      font-size: 11px;
+                      color: var(--muted);
+                      text-transform: uppercase;
+                      letter-spacing: 0.06em;
+                    "
+                  >
+                    Hyperliquid Perp
+                  </th>
+                  <th
+                    style="
+                      text-align: left;
+                      padding: 10px 14px;
+                      font-size: 11px;
+                      color: var(--muted);
+                      text-transform: uppercase;
+                      letter-spacing: 0.06em;
+                    "
+                  >
+                    CoinGecko Spot
+                  </th>
+                  <th
+                    style="
+                      text-align: left;
+                      padding: 10px 14px;
+                      font-size: 11px;
+                      color: var(--muted);
+                      text-transform: uppercase;
+                      letter-spacing: 0.06em;
+                    "
+                  >
+                    Trade Idea
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="arbTbody">
+                <tr>
+                  <td
+                    colspan="5"
+                    style="
+                      text-align: center;
+                      padding: 40px;
+                      color: var(--muted);
+                    "
+                  >
+                    Loading…
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p
+            id="arbUpdate"
+            style="font-size: 11px; color: var(--muted); margin-top: 8px"
+          ></p>
+        </div>
+
+        <div class="last-update" id="signalsUpdate"></div>
+      </div>
+    </div>
+
+    <!-- ══ PANEL 5: PERP DEXES ══════════════════════════════════════════════════ -->
+    <div class="panel" id="panel-perps">
+      <div class="perps-panel">
+        <p class="sec-label">Perpetual DEX Intelligence</p>
+        <h2 class="sec-title">Perp DEX Rankings</h2>
+        <p class="sec-desc">
+          Live data from CoinGecko derivatives. Open Interest, 24h Volume
+          (converted to USD via live BTC price), perpetual pair counts and
+          curated fee schedules for every tracked perp exchange.
+        </p>
+
+        <!-- STATS ROW -->
+        <div class="perps-stats" id="perpsStats">
+          <div class="pstat">
+            <div class="pstat-val" id="perpTotalVol">—</div>
+            <div class="pstat-lbl">Total Volume 24H</div>
+            <div
+              class="pstat-chg"
+              id="perpVolChg"
+              style="color: var(--muted)"
+            ></div>
+          </div>
+          <div class="pstat">
+            <div class="pstat-val" id="perpTotalOI">—</div>
+            <div class="pstat-lbl">Open Interest</div>
+            <div
+              class="pstat-chg"
+              id="perpOIChg"
+              style="color: var(--muted)"
+            ></div>
+          </div>
+          <div class="pstat">
+            <div class="pstat-val" id="perpCount">—</div>
+            <div class="pstat-lbl">Tracked DEXes</div>
+            <div class="pstat-chg" style="color: var(--muted)">
+              Live · DeFiLlama
+            </div>
+          </div>
+        </div>
+
+        <!-- FILTERS -->
+        <div class="perps-filters">
+          <button class="pfilt-btn active" onclick="filterPerps('all', this)">
+            All Chains
+          </button>
+          <button class="pfilt-btn" onclick="filterPerps('ethereum', this)">
+            Ethereum
+          </button>
+          <button class="pfilt-btn" onclick="filterPerps('arbitrum', this)">
+            Arbitrum
+          </button>
+          <button class="pfilt-btn" onclick="filterPerps('avalanche', this)">
+            Avalanche
+          </button>
+          <button class="pfilt-btn" onclick="filterPerps('bsc', this)">
+            BSC
+          </button>
+          <button class="pfilt-btn" onclick="filterPerps('solana', this)">
+            Solana
+          </button>
+          <button class="pfilt-btn" onclick="filterPerps('base', this)">
+            Base
+          </button>
+        </div>
+
+        <!-- PERP TABLE -->
+        <div class="perps-table-wrap">
+          <div style="overflow-x: auto">
+            <table class="perps-table" id="perpsTable">
+              <thead>
+                <tr>
+                  <th style="width: 40px">#</th>
+                  <th>Name</th>
+                  <th
+                    onclick="sortPerps('dailyVolume', this)"
+                    style="cursor: pointer"
+                    title="Sort by volume"
+                  >
+                    Volume 24H ↕
+                  </th>
+                  <th
+                    onclick="sortPerps('openInterest', this)"
+                    style="cursor: pointer"
+                    title="Sort by OI"
+                  >
+                    Open Interest ↕
+                  </th>
+                  <th title="Share of total tracked volume">Vol Share</th>
+                  <th>Maker Fee</th>
+                  <th>Taker Fee</th>
+                  <th>Token</th>
+                  <th>Airdrop</th>
+                </tr>
+              </thead>
+              <tbody id="perpsTbody">
+                <tr>
+                  <td
+                    colspan="9"
+                    class="loading-state"
+                    style="text-align: center; padding: 50px"
+                  >
+                    <span class="loading-spin">🔄</span> Loading 46 DEX
+                    protocols…
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="last-update" id="perpsUpdate"></div>
+
+        <!-- INFO CARD -->
+        <div
+          style="
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px 24px;
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.7;
+          "
+        >
+          <strong style="color: var(--white)">📋 About this data</strong> —
+          Volume and Open Interest are sourced live from CoinGecko's
+          derivatives/exchanges API (converted from BTC terms using the live
+          BTC/USD price). Maker/Taker fees are curated from official protocol
+          documentation and may lag after fee changes. For the most detailed
+          perp DEX comparison including funding rates and airdrop tracking,
+          visit
+          <a
+            href="https://perpdexlist.com"
+            target="_blank"
+            style="color: var(--flesh); text-decoration: none"
+            >perpdexlist.com</a
+          >.
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      <div>
+        <div class="ft-brand">KWIZERANA Finance</div>
+        <div class="ft-tag">
+          preservation of wealth · true privacy · organic community · media ·
+          compounding DAO
+        </div>
+      </div>
+      <div class="ft-links">
+        <a
+          href="https://github.com/kwizeranafinance-kind/THE-MOATS-collaboration"
+          target="_blank"
+          >GitHub</a
+        >
+        <a href="#">Discord</a>
+        <a href="#">MOATS</a>
+        <a href="#">Grid Bot</a>
+      </div>
+    </footer>
+
+    <script>
+      // ── PANEL SWITCHER (stub — real logic in window.showPanel below) ──────────────
+      function showPanel(id, btn) {
+        document
+          .querySelectorAll(".panel")
+          .forEach((p) => p.classList.remove("active"));
+        document
+          .querySelectorAll(".htab")
+          .forEach((b) => b.classList.remove("active"));
+        if (!document.getElementById("panel-" + id)) return;
+        document.getElementById("panel-" + id).classList.add("active");
+        if (btn) btn.classList.add("active");
+      }
+
+      // ── LIVE TICKER ───────────────────────────────────────────────────────────────
+      const TICKER_COINS = [
+        "bitcoin",
+        "ethereum",
+        "avalanche-2",
+        "solana",
+        "chainlink",
+        "uniswap",
+      ];
+      async function loadTicker() {
+        try {
+          const d = await cgFetch(
+            `https://api.coingecko.com/api/v3/simple/price?ids=${TICKER_COINS.join(",")}&vs_currencies=usd&include_24hr_change=true`,
+          );
+          const syms = {
+            bitcoin: "BTC",
+            ethereum: "ETH",
+            "avalanche-2": "AVAX",
+            solana: "SOL",
+            chainlink: "LINK",
+            uniswap: "UNI",
+          };
+          const items = TICKER_COINS.map((id) => {
+            const c = d[id] || {};
+            const chg = c.usd_24h_change || 0;
+            return `<div class="ticker-item">
+        <span class="ticker-dot"></span>
+        <span class="ticker-sym">${syms[id] || id}</span>
+        <span class="ticker-price">$${fmtPrice(c.usd)}</span>
+        <span class="ticker-chg ${chg >= 0 ? "up" : "down"}">${chg >= 0 ? "+" : ""}${chg.toFixed(2)}%</span>
+      </div>`;
+          }).join("");
+          const track = document.getElementById("tickerTrack");
+          track.innerHTML = items + items; // duplicate for seamless loop
+
+          // Also update TVL stat
+          fetchTVL();
+        } catch (e) {
+          /* silent */
+        }
+      }
+
+      async function fetchTVL() {
+        try {
+          const d = await cgFetch("https://api.coingecko.com/api/v3/global");
+          const mcap = d?.data?.total_market_cap?.usd;
+          if (mcap)
+            document.getElementById("tvlStat").textContent = "$" + fmtBig(mcap);
+        } catch (e) {}
+      }
+
+      // ── INTELLIGENCE RESPONSES ────────────────────────────────────────────────────
+      const R = {
+        def: "Routing your query to the KWIZERANA intelligence layer… 6 agents are scanning on-chain data, DeFiLlama TVL, Messari metrics, market signals, and news feeds.",
+        tvl: "🦙 **DeFiLlama TVL Intelligence**\n\nAgent: onchain-intel → DeFiLlama API\n\n**Total DeFi TVL:** fetching live…\n7-day change: tracking capital flows\n\n**Avalanche TVL:** monitoring ecosystem\nProtocol breakdown: Aave, TraderJoe, Benqi, Pangolin\n\n→ Use the **Compare** tab to visualise TVL trends vs other chains.",
+        messari:
+          "🔬 **Messari Deep Metrics — AVAX**\n\nAgent: onchain-intel → Messari v2 API\n\n• **NVT Ratio** — network value vs on-chain transaction volume\n• **Real Volume** — filters wash trading from reported volume\n• **Active Addresses (24h)** — genuine user activity signal\n• **Developer Commits (4w)** — GitHub activity = protocol health\n• **Messari Grade** — A through D quality rating\n\n→ Low NVT + high active addresses = strong on-chain fundamentals.\nUse the Compare tab to benchmark AVAX vs ETH and SOL.",
+        yield:
+          "💧 **Top AVAX Yield Farms — DeFiLlama**\n\nAgent: onchain-intel → DeFiLlama yields\n\n**🏛️ Pharaoh Exchange (PHAR — Concentrated Liquidity DEX):**\n• WAVAX/USDC — CL range · Est. APY 25–55%\n• PHAR/WAVAX — High emissions · Est. APY 60–120% (IL: HIGH)\n• USDC/USDT — Stable · Est. APY 8–14%\n\n**🟣 Pharou Protocol (P33 token — on Pharaoh Exchange):**\n• P33/WAVAX — Native emissions · Est. APY 80–150% (IL: HIGH)\n• WAVAX/USDC — Est. APY 20–40%\n\n**🦕 TraderJoe:**\n• AVAX/USDC — APY ~38–45% · Bin strategy\n• AVAX/USDT — APY ~30–40%\n\n**🏦 Aave v3 (AVAX) — Lending:**\n• USDC supply — APY ~7–9% · Zero IL\n• WAVAX supply — APY ~4–6%\n\n**🌊 Benqi — AVAX lending:**\n• WAVAX supply — APY ~5–7% · Low risk\n\n→ Ask about **PHAR**, **P33**, or **Aero** for detailed breakdowns.\n→ IL Risk: token/token = HIGH · Stable pairs = LOW",
+        stablecoin:
+          "🔐 **Stablecoin Peg Health**\n\nAgent: onchain-intel → DeFiLlama stablecoins\n\nTop stablecoins monitored:\n• USDT — largest by market cap, regular monitoring\n• USDC — regulated, US-based reserve\n• DAI — decentralised, over-collateralised\n• FRAX — hybrid algorithmic\n\n→ Any peg deviation >0.5% triggers a risk alert. All stablecoins are monitored 24/7 by the onchain-intel-agent.",
+        hack: "🛡️ **DeFi Security — DeFiLlama Hacks Tracker**\n\nAgent: onchain-intel → DeFiLlama hacks API\n\nRecent incident categories tracked:\n• Bridge exploits (historically highest losses)\n• Flash loan attacks\n• Price oracle manipulation\n• Access control vulnerabilities\n• Rug pulls and exit scams\n\n→ AVAX C-Chain has had fewer major incidents than Ethereum L1. Always verify contracts before depositing.",
+        moats:
+          "🏰 **Moats Protocol — Reward Snapshot**\n\nAgent: moats-intel → moats.app\n\nWatch tokens ranked by fort weight:\n1. HEFE — Fort Weight: 2.84 · Est. weekly: +3.2%\n2. VIT — Fort Weight: 2.11 · Est. weekly: +2.8%\n3. BLAZE — Fort Weight: 1.93 · Est. weekly: +2.4%\n4. BALLN — Fort Weight: 1.67 · Est. weekly: +2.1%\n\nNext reward epoch: check moats.app for live timer",
+        xau: "⚡ **KWIZ SHORT SIGNAL — XAU/USD**\n\nAgent: grid-strategy → KWIZERANA_SCALPER_SHORT.pine criteria\n\nAll 4 conditions must align:\n✓ 1H Trend Gate: Price < EMA50 + EMA200 bearish\n✓ StochRSI: K crossing below D from overbought (>75)\n✓ Volume spike: volume > 1.5× 20-bar MA\n✓ EMA 9 < EMA 21 on entry timeframe\n\nEntry · SL (swing high or ATR-based) · TP1 (50%) · TP2 (50%)\n\n⚠️ Backtest on TradingView before live use.",
+        fear: "😰 **Fear & Greed + NVT Composite**\n\nAgent: news-scanner + onchain-intel\n\nFear & Greed Index (alternative.me): live sentiment\n• <25 = Extreme Fear → buy opportunity signal\n• 25–45 = Fear → cautious accumulation\n• 45–55 = Neutral\n• 55–75 = Greed → reduce exposure\n• >75 = Extreme Greed → high risk, reduce grids\n\nMessari NVT: compares market cap to on-chain tx volume\n• Low NVT (< 50) = undervalued vs on-chain activity\n• High NVT (> 100) = overvalued, possible correction",
+        trending:
+          "📈 **CoinGecko Trending — Retail Narrative**\n\nAgent: market-data → CoinGecko /search/trending\n\nThis shows what retail is searching and buying right now. Trending coins often see 2–5x volume spikes within 24–48h of appearing.\n\n→ Switch to the **Heatmap** tab for a full visual breakdown of DeFi token performance, or use the **Compare** tab to benchmark trending assets vs AVAX.",
+        compare:
+          "📊 **Asset Comparison**\n\nHead to the **Compare** tab ↑ to build a live chart comparing any 2–6 assets across:\n• 24h / 7d / 30d price performance\n• Market cap ranking\n• 24h trading volume\n• 7-day sparkline price history\n\nJust type any coin names or symbols and hit Compare →",
+        bot: "🤖 **Bot Status**\n\nAgent: grid-strategy → reading coinbase_status.json + gridkeeper_status.json\n\n📌 GridKeeper (Bitget) — PHAR/USDT\n📌 Coinbase Bot — BTC-USD\n\nBoth running in PAPER mode. Set TRADING_MODE=LIVE in .env when ready.\nSee the GRID_BOT.html dashboard for live P&L view.",
+        phar: "🏛️ **PHAR — Pharaoh Exchange**\n\nAgent: market-data + onchain-intel → CoinGecko · DeFiLlama\n\n**Protocol:** Pharaoh Exchange is the leading concentrated liquidity DEX on Avalanche C-Chain, inspired by Solidly/veCRV mechanics.\n\n**PHAR Token Utility:**\n• ve(3,3) governance — lock PHAR → vePHAR for emissions voting\n• Bribe marketplace — earn PHAR + partner tokens for directing liquidity\n• Protocol revenue share — vePHAR holders receive swap fee distribution\n\n**Key Pools (live APYs via DeFiLlama):**\n• WAVAX/USDC — Concentrated CL range · Est. APY 25–55%\n• PHAR/WAVAX — High emissions · Est. APY 60–120% (IL risk: HIGH)\n• USDC/USDT — Stable pair · Est. APY 8–14% (low IL)\n• WBTC/WAVAX — BTC exposure · Est. APY 18–35%\n\n**Grid Bot Note:** PHAR/USDT is one of our watched pairs — volatile enough for grid profit but check ATR before sizing.\n\n→ Use Compare tab: type **pharaoh-exchange** for live price data.",
+        p33: "🟣 **P33 — Pharou Protocol Token**\n\nAgent: onchain-intel + market-data → AVAX C-Chain\n\n**Protocol:** P33 is the native governance and reward token of Pharou DEX, a next-generation AMM built on Avalanche.\n\n**P33 Token Utility:**\n• Governance voting on pool incentives and protocol parameters\n• Staking rewards — stake P33 for protocol fee distribution\n• LP incentives — P33 emissions distributed to Pharou liquidity providers\n\n**Pharou DEX Key Pools:**\n• WAVAX/USDC.e — Core pair · emissions active\n• P33/WAVAX — Native pair · highest P33 APY\n• USDC/USDC.e — Stablecoin bridge pool\n\n**Risk note:** P33 is a smaller-cap AVAX ecosystem token — higher volatility, lower liquidity than PHAR. Size positions accordingly.\n\n→ Contract address: verify on snowtrace.io before trading. Use the Heatmap tab → AVAX Ecosystem filter for live performance.",
+        pharou:
+          "🟣 **Pharou & P33 — AVAX Protocol Intelligence**\n\nAgent: onchain-intel + market-data → AVAX C-Chain\n\n**What is Pharou?** Pharou is an Avalanche DeFi protocol and yield ecosystem — it is NOT a centralised exchange. Think of it as an incentive layer and community protocol built on AVAX.\n\n**P33 Token:**\n• P33 is the native governance and reward token of Pharou protocol\n• Utility: staking, governance voting, LP incentive emissions\n• Pairs primarily traded on Pharaoh Exchange on AVAX\n\n**P33 Key Pools (via Pharaoh Exchange):**\n• P33/WAVAX — Native liquidity · highest P33 APY\n• P33/USDC — Stable entry pair\n\n**Risk Note:** P33 is a smaller-cap community token — higher volatility, lower liquidity. Verify contracts on snowtrace.io before trading. DYOR.\n\n→ For live yield data: defillama.com/yields?chain=Avalanche → filter for Pharaoh Exchange.",
+        dexscreener:
+          "🦅 **DexScreener — New & Trending Tokens**\n\nAgent: market-data → DexScreener API\n\n**What DexScreener shows:**\n• Every new token pair created on any DEX, any chain — in real time\n• Price, volume, liquidity, buys/sells per pair\n• Multi-chain: Avalanche, Ethereum, Base, BSC, Solana and 60+ more\n\n**How KWIZERANA uses it:**\n• Hot Pairs feed in the Signals tab (live, no key required)\n• AVAX ecosystem new pair discovery — catch new tokens early\n• Cross-reference with CoinGecko for legitimacy check\n\n**DexScreener quick links:**\n• AVAX pairs: dexscreener.com/avalanche\n• PHAR token: dexscreener.com/search?q=PHAR\n• New pairs: dexscreener.com/new-pairs\n\n→ Switch to the **Signals** tab to see the live DexScreener hot pairs feed.",
+        perps:
+          "📋 **Perpetual DEX Rankings — DeFiLlama + PerpDEXList**\n\nAgent: onchain-intel → DeFiLlama derivatives API · perpdexlist.com\n\n**What are Perp DEXes?** Perpetual DEXes let you trade with leverage using perpetual futures contracts — no expiry date. Think Binance Futures but on-chain, non-custodial.\n\n**Key Metrics Tracked:**\n• **Volume 24H** — daily trading activity = liquidity health\n• **Open Interest (OI)** — total value of open positions = market commitment\n• **Maker Fee** — fee paid/rebate earned by liquidity providers\n• **Taker Fee** — fee paid by market order traders\n\n**Top Perp DEXes (DeFiLlama live data):**\n• Hyperliquid — #1 by volume, $HYPE token, own L1\n• GMX — AVAX + Arbitrum, GLP model, $GMX token\n• Vertex Protocol — Arbitrum focused, $VRTX\n• Drift — Solana-native, $DRIFT\n• Synthetix Perps — Optimism, $SNX collateral\n\n→ Switch to the **Perp DEXes** tab for the full live ranked table.",
+        cmc: "💹 **CoinMarketCap — Market Intelligence**\n\nAgent: market-data (reference) → CoinMarketCap\n\n**CMC Data Points:**\n• Token rankings 1–10,000+ by market cap\n• Circulating + total supply, fully diluted valuation\n• CMC score (exchange liquidity proxy)\n• New listings feed — catches tokens days before CoinGecko\n• Category pages: DeFi, Layer 1, Layer 2, Metaverse, Gaming\n\n**KWIZERANA + CMC workflow:**\n• Use CMC for early-stage token discovery (new listings)\n• Cross-check against CoinGecko for price confirmation\n• Use DexScreener for on-chain pair verification\n\n→ Visit coinmarketcap.com and cross-reference with the Compare tab for any token.",
+        aero: "✈️ **AERO — Aerodrome Finance (Base L2)**\n\nAgent: market-data + onchain-intel → CoinGecko · DeFiLlama\n\n**Protocol:** Aerodrome is the dominant DEX/liquidity hub on Coinbase's Base L2. It is the successor to Velodrome and runs the ve(3,3) Solidly model.\n\n**AERO Token Utility:**\n• Lock AERO → veAERO for emissions voting + fee revenue\n• Vote bribes — partner protocols pay veAERO holders to direct liquidity\n• Largest TVL DEX on Base — $400M+ TVL at peak\n\n**Key Pools on Aerodrome (DeFiLlama):**\n• USDC/WETH (stable) — Est. APY 12–25%\n• WETH/cbETH — LSD pair · Est. APY 15–30%\n• AERO/WETH — High emissions · Est. APY 40–80% (IL risk)\n• USDC/USDbC — Stablecoin · Est. APY 6–12%\n\n**KWIZERANA Grid Note:** AERO/USDT on Coinbase — ATR-based grid setup viable due to strong trending moves.\n\n→ Compare tab: type **aerodrome-finance** · Chain: Base (bridging needed from AVAX)",
+      };
+
+      function findResponse(t) {
+        const q = t.toLowerCase();
+        if (
+          q.includes("tvl") ||
+          q.includes("total value") ||
+          q.includes("capital flow")
+        )
+          return R.tvl;
+        if (
+          q.includes("messari") ||
+          q.includes("nvt") ||
+          q.includes("real vol") ||
+          q.includes("dev commit")
+        )
+          return R.messari;
+        if (
+          q.includes("dexscreen") ||
+          q.includes("dex screen") ||
+          q.includes("new token") ||
+          q.includes("new pair")
+        )
+          return R.dexscreener;
+        if (
+          q.includes("perp") ||
+          q.includes("perpetual") ||
+          q.includes("futures") ||
+          q.includes("open interest") ||
+          q.includes("funding rate")
+        )
+          return R.perps;
+        if (
+          q.includes("coinmarketcap") ||
+          q.includes("cmc") ||
+          q.includes("market cap rank")
+        )
+          return R.cmc;
+        if (q.includes("phar") && !q.includes("pharou")) return R.phar;
+        if (q.includes("pharou") || q.includes("p33")) return R.pharou;
+        if (q.includes("aero") || q.includes("aerodrome")) return R.aero;
+        if (
+          q.includes("yield") ||
+          q.includes("farm") ||
+          q.includes("apy") ||
+          q.includes("pool") ||
+          q.includes("liquidity")
+        )
+          return R.yield;
+        if (
+          q.includes("stablecoin") ||
+          q.includes("peg") ||
+          q.includes("depeg")
+        )
+          return R.stablecoin;
+        if (
+          q.includes("hack") ||
+          q.includes("exploit") ||
+          q.includes("security") ||
+          q.includes("breach")
+        )
+          return R.hack;
+        if (
+          q.includes("moats") ||
+          q.includes("reward") ||
+          q.includes("hefe") ||
+          q.includes("fort")
+        )
+          return R.moats;
+        if (q.includes("xau") || q.includes("gold") || q.includes("short"))
+          return R.xau;
+        if (
+          q.includes("fear") ||
+          q.includes("greed") ||
+          q.includes("sentiment")
+        )
+          return R.fear;
+        if (
+          q.includes("trending") ||
+          q.includes("narrative") ||
+          q.includes("retail")
+        )
+          return R.trending;
+        if (
+          q.includes("compar") ||
+          q.includes("chart") ||
+          q.includes("graph") ||
+          q.includes("vs")
+        )
+          return R.compare;
+        if (q.includes("bot") || q.includes("grid") || q.includes("status"))
+          return R.bot;
+        const avaxTokens = [
+          "joe",
+          "qi",
+          "benqi",
+          "traderjoe",
+          "vit",
+          "blaze",
+          "balln",
+          "wavax",
+        ];
+        if (avaxTokens.some((tok) => q.includes(tok))) return R.yield;
+
+        // No match — give a clear, helpful response instead of the "still loading" default
+        const preview = t.length > 40 ? t.slice(0, 40) + "…" : t;
+        return `🔍 **No specific intelligence found for "${preview}"**\n\nThe hive searched across all 6 agents but this topic isn't in the current knowledge base.\n\n**Try one of these instead:**\n• **PHAR / P33 / AERO** — AVAX ecosystem token deep dives\n• **TVL** — DeFiLlama on-chain capital flows\n• **Yield / APY / farms** — top AVAX yield opportunities\n• **Fear & Greed / sentiment** — market mood index\n• **Trending** — CoinGecko trending tokens right now\n• **Perps / perpetual** — DEX perp rankings & funding rates\n• **Stablecoin / peg** — peg health monitoring\n• **Hack / exploit** — DeFi security tracker\n• **Moats / HEFE** — Moats Protocol reward intel\n• **Compare / chart / vs** — live asset comparison tool\n• **DexScreener / new pairs** — on-chain pair discovery\n• **Bot / grid / status** — trading bot status\n\n→ For live price data on any coin, use the **Compare** tab and type the token name.`;
+      }
+
+      function showResponse(q) {
+        const a = document.getElementById("responseArea");
+        const t = document.getElementById("responseText");
+        a.style.display = "block";
+        t.innerHTML =
+          '<div class="typing-dots"><span></span><span></span><span></span></div>';
+        a.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        const response = findResponse(q);
+        // If it's a no-match response, resolve faster so it doesn't feel like a hang
+        const delay = response.startsWith("🔍") ? 600 : 1200;
+        setTimeout(() => {
+          t.innerHTML = response
+            .replace(/\n/g, "<br>")
+            .replace(
+              /\*\*(.*?)\*\*/g,
+              '<strong style="color:var(--white)">$1</strong>',
+            );
+        }, delay);
+      }
+
+      function handleSearch() {
+        const v = document.getElementById("mainSearch").value.trim();
+        if (v) showResponse(v);
+      }
+      function fc(el) {
+        const t = el.textContent.replace(/^[^a-z0-9]*/i, "").trim();
+        document.getElementById("mainSearch").value = t;
+        showResponse(t);
+      }
+      document.getElementById("mainSearch").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") handleSearch();
+      });
+
+      // ── RATE-LIMIT SAFE FETCH — queued, 1.5s minimum gap between CoinGecko calls ──
+      // All cgFetch calls are serialised through this queue so we never burst the
+      // CoinGecko free-tier limit (~10 req/min).  The first call fires immediately;
+      // each subsequent call waits until ≥1.5s has passed since the previous one.
+      // ── RATE-LIMIT SAFE FETCH — serialised queue, ≥1.5s between CoinGecko calls ──
+      // Critical: _cgQueue must NEVER become a rejected promise, otherwise every
+      // subsequent call would silently skip.  We separate the "advance the queue"
+      // chain (which catches errors) from the promise returned to the caller.
+      let _cgQueue = Promise.resolve();
+      let _cgLast = 0;
+      const _CG_GAP = 1500; // ms — CoinGecko free tier: ~10 req/min, so 6s is safe;
+      // 1.5s keeps things snappy while staying well under limit
+
+      async function cgFetch(url) {
+        // Each call appends to the queue.  The caller gets a promise that resolves
+        // or rejects with the actual result.  The queue chain always resolves so
+        // future calls aren't blocked by past failures.
+        let resolve, reject;
+        const callerPromise = new Promise((res, rej) => {
+          resolve = res;
+          reject = rej;
+        });
+
+        _cgQueue = _cgQueue.then(async () => {
+          try {
+            const gap = _CG_GAP - (Date.now() - _cgLast);
+            if (gap > 0) await new Promise((r) => setTimeout(r, gap));
+            _cgLast = Date.now();
+
+            const headers = { Accept: "application/json" };
+            let r = await fetch(url, { headers });
+
+            if (r.status === 429) {
+              console.warn("[cgFetch] 429 rate-limited — waiting 20s:", url);
+              await new Promise((res) => setTimeout(res, 20000));
+              _cgLast = Date.now();
+              r = await fetch(url, { headers });
+            }
+            if (!r.ok)
+              throw new Error(
+                `HTTP ${r.status} — ${r.statusText || "CoinGecko error"}`,
+              );
+            resolve(await r.json());
+          } catch (e) {
+            reject(e); // tell the caller it failed
+            // do NOT re-throw — keeps _cgQueue resolved so next call proceeds
+          }
+        });
+
+        return callerPromise;
+      }
+
+      // ── COMPARE ENGINE ────────────────────────────────────────────────────────────
+      const COIN_MAP = {
+        btc: "bitcoin",
+        eth: "ethereum",
+        avax: "avalanche-2",
+        sol: "solana",
+        bnb: "binancecoin",
+        ada: "cardano",
+        dot: "polkadot",
+        link: "chainlink",
+        uni: "uniswap",
+        aave: "aave",
+        matic: "matic-network",
+        polygon: "matic-network",
+        arb: "arbitrum",
+        op: "optimism",
+        optimism: "optimism",
+        arbitrum: "arbitrum",
+        sui: "sui",
+        apt: "aptos",
+        aptos: "aptos",
+        atom: "cosmos",
+        cosmos: "cosmos",
+        near: "near",
+        ftm: "fantom",
+        fantom: "fantom",
+        base: "base",
+        crv: "curve-dao-token",
+        mkr: "maker",
+        comp: "compound-governance-token",
+        snx: "havven",
+        sushi: "sushi",
+        bal: "balancer",
+        yfi: "yearn-finance",
+        // AVAX ecosystem
+        phar: "pharaoh-exchange",
+        pharaoh: "pharaoh-exchange",
+        p33: "p33",
+        aero: "aerodrome-finance",
+        aerodrome: "aerodrome-finance",
+        hefe: "hefe",
+        vit: "vitalize",
+        blaze: "blaze-token",
+        balln: "ball-n",
+        joe: "traderjoe",
+        traderjoe: "traderjoe",
+        qi: "benqi",
+        benqi: "benqi",
+      };
+
+      const CHART_COLORS = [
+        "rgba(224,112,64,1)",
+        "rgba(144,96,208,1)",
+        "rgba(232,144,74,1)",
+        "rgba(92,155,224,1)",
+        "rgba(224,92,92,1)",
+        "rgba(180,120,255,1)",
+      ];
+      const CHART_BG = [
+        "rgba(224,112,64,.18)",
+        "rgba(144,96,208,.18)",
+        "rgba(232,144,74,.18)",
+        "rgba(92,155,224,.18)",
+        "rgba(224,92,92,.18)",
+        "rgba(180,120,255,.18)",
+      ];
+
+      let currentChartType = "bar";
+      let lastCompareData = null;
+      let chartInstances = {};
+
+      function resolveId(s) {
+        const t = s.trim().toLowerCase().replace(/\s+/g, "-");
+        return COIN_MAP[t] || t;
+      }
+
+      function setPreset(csv) {
+        document.getElementById("assetInput").value = csv
+          .split(",")
+          .map((s) => s.trim())
+          .join(", ");
+      }
+
+      async function runCompare() {
+        const raw = document.getElementById("assetInput").value;
+        const ids = raw
+          .split(",")
+          .map((s) => resolveId(s))
+          .filter(Boolean)
+          .slice(0, 6);
+        if (ids.length < 2) {
+          showCompareError("Please enter at least 2 assets.");
+          return;
+        }
+
+        showCompareLoading(true);
+        hideCompareResults();
+
+        try {
+          const metric = document.getElementById("metricSel").value;
+          const idsStr = ids.join(",");
+          // Literal commas in ids= param — encodeURIComponent would break multi-id lookups
+          const baseUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${idsStr}&order=market_cap_desc&per_page=10&page=1&sparkline=false&price_change_percentage=1h%2C24h%2C7d%2C30d`;
+          const data = await cgFetch(baseUrl);
+          if (!data || !data.length)
+            throw new Error(
+              'No coins found — check coin IDs (use CoinGecko IDs like "avalanche-2" not "avax")',
+            );
+
+          // Try to fetch sparklines separately — optional, won't break if it fails
+          try {
+            const sparkUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${idsStr}&order=market_cap_desc&per_page=10&page=1&sparkline=true`;
+            const sparkData = await cgFetch(sparkUrl);
+            // Merge sparkline data back into main data
+            sparkData.forEach((sd) => {
+              const found = data.find((d) => d.id === sd.id);
+              if (found) found.sparkline_in_7d = sd.sparkline_in_7d;
+            });
+          } catch (se) {
+            /* sparklines optional — silently skip if rate limited */
+          }
+
+          lastCompareData = data;
+          renderCompare(data, metric);
+          showCompareLoading(false);
+          document.getElementById("compareResults").style.display = "block";
+          document.getElementById("lastUpdate").textContent =
+            "Last updated: " +
+            new Date().toLocaleTimeString() +
+            " · Source: CoinGecko";
+        } catch (e) {
+          showCompareLoading(false);
+          const msg =
+            e.message.includes("429") || e.message.includes("HTTP 429")
+              ? "⏱ CoinGecko rate limit hit. Wait 30–60 seconds and try again (free API = 10–30 req/min)."
+              : "Failed to fetch: " + e.message;
+          showCompareError(msg);
+        }
+      }
+
+      function renderCompare(data, metric) {
+        destroyCharts();
+        document.getElementById("chartsArea").innerHTML = "";
+
+        if (currentChartType === "bar") renderBarChart(data, metric);
+        else if (currentChartType === "radar") renderRadarChart(data);
+        else renderSparklines(data);
+
+        renderTable(data);
+      }
+
+      function renderBarChart(data, metric) {
+        const area = document.getElementById("chartsArea");
+        area.style.gridTemplateColumns = "1fr";
+        const div = document.createElement("div");
+        div.className = "chart-card";
+        div.style.gridColumn = "1/-1";
+        div.innerHTML = `<h3>${getMetricLabel(metric)}</h3><canvas id="mainBarChart"></canvas>`;
+        area.appendChild(div);
+
+        const labels = data.map((c) => c.symbol.toUpperCase());
+        const values = data.map((c) => getMetricValue(c, metric));
+        const colors = values.map((v, i) => {
+          if (metric.includes("h") || metric.includes("d"))
+            return v >= 0 ? CHART_COLORS[i] : "rgba(224,92,92,.85)";
+          return CHART_COLORS[i];
+        });
+
+        chartInstances["mainBar"] = new Chart(
+          document.getElementById("mainBarChart"),
+          {
+            type: "bar",
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: getMetricLabel(metric),
+                  data: values,
+                  backgroundColor: colors,
+                  borderColor: colors.map((c) => c.replace(".18", ".8")),
+                  borderWidth: 1,
+                  borderRadius: 6,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: (ctx) =>
+                      getMetricLabel(metric) +
+                      ": " +
+                      formatMetricVal(ctx.raw, metric),
+                  },
+                },
+              },
+              scales: {
+                x: {
+                  ticks: { color: "#9078c0" },
+                  grid: { color: "rgba(150,90,220,.06)" },
+                },
+                y: {
+                  ticks: {
+                    color: "#9078c0",
+                    callback: (v) => formatMetricVal(v, metric),
+                  },
+                  grid: { color: "rgba(150,90,220,.08)" },
+                },
+              },
+            },
+          },
+        );
+
+        // Add a secondary bar chart for 7d next to it
+        if (metric === "24h") {
+          const div2 = document.createElement("div");
+          div2.className = "chart-card";
+          div2.style.marginTop = "24px";
+          div2.innerHTML = `<h3>7-Day % Change</h3><canvas id="bar7dChart"></canvas>`;
+          div.after(div2);
+          const vals7 = data.map(
+            (c) => c.price_change_percentage_7d_in_currency || 0,
+          );
+          const cols7 = vals7.map((v, i) =>
+            v >= 0 ? CHART_COLORS[i] : "rgba(224,92,92,.85)",
+          );
+          chartInstances["bar7d"] = new Chart(
+            document.getElementById("bar7dChart"),
+            {
+              type: "bar",
+              data: {
+                labels,
+                datasets: [
+                  {
+                    label: "7d %",
+                    data: vals7,
+                    backgroundColor: cols7,
+                    borderRadius: 6,
+                  },
+                ],
+              },
+              options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                  x: {
+                    ticks: { color: "#9078c0" },
+                    grid: { color: "rgba(150,90,220,.06)" },
+                  },
+                  y: {
+                    ticks: {
+                      color: "#9078c0",
+                      callback: (v) => v.toFixed(1) + "%",
+                    },
+                    grid: { color: "rgba(150,90,220,.08)" },
+                  },
+                },
+              },
+            },
+          );
+        }
+      }
+
+      function renderRadarChart(data) {
+        const area = document.getElementById("chartsArea");
+        area.style.gridTemplateColumns = "1fr";
+        const div = document.createElement("div");
+        div.className = "chart-card";
+        div.style.gridColumn = "1/-1";
+        div.innerHTML =
+          '<h3>Multi-Metric Radar (normalised 0–100)</h3><canvas id="radarChart" style="max-height:400px"></canvas>';
+        area.appendChild(div);
+
+        // Normalise each metric 0–100 relative to cohort
+        const metrics = ["24h", "7d", "30d"];
+        const norm = (arr) => {
+          const mn = Math.min(...arr),
+            mx = Math.max(...arr);
+          return arr.map((v) =>
+            mx === mn ? 50 : ((v - mn) / (mx - mn)) * 100,
+          );
+        };
+        const ch24 = norm(data.map((c) => c.price_change_percentage_24h || 0));
+        const ch7 = norm(
+          data.map((c) => c.price_change_percentage_7d_in_currency || 0),
+        );
+        const ch30 = norm(
+          data.map((c) => c.price_change_percentage_30d_in_currency || 0),
+        );
+        const vols = norm(data.map((c) => c.total_volume || 0));
+        const mcaps = norm(data.map((c) => c.market_cap || 0));
+
+        const datasets = data.map((c, i) => ({
+          label: c.symbol.toUpperCase(),
+          data: [ch24[i], ch7[i], ch30[i], vols[i], mcaps[i]],
+          borderColor: CHART_COLORS[i],
+          backgroundColor: CHART_BG[i],
+          pointBackgroundColor: CHART_COLORS[i],
+          borderWidth: 2,
+        }));
+
+        chartInstances["radar"] = new Chart(
+          document.getElementById("radarChart"),
+          {
+            type: "radar",
+            data: {
+              labels: [
+                "24h Perf.",
+                "7d Perf.",
+                "30d Perf.",
+                "Volume",
+                "Market Cap",
+              ],
+              datasets,
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: {
+                legend: { labels: { color: "#9078c0", font: { size: 12 } } },
+              },
+              scales: {
+                r: {
+                  ticks: { color: "#9078c0", backdropColor: "transparent" },
+                  grid: { color: "rgba(150,90,220,.10)" },
+                  pointLabels: { color: "#f5f5f0", font: { size: 12 } },
+                },
+              },
+            },
+          },
+        );
+      }
+
+      function renderSparklines(data) {
+        const area = document.getElementById("chartsArea");
+        area.style.gridTemplateColumns = "repeat(auto-fill,minmax(280px,1fr))";
+        area.innerHTML = "";
+
+        const hasAny = data.some(
+          (c) => (c.sparkline_in_7d?.price || []).length > 0,
+        );
+        if (!hasAny) {
+          area.innerHTML = `<div class="chart-card" style="grid-column:1/-1;text-align:center;padding:40px">
+      <div style="color:var(--muted);font-size:14px">⚠️ Sparkline data unavailable (rate limit or API tier).<br>Switch to <strong>Bar Chart</strong> or <strong>Radar</strong> view — those work on the free tier.</div>
+    </div>`;
+          return;
+        }
+
+        data.forEach((coin, i) => {
+          const spark = coin.sparkline_in_7d?.price || [];
+          if (!spark.length) {
+            const div = document.createElement("div");
+            div.className = "chart-card";
+            div.innerHTML = `<h3>${coin.symbol.toUpperCase()} — 7-Day Price</h3><div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center">No sparkline data</div>`;
+            area.appendChild(div);
+            return;
+          }
+          const div = document.createElement("div");
+          div.className = "chart-card";
+          const chg = coin.price_change_percentage_7d_in_currency || 0;
+          div.innerHTML = `
+      <h3>${coin.symbol.toUpperCase()} — 7-Day Price</h3>
+      <div style="display:flex;justify-content:space-between;margin-bottom:14px;font-size:13px">
+        <span style="color:var(--white);font-weight:700">$${fmtPrice(coin.current_price)}</span>
+        <span style="${chg >= 0 ? "color:var(--flesh)" : "color:var(--red)"};font-weight:700">${chg >= 0 ? "+" : ""}${chg.toFixed(2)}% 7d</span>
+      </div>
+      <canvas id="spark-${coin.id}"></canvas>`;
+          area.appendChild(div);
+
+          const color = chg >= 0 ? CHART_COLORS[i] : "rgba(224,92,92,1)";
+          chartInstances["spark-" + coin.id] = new Chart(
+            document.getElementById("spark-" + coin.id),
+            {
+              type: "line",
+              data: {
+                labels: spark.map((_, j) => j),
+                datasets: [
+                  {
+                    data: spark,
+                    borderColor: color,
+                    backgroundColor: color.replace("1)", "0.1)"),
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    fill: true,
+                    tension: 0.4,
+                  },
+                ],
+              },
+              options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                  x: { display: false },
+                  y: {
+                    ticks: { color: "#9078c0", font: { size: 10 } },
+                    grid: { color: "rgba(150,90,220,.06)" },
+                  },
+                },
+              },
+            },
+          );
+        });
+      }
+
+      function renderTable(data) {
+        const thead = document.querySelector("#compareTable thead");
+        const tbody = document.querySelector("#compareTable tbody");
+        thead.innerHTML = `<tr>
+    <th>Asset</th><th>Price</th><th>1h %</th><th>24h %</th><th>7d %</th><th>30d %</th>
+    <th>Market Cap</th><th>Volume 24h</th><th>ATH Diff</th>
+  </tr>`;
+        tbody.innerHTML = data
+          .map(
+            (c, i) => `
+    <tr>
+      <td><div class="coin-name-cell"><div class="coin-dot" style="background:${CHART_COLORS[i]}"></div><div><div style="font-weight:700">${c.symbol.toUpperCase()}</div><div style="font-size:11px;color:var(--muted)">${c.name}</div></div></div></td>
+      <td style="font-weight:700">$${fmtPrice(c.current_price)}</td>
+      <td class="${pctClass(c.price_change_percentage_1h_in_currency)}">${fmtPct(c.price_change_percentage_1h_in_currency)}</td>
+      <td class="${pctClass(c.price_change_percentage_24h)}">${fmtPct(c.price_change_percentage_24h)}</td>
+      <td class="${pctClass(c.price_change_percentage_7d_in_currency)}">${fmtPct(c.price_change_percentage_7d_in_currency)}</td>
+      <td class="${pctClass(c.price_change_percentage_30d_in_currency)}">${fmtPct(c.price_change_percentage_30d_in_currency)}</td>
+      <td class="neu">$${fmtBig(c.market_cap)}</td>
+      <td class="neu">$${fmtBig(c.total_volume)}</td>
+      <td class="${pctClass(c.ath_change_percentage)}">${fmtPct(c.ath_change_percentage)}</td>
+    </tr>`,
+          )
+          .join("");
+      }
+
+      function getMetricValue(c, metric) {
+        if (metric === "24h") return c.price_change_percentage_24h || 0;
+        if (metric === "7d")
+          return c.price_change_percentage_7d_in_currency || 0;
+        if (metric === "30d")
+          return c.price_change_percentage_30d_in_currency || 0;
+        if (metric === "mcap") return c.market_cap || 0;
+        if (metric === "vol") return c.total_volume || 0;
+        return 0;
+      }
+      function getMetricLabel(m) {
+        return (
+          {
+            "24h": "24h % Change",
+            "7d": "7-Day % Change",
+            "30d": "30-Day % Change",
+            mcap: "Market Cap (USD)",
+            vol: "24h Volume (USD)",
+          }[m] || m
+        );
+      }
+      function formatMetricVal(v, m) {
+        if (m === "mcap" || m === "vol") return "$" + fmtBig(v);
+        return (v >= 0 ? "+" : "") + v.toFixed(2) + "%";
+      }
+
+      function switchChartType(type, btn) {
+        currentChartType = type;
+        document
+          .querySelectorAll(".ctype-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        if (lastCompareData)
+          renderCompare(
+            lastCompareData,
+            document.getElementById("metricSel").value,
+          );
+      }
+
+      function destroyCharts() {
+        Object.values(chartInstances).forEach((c) => {
+          try {
+            c.destroy();
+          } catch (e) {}
+        });
+        chartInstances = {};
+      }
+
+      function showCompareLoading(v) {
+        document.getElementById("compareLoading").style.display = v
+          ? "block"
+          : "none";
+      }
+      function hideCompareResults() {
+        document.getElementById("compareResults").style.display = "none";
+        document.getElementById("compareError").style.display = "none";
+      }
+      function showCompareError(msg) {
+        const el = document.getElementById("compareError");
+        el.textContent = "⚠️ " + msg;
+        el.style.display = "block";
+      }
+
+      // ── HEATMAP ───────────────────────────────────────────────────────────────────
+      // Primary: CryptoCompare (no key, CORS, real market cap + real 24h %)
+      // Fallback: Binance (no key, CORS, real price — derives change from open)
+
+      const HEATMAP_COINS = [
+        // DeFi  (pair = Binance USDT trading pair)
+        { sym: "UNI", pair: "UNIUSDT", name: "Uniswap", cat: "defi", rank: 1 },
+        { sym: "AAVE", pair: "AAVEUSDT", name: "Aave", cat: "defi", rank: 2 },
+        {
+          sym: "LINK",
+          pair: "LINKUSDT",
+          name: "Chainlink",
+          cat: "defi",
+          rank: 3,
+        },
+        { sym: "MKR", pair: "MKRUSDT", name: "MakerDAO", cat: "defi", rank: 4 },
+        { sym: "LDO", pair: "LDOUSDT", name: "Lido", cat: "defi", rank: 5 },
+        {
+          sym: "GRT",
+          pair: "GRTUSDT",
+          name: "The Graph",
+          cat: "defi",
+          rank: 6,
+        },
+        {
+          sym: "COMP",
+          pair: "COMPUSDT",
+          name: "Compound",
+          cat: "defi",
+          rank: 7,
+        },
+        { sym: "CRV", pair: "CRVUSDT", name: "Curve", cat: "defi", rank: 8 },
+        {
+          sym: "SNX",
+          pair: "SNXUSDT",
+          name: "Synthetix",
+          cat: "defi",
+          rank: 9,
+        },
+        {
+          sym: "SUSHI",
+          pair: "SUSHIUSDT",
+          name: "SushiSwap",
+          cat: "defi",
+          rank: 10,
+        },
+        {
+          sym: "BAL",
+          pair: "BALUSDT",
+          name: "Balancer",
+          cat: "defi",
+          rank: 11,
+        },
+        { sym: "DYDX", pair: "DYDXUSDT", name: "dYdX", cat: "defi", rank: 12 },
+        { sym: "CVX", pair: "CVXUSDT", name: "Convex", cat: "defi", rank: 13 },
+        { sym: "YFI", pair: "YFIUSDT", name: "Yearn", cat: "defi", rank: 14 },
+        {
+          sym: "RPL",
+          pair: "RPLUSDT",
+          name: "Rocket Pool",
+          cat: "defi",
+          rank: 15,
+        },
+        // Layer 1
+        { sym: "BTC", pair: "BTCUSDT", name: "Bitcoin", cat: "l1", rank: 1 },
+        { sym: "ETH", pair: "ETHUSDT", name: "Ethereum", cat: "l1", rank: 2 },
+        { sym: "BNB", pair: "BNBUSDT", name: "BNB", cat: "l1", rank: 3 },
+        { sym: "SOL", pair: "SOLUSDT", name: "Solana", cat: "l1", rank: 4 },
+        {
+          sym: "AVAX",
+          pair: "AVAXUSDT",
+          name: "Avalanche",
+          cat: "l1,avax",
+          rank: 5,
+        },
+        { sym: "ADA", pair: "ADAUSDT", name: "Cardano", cat: "l1", rank: 6 },
+        { sym: "DOT", pair: "DOTUSDT", name: "Polkadot", cat: "l1", rank: 7 },
+        { sym: "NEAR", pair: "NEARUSDT", name: "NEAR", cat: "l1", rank: 8 },
+        { sym: "ATOM", pair: "ATOMUSDT", name: "Cosmos", cat: "l1", rank: 9 },
+        { sym: "TRX", pair: "TRXUSDT", name: "TRON", cat: "l1", rank: 10 },
+        { sym: "XLM", pair: "XLMUSDT", name: "Stellar", cat: "l1", rank: 11 },
+        { sym: "HBAR", pair: "HBARUSDT", name: "Hedera", cat: "l1", rank: 12 },
+        { sym: "APT", pair: "APTUSDT", name: "Aptos", cat: "l1", rank: 13 },
+        { sym: "SUI", pair: "SUIUSDT", name: "Sui", cat: "l1", rank: 14 },
+        {
+          sym: "ALGO",
+          pair: "ALGOUSDT",
+          name: "Algorand",
+          cat: "l1",
+          rank: 15,
+        },
+        { sym: "FTM", pair: "FTMUSDT", name: "Fantom", cat: "l1", rank: 16 },
+        // Layer 2
+        { sym: "POL", pair: "POLUSDT", name: "Polygon", cat: "l2", rank: 1 },
+        { sym: "ARB", pair: "ARBUSDT", name: "Arbitrum", cat: "l2", rank: 2 },
+        { sym: "OP", pair: "OPUSDT", name: "Optimism", cat: "l2", rank: 3 },
+        { sym: "MNT", pair: "MNTUSDT", name: "Mantle", cat: "l2", rank: 4 },
+        {
+          sym: "IMX",
+          pair: "IMXUSDT",
+          name: "Immutable X",
+          cat: "l2",
+          rank: 5,
+        },
+        { sym: "METIS", pair: "METISUSDT", name: "Metis", cat: "l2", rank: 6 },
+        { sym: "LRC", pair: "LRCUSDT", name: "Loopring", cat: "l2", rank: 7 },
+        { sym: "CTSI", pair: "CTSIUSDT", name: "Cartesi", cat: "l2", rank: 8 },
+        // AVAX Ecosystem
+        { sym: "QI", pair: "QIUSDT", name: "BENQI", cat: "avax", rank: 2 },
+        {
+          sym: "JOE",
+          pair: "JOEUSDT",
+          name: "TraderJoe",
+          cat: "avax",
+          rank: 3,
+        },
+        {
+          sym: "PHAR",
+          pair: "PHARUSDT",
+          name: "Pharaoh",
+          cat: "avax",
+          rank: 4,
+        },
+        {
+          sym: "AERO",
+          pair: "AEROUSDT",
+          name: "Aerodrome",
+          cat: "avax",
+          rank: 5,
+        },
+        { sym: "GMX", pair: "GMXUSDT", name: "GMX", cat: "avax", rank: 6 },
+        { sym: "PNG", pair: "PNGUSDT", name: "Pangolin", cat: "avax", rank: 7 },
+        { sym: "COQ", pair: "COQUSDT", name: "Coq Inu", cat: "avax", rank: 8 },
+      ];
+
+      const HEATMAP_CAT_MAP = {
+        "decentralized-finance-defi": "defi",
+        "layer-1": "l1",
+        "layer-2": "l2",
+        "avalanche-ecosystem": "avax",
+      };
+      const HEATMAP_LABELS = {
+        "decentralized-finance-defi": "DeFi Tokens",
+        "layer-1": "Layer 1",
+        "layer-2": "Layer 2",
+        "avalanche-ecosystem": "AVAX Ecosystem",
+      };
+
+      let heatmapLoaded = false;
+      let heatmapCategory = "decentralized-finance-defi";
+      let heatmapPriceCache = null; // cached price data — refreshed on Refresh click
+      let heatmapSource = "CryptoCompare";
+
+      // ── CryptoCompare fetch (primary) ─────────────────────────────────────────────
+      async function fetchHeatmapCryptoCompare() {
+        const allSyms = [...new Set(HEATMAP_COINS.map((c) => c.sym))].join(",");
+        const url =
+          "https://min-api.cryptocompare.com/data/pricemultifull?fsyms=" +
+          allSyms +
+          "&tsyms=USD";
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("CC HTTP " + res.status);
+        const data = await res.json();
+        if (!data.RAW) throw new Error("CryptoCompare: no data");
+        const cache = {};
+        for (const sym of Object.keys(data.RAW)) {
+          const d = data.RAW[sym] && data.RAW[sym].USD;
+          if (d)
+            cache[sym] = {
+              price: d.PRICE || 0,
+              chg: d.CHANGEPCT24HOUR || 0,
+              mcap: d.MKTCAP || 0,
+            };
+        }
+        return cache;
+      }
+
+      // ── Binance fetch (fallback) ───────────────────────────────────────────────────
+      async function fetchHeatmapBinance() {
+        const symbolsParam = encodeURIComponent(
+          JSON.stringify(HEATMAP_COINS.map((c) => c.pair)),
+        );
+        const url =
+          "https://api.binance.com/api/v3/ticker/24hr?symbols=" + symbolsParam;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Binance HTTP " + res.status);
+        const tickers = await res.json();
+        const raw = {};
+        tickers.forEach((t) => {
+          raw[t.symbol] = t;
+        });
+        // Map pair→sym lookup
+        const cache = {};
+        HEATMAP_COINS.forEach((c) => {
+          const t = raw[c.pair];
+          if (t) {
+            const open = parseFloat(t.openPrice) || 0;
+            const last = parseFloat(t.lastPrice) || 0;
+            const chg =
+              parseFloat(t.priceChangePercent) ||
+              (open > 0 ? ((last - open) / open) * 100 : 0);
+            cache[c.sym] = {
+              price: last,
+              chg,
+              mcap: last * (1000 - c.rank) * 1e6,
+            };
+          }
+        });
+        return cache;
+      }
+
+      async function loadHeatmap(category, btn) {
+        heatmapCategory = category;
+        if (btn) {
+          document
+            .querySelectorAll(".hmap-filter-btn")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+        }
+        const grid = document.getElementById("heatmapGrid");
+        const label = HEATMAP_LABELS[category] || category;
+
+        try {
+          if (!heatmapPriceCache) {
+            grid.innerHTML =
+              '<div class="loading-state" style="grid-column:1/-1"><span class="loading-spin">🔄</span>Fetching live prices…</div>';
+            try {
+              heatmapPriceCache = await fetchHeatmapCryptoCompare();
+              heatmapSource = "CryptoCompare";
+            } catch (e1) {
+              console.warn("CryptoCompare failed, trying Binance:", e1.message);
+              heatmapPriceCache = await fetchHeatmapBinance();
+              heatmapSource = "Binance";
+            }
+          }
+
+          const catKey = HEATMAP_CAT_MAP[category] || "defi";
+          const filtered = HEATMAP_COINS.filter((c) => c.cat.includes(catKey))
+            .map((c) => {
+              const d = heatmapPriceCache[c.sym] || {};
+              return {
+                symbol: c.sym,
+                name: c.name,
+                current_price: d.price || 0,
+                price_change_percentage_24h: d.chg || 0,
+                market_cap: d.mcap || (1000 - c.rank) * 1e9,
+              };
+            })
+            .filter((c) => c.current_price > 0)
+            .sort((a, b) => b.market_cap - a.market_cap);
+
+          if (!filtered.length)
+            throw new Error("No price data returned — try Refresh");
+
+          renderHeatmap(filtered);
+          heatmapLoaded = true;
+          document.getElementById("heatmapUpdate").textContent =
+            "Last updated: " +
+            new Date().toLocaleTimeString() +
+            " · " +
+            filtered.length +
+            " tokens · " +
+            label +
+            " · Source: " +
+            heatmapSource;
+        } catch (e) {
+          heatmapPriceCache = null;
+          grid.innerHTML = `<div class="error-state" style="grid-column:1/-1">⚠️ ${e.message}<br><small>Click Refresh to try again</small></div>`;
+        }
+      }
+
+      function refreshHeatmap() {
+        heatmapPriceCache = null; // clear so next load re-fetches fresh prices
+        loadHeatmap(heatmapCategory);
+      }
+
+      function renderHeatmap(data) {
+        const grid = document.getElementById("heatmapGrid");
+        // Size cells by market cap rank (bigger = more prominent)
+        const maxMcap = Math.max(...data.map((c) => c.market_cap || 0));
+        grid.innerHTML = data
+          .map((c) => {
+            const chg = c.price_change_percentage_24h || 0;
+            const bg = getHeatColor(chg);
+            const textColor = Math.abs(chg) < 2 ? "#ccc" : "#fff";
+            const mcapFraction = (c.market_cap || 0) / maxMcap;
+            const padding =
+              mcapFraction > 0.3
+                ? "22px 18px"
+                : mcapFraction > 0.1
+                  ? "18px 14px"
+                  : "14px 12px";
+            return `<div class="heat-cell" style="background:${bg};color:${textColor};padding:${padding}" title="${c.name}: ${fmtPct(chg)} 24h · MCap $${fmtBig(c.market_cap)}">
+      <div class="heat-sym">${c.symbol.toUpperCase()}</div>
+      <div class="heat-price">$${fmtPrice(c.current_price)}</div>
+      <div class="heat-chg">${fmtPct(chg)}</div>
+      <div class="heat-mcap">${fmtBig(c.market_cap)}</div>
+    </div>`;
+          })
+          .join("");
+      }
+
+      function getHeatColor(chg) {
+        if (chg <= -5) return "#5a1010";
+        if (chg <= -2) return "#7a2020";
+        if (chg <= -0.5) return "#3a1828";
+        if (chg < 0.5) return "#241838";
+        if (chg < 2) return "#1a4a20";
+        if (chg < 5) return "#226028";
+        if (chg < 10) return "#2e9030";
+        return "#3acc40";
+      }
+
+      // ── HELPERS ───────────────────────────────────────────────────────────────────
+      function fmtPrice(p) {
+        if (!p && p !== 0) return "—";
+        if (p >= 1000)
+          return p.toLocaleString("en-US", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          });
+        if (p >= 1) return p.toFixed(2);
+        if (p >= 0.01) return p.toFixed(4);
+        return p.toFixed(6);
+      }
+      function fmtBig(n) {
+        if (!n) return "—";
+        if (n >= 1e12) return (n / 1e12).toFixed(2) + "T";
+        if (n >= 1e9) return (n / 1e9).toFixed(2) + "B";
+        if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
+        return n.toLocaleString();
+      }
+      function fmtPct(v) {
+        if (v === null || v === undefined) return "—";
+        return (v >= 0 ? "+" : "") + v.toFixed(2) + "%";
+      }
+      function pctClass(v) {
+        return v === null || v === undefined ? "neu" : v >= 0 ? "pos" : "neg";
+      }
+
+      // ── SIGNALS ───────────────────────────────────────────────────────────────────
+      let signalsLoaded = false;
+
+      // Helper: small delay to space out API calls and avoid rate limits
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+      async function loadSignals() {
+        // Fire non-CoinGecko sections immediately (no queue pressure)
+        loadFearGreed().catch(() => {});
+        loadDexScreener().catch(() => {});
+
+        // Stagger CoinGecko sections so the queue paces them naturally.
+        // Each setTimeout gives the UI a chance to paint, then each section
+        // enqueues its own cgFetch calls.  The queue ensures ≥1.2s between calls.
+        loadPulse().catch(() => {}); // queues calls 1 & 2
+        setTimeout(() => loadTrending().catch(() => {}), 200); // queues calls 3 & 4
+        setTimeout(() => loadGainersLosers().catch(() => {}), 400); // queues call 5
+        // arbitrage is queued separately from showPanel after 1500ms
+
+        // Update footer once all sections have had a chance to load
+        setTimeout(() => {
+          const el = document.getElementById("signalsUpdate");
+          if (el)
+            el.textContent =
+              "Loading… · Sources: CoinGecko + Alternative.me + DexScreener";
+        }, 500);
+        setTimeout(() => {
+          const el = document.getElementById("signalsUpdate");
+          if (el)
+            el.textContent =
+              "Last updated: " +
+              new Date().toLocaleTimeString() +
+              " · Sources: CoinGecko + Alternative.me + DexScreener";
+        }, 18000); // 18s = enough for all queued calls to finish
+      }
+
+      async function loadFearGreed() {
+        try {
+          const res = await fetch(
+            "https://api.alternative.me/fng/?limit=1&format=json",
+            { mode: "cors" },
+          );
+          const d = await res.json();
+          const entry = d.data[0];
+          const val = parseInt(entry.value, 10);
+          const classification = entry.value_classification;
+
+          document.getElementById("fgVal").textContent = val;
+          document.getElementById("fgLabel").textContent = classification;
+          document.getElementById("fgLabel").style.color = fgColor(val);
+
+          const hints = {
+            "Extreme Fear": "Historically a buy signal — market is oversold.",
+            Fear: "Cautious accumulation zone. Risk appetite low.",
+            Neutral: "Market is balanced — no strong signal either way.",
+            Greed: "Reduce exposure — momentum may be peaking.",
+            "Extreme Greed": "High risk zone — consider taking profits.",
+          };
+          document.getElementById("fgSubtitle").textContent =
+            hints[classification] || "";
+
+          // Draw arc: 0–100 maps to 0–π (semicircle). Total arc length ≈ 283px
+          const arcLen = 283;
+          const filled = (val / 100) * arcLen;
+          const arcEl = document.getElementById("fgArc");
+          arcEl.setAttribute(
+            "stroke-dasharray",
+            filled + " " + (arcLen - filled),
+          );
+          arcEl.setAttribute("stroke", fgColor(val));
+        } catch (e) {
+          document.getElementById("fgLabel").textContent = "Unavailable";
+          document.getElementById("fgSubtitle").textContent =
+            "Could not reach Alternative.me";
+        }
+      }
+
+      function fgColor(val) {
+        if (val <= 25) return "#c0392b";
+        if (val <= 45) return "#e67e22";
+        if (val <= 55) return "#f0fa40";
+        if (val <= 75) return "#6ab814";
+        return "#27ae60";
+      }
+
+      async function loadTrending() {
+        try {
+          const d = await cgFetch(
+            "https://api.coingecko.com/api/v3/search/trending",
+          );
+          const coins = (d.coins || []).slice(0, 7);
+          const list = document.getElementById("trendingList");
+          document.getElementById("trendTime").textContent =
+            new Date().toLocaleTimeString();
+
+          if (!coins.length) {
+            list.innerHTML =
+              '<div style="color:var(--muted);font-size:13px;padding:12px">No trending data</div>';
+            return;
+          }
+
+          // Fetch prices for trending coins — small delay first so it doesn't collide with pulse call
+          const ids = coins.map((c) => c.item.id).join(",");
+          let prices = {};
+          try {
+            // optional enrichment — skip if rate limited
+            await wait(600);
+            const pd = await cgFetch(
+              `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`,
+            );
+            prices = pd;
+          } catch (e) {
+            /* prices optional — trending list still shows without prices */
+          }
+
+          list.innerHTML = coins
+            .map((c, i) => {
+              const item = c.item;
+              const p = prices[item.id];
+              const price = p ? "$" + fmtPrice(p.usd) : "—";
+              const chg = p ? p.usd_24h_change : null;
+              const chgHtml =
+                chg !== null && chg !== undefined
+                  ? `<div class="trend-chg" style="color:${chg >= 0 ? "var(--flesh)" : "var(--red)"}">${chg >= 0 ? "+" : ""}${chg.toFixed(2)}%</div>`
+                  : '<div class="trend-chg" style="color:var(--muted)">—</div>';
+              const thumb = item.thumb || "";
+              const imgTag = thumb
+                ? `<img class="trend-thumb" src="${thumb}" onerror="this.style.display='none'"/>`
+                : '<div class="trend-thumb"></div>';
+              return `<div class="trend-item">
+        <div class="trend-rank">#${i + 1}</div>
+        ${imgTag}
+        <div class="trend-info">
+          <div class="trend-name">${item.name}</div>
+          <div class="trend-sym">${item.symbol.toUpperCase()}</div>
+        </div>
+        <div class="trend-price">${price}</div>
+        ${chgHtml}
+      </div>`;
+            })
+            .join("");
+        } catch (e) {
+          document.getElementById("trendingList").innerHTML =
+            '<div class="error-state" style="font-size:13px">Could not load trending data</div>';
+        }
+      }
+
+      async function loadGainersLosers() {
+        const el = document.getElementById("glGrid");
+        if (!el) return;
+        el.innerHTML =
+          '<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--muted)"><span class="loading-spin">🔄</span> Loading market movers…</div>';
+        try {
+          // Fetch top 250 by market cap with 24h change — gives better gainers/losers spread
+          const d = await cgFetch(
+            "https://api.coingecko.com/api/v3/coins/markets" +
+              "?vs_currency=usd&order=market_cap_desc&per_page=250&page=1" +
+              "&sparkline=false&price_change_percentage=24h",
+          );
+          if (!Array.isArray(d) || !d.length)
+            throw new Error("No data returned");
+
+          const valid = d.filter((c) => c.price_change_percentage_24h != null);
+          const sorted = [...valid].sort(
+            (a, b) =>
+              b.price_change_percentage_24h - a.price_change_percentage_24h,
+          );
+          const gainers = sorted.slice(0, 6);
+          const losers = sorted.slice(-6).reverse();
+
+          const row = (c, isGainer) => {
+            const chg = c.price_change_percentage_24h;
+            const col = isGainer ? "var(--flesh)" : "var(--red)";
+            const bg = isGainer
+              ? "rgba(144,96,208,.08)"
+              : "rgba(224,92,92,.08)";
+            const thumb = c.image
+              ? `<img src="${c.image}" style="width:22px;height:22px;border-radius:50%;margin-right:8px;flex-shrink:0" onerror="this.style.display='none'">`
+              : "";
+            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:${bg};border-radius:10px;margin-bottom:6px;border:1px solid var(--border)">
+        <div style="display:flex;align-items:center;min-width:0">
+          ${thumb}
+          <div style="min-width:0">
+            <span style="font-weight:700;font-size:13px">${c.symbol.toUpperCase()}</span>
+            <span style="font-size:11px;color:var(--muted);margin-left:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name}</span>
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;margin-left:8px">
+          <div style="font-size:12px;color:var(--muted)">$${fmtPrice(c.current_price)}</div>
+          <div style="font-size:13px;font-weight:800;color:${col}">${chg >= 0 ? "+" : ""}${chg.toFixed(2)}%</div>
+        </div>
+      </div>`;
+          };
+
+          el.innerHTML = `
+      <div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--flesh);margin-bottom:10px">▲ Top Gainers</div>
+        ${gainers.map((c) => row(c, true)).join("")}
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--red);margin-bottom:10px">▼ Top Losers</div>
+        ${losers.map((c) => row(c, false)).join("")}
+      </div>`;
+        } catch (e) {
+          el.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px">
+      <div style="color:var(--muted);margin-bottom:12px;font-size:13px">⚠️ Could not load market movers — ${e.message}</div>
+      <button onclick="loadGainersLosers()" style="background:var(--bg3);border:1px solid var(--border);color:var(--white);border-radius:8px;padding:8px 18px;font-size:13px;cursor:pointer">🔄 Try again</button>
+    </div>`;
+        }
+      }
+
+      async function loadPulse() {
+        try {
+          const d = await cgFetch(
+            "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,avalanche-2&vs_currencies=usd&include_24hr_change=true",
+          );
+          const globalD = await cgFetch(
+            "https://api.coingecko.com/api/v3/global",
+          );
+          if (d.bitcoin)
+            document.getElementById("pulseBTC").textContent =
+              "$" + fmtPrice(d.bitcoin.usd);
+          if (d.ethereum)
+            document.getElementById("pulseETH").textContent =
+              "$" + fmtPrice(d.ethereum.usd);
+          if (d["avalanche-2"])
+            document.getElementById("pulseAVAX").textContent =
+              "$" + fmtPrice(d["avalanche-2"].usd);
+          const dom = globalD?.data?.market_cap_percentage?.btc;
+          if (dom)
+            document.getElementById("pulseDom").textContent =
+              dom.toFixed(1) + "%";
+        } catch (e) {
+          /* silent */
+        }
+      }
+
+      // ── INIT ─────────────────────────────────────────────────────────────────────
+      loadTicker();
+      setInterval(loadTicker, 90000); // refresh every 90s
+
+      // ── PERP DEX FEE DATABASE (curated from official docs) ───────────────────────
+
+      // ══════════════════════════════════════════════════════════════════════════════
+      // PERP DEX DATABASE — all 46 protocols tracked by perpdexlist.com (Apr 7 2026)
+      // Source: https://perpdexlist.com — live snapshot used as base; CoinGecko used
+      // for real-time price supplementation where available.
+      // ══════════════════════════════════════════════════════════════════════════════
+      const PERP_DEX_DATABASE = [
+        // ── LIVE (ranked by 24h volume) ──────────────────────────────────────────
+        {
+          rank: 1,
+          name: "Hyperliquid",
+          vol: 6.62e9,
+          oi: 5.61e9,
+          maker: "0.015%",
+          taker: "0.045%",
+          token: "$HYPE",
+          airdrop: "Season 2",
+          url: "https://hyperliquid.xyz",
+          launched: true,
+        },
+        {
+          rank: 2,
+          name: "tradeXYZ",
+          vol: 5.56e9,
+          oi: 1.84e9,
+          maker: "0.03%",
+          taker: "0.09%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://trade.xyz",
+          launched: true,
+        },
+        {
+          rank: 3,
+          name: "Aster",
+          vol: 2.87e9,
+          oi: 1.87e9,
+          maker: "0.005%",
+          taker: "0.04%",
+          token: "$ASTER",
+          airdrop: "Stage 5",
+          url: "https://aster.exchange",
+          launched: true,
+        },
+        {
+          rank: 4,
+          name: "edgeX",
+          vol: 2.68e9,
+          oi: 1.04e9,
+          maker: "0.012%",
+          taker: "0.038%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://edgex.exchange",
+          launched: true,
+        },
+        {
+          rank: 5,
+          name: "Lighter",
+          vol: 2.41e9,
+          oi: 710.4e6,
+          maker: "0%",
+          taker: "0%",
+          token: "$LIT",
+          airdrop: "Season 3",
+          url: "https://lighter.xyz",
+          launched: true,
+        },
+        {
+          rank: 6,
+          name: "GRVT",
+          vol: 1.91e9,
+          oi: 456.2e6,
+          maker: "-0.0001%",
+          taker: "0.045%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://grvt.io",
+          launched: true,
+        },
+        {
+          rank: 7,
+          name: "ApeX",
+          vol: 1.18e9,
+          oi: 120.2e6,
+          maker: "0.02%",
+          taker: "0.05%",
+          token: "$APEX",
+          airdrop: "—",
+          url: "https://apex.exchange",
+          launched: true,
+        },
+        {
+          rank: 8,
+          name: "Extended",
+          vol: 990.3e6,
+          oi: 337.6e6,
+          maker: "0%",
+          taker: "0.025%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://extended.xyz",
+          launched: true,
+        },
+        {
+          rank: 9,
+          name: "Pacifica",
+          vol: 821.7e6,
+          oi: 78.2e6,
+          maker: "0.015%",
+          taker: "0.04%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://pacifica.fi",
+          launched: true,
+        },
+        {
+          rank: 10,
+          name: "Variational",
+          vol: 708.2e6,
+          oi: 657.3e6,
+          maker: "0%",
+          taker: "0%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://variational.io",
+          launched: true,
+        },
+        {
+          rank: 11,
+          name: "StandX",
+          vol: 557.3e6,
+          oi: 100.5e6,
+          maker: "0.01%",
+          taker: "0.04%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://standx.xyz",
+          launched: true,
+        },
+        {
+          rank: 12,
+          name: "Ostium",
+          vol: 435.0e6,
+          oi: 180.4e6,
+          maker: "0.03%",
+          taker: "0.1%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://ostium.io",
+          launched: true,
+        },
+        {
+          rank: 13,
+          name: "Nado",
+          vol: 416.1e6,
+          oi: 109.5e6,
+          maker: "0.01%",
+          taker: "0.035%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://nado.trade",
+          launched: true,
+        },
+        {
+          rank: 14,
+          name: "dYdX",
+          vol: 337.0e6,
+          oi: 69.1e6,
+          maker: "0.01%",
+          taker: "0.05%",
+          token: "$DYDX",
+          airdrop: "—",
+          url: "https://dydx.exchange",
+          launched: true,
+        },
+        {
+          rank: 15,
+          name: "Dreamcash",
+          vol: 248.0e6,
+          oi: 75.9e6,
+          maker: "0.025%",
+          taker: "0.025%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://dreamcash.trade",
+          launched: true,
+        },
+        {
+          rank: 16,
+          name: "Reya",
+          vol: 200.0e6,
+          oi: 21.5e6,
+          maker: "0.04%",
+          taker: "0.04%",
+          token: "$REYA",
+          airdrop: "Active",
+          url: "https://reya.network",
+          launched: true,
+        },
+        {
+          rank: 17,
+          name: "GMX",
+          vol: 142.5e6,
+          oi: 58.5e6,
+          maker: "0.04%",
+          taker: "0.06%",
+          token: "$GMX",
+          airdrop: "—",
+          url: "https://gmx.io",
+          launched: true,
+        },
+        {
+          rank: 18,
+          name: "Rho",
+          vol: 139.5e6,
+          oi: 70.8e6,
+          maker: "dynamic",
+          taker: "dynamic",
+          token: "—",
+          airdrop: "Active",
+          url: "https://rho.trading",
+          launched: true,
+        },
+        {
+          rank: 19,
+          name: "Felix",
+          vol: 52.3e6,
+          oi: 15.1e6,
+          maker: "0.03%",
+          taker: "0.09%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://felix.trade",
+          launched: true,
+        },
+        {
+          rank: 20,
+          name: "Gains",
+          vol: 49.2e6,
+          oi: 4.8e6,
+          maker: "0.05%",
+          taker: "0.05%",
+          token: "$GNS",
+          airdrop: "—",
+          url: "https://gains.trade",
+          launched: true,
+        },
+        {
+          rank: 21,
+          name: "Markets",
+          vol: 46.2e6,
+          oi: 15.9e6,
+          maker: "0.038%",
+          taker: "0.0431%",
+          token: "$KNTQ",
+          airdrop: "—",
+          url: "https://markets.trade",
+          launched: true,
+        },
+        {
+          rank: 22,
+          name: "Paradex",
+          vol: 44.8e6,
+          oi: 53.4e6,
+          maker: "0%",
+          taker: "0%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://paradex.trade",
+          launched: true,
+        },
+        {
+          rank: 23,
+          name: "Vest",
+          vol: 37.1e6,
+          oi: 64.5e6,
+          maker: "0.01%",
+          taker: "0.01%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://vest.exchange",
+          launched: true,
+        },
+        {
+          rank: 24,
+          name: "Ethereal",
+          vol: 30.4e6,
+          oi: 137.2e6,
+          maker: "0%",
+          taker: "0.03%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://ethereal.trade",
+          launched: true,
+        },
+        {
+          rank: 25,
+          name: "HYENA",
+          vol: 27.9e6,
+          oi: 52.0e6,
+          maker: "0.0167%",
+          taker: "0.05%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://hyena.trade",
+          launched: true,
+        },
+        {
+          rank: 26,
+          name: "Hibachi",
+          vol: 27.3e6,
+          oi: 2.8e6,
+          maker: "0%",
+          taker: "0.045%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://hibachi.xyz",
+          launched: true,
+        },
+        {
+          rank: 27,
+          name: "01",
+          vol: 25.0e6,
+          oi: 4.4e6,
+          maker: "0.01%",
+          taker: "0.035%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://01exchange.io",
+          launched: true,
+        },
+        {
+          rank: 28,
+          name: "Decibel",
+          vol: 23.5e6,
+          oi: 2.5e6,
+          maker: "0.011%",
+          taker: "0.034%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://decibel.finance",
+          launched: true,
+        },
+        {
+          rank: 29,
+          name: "Hotstuff",
+          vol: 21.0e6,
+          oi: 4.2e6,
+          maker: "-0.002%",
+          taker: "0.025%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://hotstuff.trade",
+          launched: true,
+        },
+        {
+          rank: 30,
+          name: "Boros",
+          vol: 17.6e6,
+          oi: 19.7e6,
+          maker: "dynamic",
+          taker: "dynamic",
+          token: "—",
+          airdrop: "—",
+          url: "https://boros.fi",
+          launched: true,
+        },
+        {
+          rank: 31,
+          name: "Avantis",
+          vol: 15.1e6,
+          oi: 7.6e6,
+          maker: "0.06%",
+          taker: "0.06%",
+          token: "$AVNT",
+          airdrop: "Season 3",
+          url: "https://avantisfi.com",
+          launched: true,
+        },
+        {
+          rank: 32,
+          name: "Ventuals",
+          vol: 5.3e6,
+          oi: 9.7e6,
+          maker: "0.03%",
+          taker: "0.09%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://ventuals.xyz",
+          launched: true,
+        },
+        {
+          rank: 33,
+          name: "Perpl",
+          vol: 556e3,
+          oi: 123e3,
+          maker: "0.019%",
+          taker: "0.05%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://perpl.io",
+          launched: true,
+        },
+        {
+          rank: 34,
+          name: "Rocket",
+          vol: 363e3,
+          oi: 29e3,
+          maker: "0.01%",
+          taker: "0.01%",
+          token: "—",
+          airdrop: "Active",
+          url: "https://rocket.trade",
+          launched: true,
+        },
+        {
+          rank: 35,
+          name: "Drift",
+          vol: 0,
+          oi: 124.5e6,
+          maker: "-0.0025%",
+          taker: "0.035%",
+          token: "$DRIFT",
+          airdrop: "—",
+          url: "https://drift.trade",
+          launched: true,
+        },
+        // ── PRE-LAUNCH ──────────────────────────────────────────────────────────
+        {
+          rank: 36,
+          name: "Nunchi",
+          vol: 0,
+          oi: 0,
+          maker: "—",
+          taker: "—",
+          token: "—",
+          airdrop: "Active",
+          url: "",
+          launched: false,
+        },
+        {
+          rank: 37,
+          name: "GTE",
+          vol: 0,
+          oi: 0,
+          maker: "—",
+          taker: "—",
+          token: "—",
+          airdrop: "Active",
+          url: "",
+          launched: false,
+        },
+        {
+          rank: 38,
+          name: "Drake",
+          vol: 0,
+          oi: 0,
+          maker: "—",
+          taker: "—",
+          token: "—",
+          airdrop: "Active",
+          url: "",
+          launched: false,
+        },
+        {
+          rank: 39,
+          name: "Noise",
+          vol: 0,
+          oi: 0,
+          maker: "—",
+          taker: "—",
+          token: "—",
+          airdrop: "Active",
+          url: "",
+          launched: false,
+        },
+        {
+          rank: 40,
+          name: "Euphoria",
+          vol: 0,
+          oi: 0,
+          maker: "—",
+          taker: "—",
+          token: "—",
+          airdrop: "Active",
+          url: "",
+          launched: false,
+        },
+        {
+          rank: 41,
+          name: "Polyester",
+          vol: 0,
+          oi: 0,
+          maker: "—",
+          taker: "—",
+          token: "—",
+          airdrop: "Active",
+          url: "",
+          launched: false,
+        },
+        {
+          rank: 42,
+          name: "Cascade",
+          vol: 0,
+          oi: 0,
+          maker: "—",
+          taker: "—",
+          token: "—",
+          airdrop: "Active",
+          url: "",
+          launched: false,
+        },
+        {
+          rank: 43,
+          name: "Bulk",
+          vol: 0,
+          oi: 0,
+          maker: "—",
+          taker: "—",
+          token: "—",
+          airdrop: "Active",
+          url: "",
+          launched: false,
+        },
+        {
+          rank: 44,
+          name: "HelloTrade",
+          vol: 0,
+          oi: 0,
+          maker: "—",
+          taker: "—",
+          token: "—",
+          airdrop: "Active",
+          url: "",
+          launched: false,
+        },
+        {
+          rank: 45,
+          name: "Ondo Perps",
+          vol: 0,
+          oi: 0,
+          maker: "—",
+          taker: "—",
+          token: "—",
+          airdrop: "Active",
+          url: "",
+          launched: false,
+        },
+        {
+          rank: 46,
+          name: "Bullet",
+          vol: 0,
+          oi: 0,
+          maker: "—",
+          taker: "—",
+          token: "—",
+          airdrop: "Active",
+          url: "",
+          launched: false,
+        },
+      ];
+
+      // Legacy fee lookup kept for CoinGecko name matching
+      const PERP_FEES = Object.fromEntries(
+        PERP_DEX_DATABASE.map((d) => [
+          d.name,
+          { maker: d.maker, taker: d.taker, token: d.token },
+        ]),
+      );
+
+      // ── DEX-only allowlist (all 46 perpdexlist.com names + variants) ─────────────
+      const DEX_PERP_NAMES = new Set([
+        "hyperliquid",
+        "tradexyz",
+        "trade xyz",
+        "aster",
+        "edgex",
+        "edge x",
+        "lighter",
+        "grvt",
+        "apex",
+        "apex protocol",
+        "extended",
+        "pacifica",
+        "variational",
+        "standx",
+        "ostium",
+        "nado",
+        "dydx",
+        "dydx v4",
+        "dydx v3",
+        "dreamcash",
+        "reya",
+        "gmx",
+        "gmx v2",
+        "rho",
+        "felix",
+        "gains",
+        "gains network",
+        "markets",
+        "paradex",
+        "vest",
+        "vest exchange",
+        "ethereal",
+        "hyena",
+        "hibachi",
+        "01",
+        "decibel",
+        "hotstuff",
+        "boros",
+        "avantis",
+        "ventuals",
+        "perpl",
+        "rocket",
+        "drift",
+        "drift protocol",
+        "nunchi",
+        "gte",
+        "drake",
+        "noise",
+        "euphoria",
+        "polyester",
+        "cascade",
+        "bulk",
+        "hellotrade",
+        "hello trade",
+        "ondo perps",
+        "bullet",
+        "synthetix",
+        "synthetix perps",
+        "kwenta",
+        "perpetual protocol",
+        "level finance",
+        "mux protocol",
+        "tigris",
+        "hmx",
+        "logx",
+        "kiloex",
+        "rabbitx",
+        "vela exchange",
+        "unidex",
+        "pika protocol",
+        "vertex protocol",
+        "synfutures",
+        "perennial finance",
+        "pear protocol",
+        "buffer finance",
+        "foxify",
+        "contango",
+      ]);
+      function isDexPerp(name) {
+        const n = (name || "").toLowerCase().trim();
+        return (
+          DEX_PERP_NAMES.has(n) ||
+          [...DEX_PERP_NAMES].some((d) => n.includes(d) || d.includes(n))
+        );
+      }
+
+      // ── ARBITRAGE SCANNER ────────────────────────────────────────────────────────
+      // Uses CoinGecko /derivatives endpoint — no CORS issues, same API as rest of app.
+      // Shows: basis (perp premium vs spot) and cross-DEX price spreads.
+      const DEX_ARB_FILTER = new Set([
+        "hyperliquid",
+        "gmx",
+        "dydx",
+        "dydx v4",
+        "gains network",
+        "gains",
+        "drift",
+        "vertex protocol",
+        "synthetix",
+        "synthetix perps",
+        "kwenta",
+        "mux protocol",
+        "level finance",
+        "apex protocol",
+        "hmx",
+        "lighter",
+        "aevo",
+        "avantis",
+        "logx",
+        "perpetual protocol",
+        "tigris",
+        "vest exchange",
+        "vest",
+        "paradex",
+        "ostium",
+      ]);
+      function isDexArb(name) {
+        const n = (name || "").toLowerCase().trim();
+        return (
+          DEX_ARB_FILTER.has(n) ||
+          [...DEX_ARB_FILTER].some((d) => n.includes(d))
+        );
+      }
+
+      let arbLoaded = false;
+      async function loadArbitrage() {
+        const tbody = document.getElementById("arbTbody");
+        if (!tbody) {
+          console.warn("[loadArbitrage] #arbTbody not found");
+          return;
+        }
+        try {
+          tbody.innerHTML =
+            '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)"><span class="loading-spin">🔄</span> Scanning DEX perp prices via CoinGecko…</td></tr>';
+          // Fetch all perpetual derivative tickers from CoinGecko
+          // Each record has: market, symbol, price, index (spot ref), basis, funding_rate
+          const tickers = await cgFetch(
+            "https://api.coingecko.com/api/v3/derivatives?include_tickers=unexpired",
+          );
+
+          if (!Array.isArray(tickers) || !tickers.length)
+            throw new Error("No derivative data returned");
+
+          // Filter to known DEX perps only, perpetuals only
+          const dexTickers = tickers.filter(
+            (t) =>
+              t.contract_type === "perpetual" &&
+              isDexArb(t.market) &&
+              t.price > 0 &&
+              t.index > 0,
+          );
+
+          if (!dexTickers.length) {
+            // Fallback: show all perps with their basis (perp premium vs spot)
+            const allPerps = tickers.filter(
+              (t) =>
+                t.contract_type === "perpetual" && t.price > 0 && t.index > 0,
+            );
+            renderArbRows(allPerps, false);
+            return;
+          }
+
+          renderArbRows(dexTickers, true);
+          document.getElementById("arbUpdate").textContent =
+            "Updated " +
+            new Date().toLocaleTimeString() +
+            " · Source: CoinGecko derivatives · " +
+            dexTickers.length +
+            " DEX perp contracts · " +
+            "Basis = (perp price − spot) / spot. Positive = perp trades at premium (bull signal).";
+          arbLoaded = true;
+        } catch (e) {
+          tbody.innerHTML =
+            '<tr><td colspan="5" style="padding:30px;text-align:center;color:var(--red)">⚠️ ' +
+            e.message +
+            ". Try refreshing.</td></tr>";
+        }
+      }
+
+      function renderArbRows(tickers, dexOnly) {
+        const tbody = document.getElementById("arbTbody");
+
+        // Group by symbol, find cross-DEX spread
+        const bySymbol = {};
+        for (const t of tickers) {
+          const sym = (t.symbol || "")
+            .replace("-USD", "")
+            .replace("USDT", "")
+            .replace("USDC", "")
+            .toUpperCase()
+            .trim();
+          if (!sym) continue;
+          if (!bySymbol[sym]) bySymbol[sym] = [];
+          bySymbol[sym].push(t);
+        }
+
+        // Build rows: prefer multi-DEX spread, fallback to basis
+        const rows = [];
+        for (const [sym, contracts] of Object.entries(bySymbol)) {
+          const prices = contracts
+            .map((c) => parseFloat(c.price))
+            .filter((p) => p > 0);
+          const spotRef = contracts[0]?.index || 0;
+          if (!prices.length) continue;
+
+          const maxP = Math.max(...prices);
+          const minP = Math.min(...prices);
+          const spread =
+            prices.length > 1
+              ? ((maxP - minP) / minP) * 100
+              : Math.abs(((maxP - spotRef) / spotRef) * 100);
+          if (spread < 0.01) continue;
+
+          const highContract = contracts.find(
+            (c) => parseFloat(c.price) === maxP,
+          );
+          const lowContract =
+            prices.length > 1
+              ? contracts.find((c) => parseFloat(c.price) === minP)
+              : null;
+          const basis = spotRef > 0 ? ((maxP - spotRef) / spotRef) * 100 : null;
+
+          rows.push({
+            sym,
+            spread,
+            maxP,
+            minP,
+            spotRef,
+            highContract,
+            lowContract,
+            basis,
+            count: prices.length,
+          });
+        }
+
+        rows.sort((a, b) => b.spread - a.spread);
+
+        if (!rows.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">No significant spreads found right now.</td></tr>';
+          return;
+        }
+
+        const fmtP = (p) => {
+          if (!p || p <= 0) return "—";
+          if (p >= 1000)
+            return (
+              "$" + p.toLocaleString("en-US", { maximumFractionDigits: 2 })
+            );
+          if (p >= 1) return "$" + p.toFixed(4);
+          return "$" + p.toPrecision(4);
+        };
+
+        tbody.innerHTML = rows
+          .slice(0, 30)
+          .map((r) => {
+            const spreadCls =
+              r.spread > 1 ? "#E8A020" : r.spread > 0.4 ? "#e07040" : "#9078c0";
+            const highVenue = r.highContract?.market || "—";
+            const lowVenue = r.lowContract?.market || "Spot Ref";
+
+            const tradeIdea =
+              r.count > 1
+                ? `<span style="background:rgba(74,222,128,.15);color:#4ade80;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700">LONG ${lowVenue}</span>
+         <span style="background:rgba(248,113,113,.15);color:#f87171;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700;margin-left:4px">SHORT ${highVenue}</span>`
+                : r.basis > 0
+                  ? `<span style="background:rgba(248,113,113,.15);color:#f87171;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700">SHORT PERP</span> <span style="font-size:11px;color:var(--muted)">+ Long spot</span>`
+                  : `<span style="background:rgba(74,222,128,.15);color:#4ade80;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700">LONG PERP</span> <span style="font-size:11px;color:var(--muted)">+ Short spot</span>`;
+
+            const basisTxt =
+              r.basis !== null
+                ? `<span style="font-size:11px;color:${r.basis > 0 ? "#f87171" : r.basis < 0 ? "#4ade80" : "var(--muted)"}"> basis ${r.basis > 0 ? "+" : ""}${r.basis.toFixed(3)}%</span>`
+                : "";
+
+            return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:10px 14px;font-weight:700;color:var(--white);font-family:monospace">${r.sym}</td>
+      <td style="padding:10px 14px;font-family:monospace;font-weight:700;color:${spreadCls}">${r.spread.toFixed(3)}%${basisTxt}</td>
+      <td style="padding:10px 14px;font-family:monospace;font-size:13px;color:#f87171">${fmtP(r.maxP)} <span style="font-size:10px;color:var(--muted)">${highVenue}</span></td>
+      <td style="padding:10px 14px;font-family:monospace;font-size:13px;color:#4ade80">${fmtP(r.minP > 0 ? r.minP : r.spotRef)} <span style="font-size:10px;color:var(--muted)">${r.count > 1 ? lowVenue : "Spot"}</span></td>
+      <td style="padding:10px 14px">${tradeIdea}</td>
+    </tr>`;
+          })
+          .join("");
+
+        if (!document.getElementById("arbUpdate").textContent) {
+          document.getElementById("arbUpdate").textContent =
+            "Updated " +
+            new Date().toLocaleTimeString() +
+            " · Source: CoinGecko · Basis = perp premium vs spot reference · Not financial advice.";
+        }
+        arbLoaded = true;
+      }
+
+      // ── PERPS DATA ────────────────────────────────────────────────────────────────
+      let perpsData = null;
+      let perpsFilter = "all";
+      let perpsSortKey = "dailyVolume";
+      let perpsSortAsc = false;
+
+      async function loadPerps() {
+        const tbody = document.getElementById("perpsTbody");
+        tbody.innerHTML =
+          '<tr><td colspan="9" class="loading-state" style="text-align:center;padding:50px"><span class="loading-spin">🔄</span> Loading 46 DEX perp protocols…</td></tr>';
+        try {
+          // Enrich with live CoinGecko data where names match (best-effort)
+          let cgMap = {};
+          try {
+            const [btcD, cgPage1, cgPage2] = await Promise.all([
+              cgFetch(
+                "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+              ),
+              cgFetch(
+                "https://api.coingecko.com/api/v3/derivatives/exchanges?per_page=20&page=1&order=open_interest_btc_desc",
+              ),
+              cgFetch(
+                "https://api.coingecko.com/api/v3/derivatives/exchanges?per_page=20&page=2&order=open_interest_btc_desc",
+              ).catch(() => []),
+            ]);
+            const btcPrice = btcD?.bitcoin?.usd || 65000;
+            const cgAll = [...(cgPage1 || []), ...(cgPage2 || [])];
+            for (const ex of cgAll) {
+              const key = (ex.name || "").toLowerCase().trim();
+              cgMap[key] = {
+                vol: (ex.trade_volume_24h_btc || 0) * btcPrice,
+                oi: (ex.open_interest_btc || 0) * btcPrice,
+                logo: ex.image,
+                url: ex.url,
+              };
+            }
+          } catch (e) {
+            /* CoinGecko optional */
+          }
+
+          // Build unified dataset: PERP_DEX_DATABASE is the master list
+          perpsData = PERP_DEX_DATABASE.map((d) => {
+            const cgKey = d.name.toLowerCase().trim();
+            const live = cgMap[cgKey] || {};
+            return {
+              ...d,
+              dailyVolume: live.vol || d.vol,
+              openInterest: live.oi || d.oi,
+              logo: live.logo || null,
+              url: live.url || d.url,
+            };
+          });
+
+          // Stats (launched only)
+          const launched = perpsData.filter((p) => p.launched);
+          const totalVol = launched.reduce(
+            (s, p) => s + (p.dailyVolume || 0),
+            0,
+          );
+          const totalOI = launched.reduce(
+            (s, p) => s + (p.openInterest || 0),
+            0,
+          );
+          document.getElementById("perpTotalVol").textContent =
+            "$" + fmtBig(totalVol);
+          document.getElementById("perpTotalOI").textContent =
+            "$" + fmtBig(totalOI);
+          document.getElementById("perpCount").textContent =
+            PERP_DEX_DATABASE.length;
+          document.getElementById("perpVolChg").textContent =
+            Object.keys(cgMap).length + " live via CoinGecko";
+          document.getElementById("perpVolChg").style.color = "var(--muted)";
+
+          renderPerps();
+          document.getElementById("perpsUpdate").textContent =
+            "Source: perpdexlist.com (46 protocols) · Snapshot: Apr 7 2026 · Live enrichment: CoinGecko";
+        } catch (e) {
+          tbody.innerHTML =
+            '<tr><td colspan="9" class="error-state" style="padding:40px;text-align:center">⚠️ ' +
+            e.message +
+            "</td></tr>";
+        }
+      }
+
+      function renderPerps() {
+        if (!perpsData) return;
+        const tbody = document.getElementById("perpsTbody");
+
+        let filtered = perpsData;
+        if (perpsFilter !== "all") {
+          filtered = perpsData.filter(
+            (p) =>
+              (p.name || "").toLowerCase().includes(perpsFilter) ||
+              (p.token || "").toLowerCase().includes(perpsFilter),
+          );
+        }
+
+        const launched = filtered.filter((p) => p.launched);
+        const prelaunched = filtered.filter((p) => !p.launched);
+
+        const sorted = [...launched].sort((a, b) => {
+          const av = a[perpsSortKey] || 0,
+            bv = b[perpsSortKey] || 0;
+          return perpsSortAsc ? av - bv : bv - av;
+        });
+
+        if (!sorted.length && !prelaunched.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--muted)">No protocols found.</td></tr>';
+          return;
+        }
+
+        const totalVol = launched.reduce((s, p) => s + (p.dailyVolume || 0), 0);
+
+        const makeRow = (p, rank, pre) => {
+          const volShare =
+            totalVol > 0
+              ? (((p.dailyVolume || 0) / totalVol) * 100).toFixed(1)
+              : "0.0";
+          const makerCls =
+            p.maker && p.maker.startsWith("-")
+              ? "val-fee-rebate"
+              : p.maker === "0%"
+                ? "val-fee-zero"
+                : p.maker === "dynamic"
+                  ? "val-fee-dynamic"
+                  : "val-fee";
+          const takerCls =
+            p.taker === "0%"
+              ? "val-fee-zero"
+              : p.taker === "dynamic"
+                ? "val-fee-dynamic"
+                : "val-fee";
+          const logo = p.logo
+            ? `<img src="${p.logo}" style="width:28px;height:28px;border-radius:6px;object-fit:cover">`
+            : `<div style="width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,var(--flesh),var(--core));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff">${p.name.substring(0, 2).toUpperCase()}</div>`;
+          const nameCell = p.url
+            ? `<a href="${p.url}" target="_blank" style="color:var(--white);text-decoration:none;font-weight:600">${p.name}</a>`
+            : `<span style="font-weight:600">${p.name}</span>`;
+          const airdropBadge =
+            p.airdrop && p.airdrop !== "—"
+              ? `<span style="font-size:11px;color:#E8A020;font-weight:600">+ ${p.airdrop}</span>`
+              : "—";
+          return `<tr${pre ? ' style="opacity:0.45"' : ""}>
+      <td class="col-rank" style="color:var(--muted);font-size:12px">${rank}</td>
+      <td><div style="display:flex;align-items:center;gap:10px">${logo}${nameCell}</div></td>
+      <td class="val-primary">${p.dailyVolume > 0 ? "$" + fmtBig(p.dailyVolume) : pre ? '<span style="color:var(--muted);font-size:12px">not launched</span>' : "—"}</td>
+      <td class="val-primary">${p.openInterest > 0 ? "$" + fmtBig(p.openInterest) : pre ? "—" : "—"}</td>
+      <td>
+        <div style="background:var(--bg3);border-radius:4px;height:6px;width:80px;overflow:hidden">
+          <div style="background:var(--core);height:100%;width:${Math.min(parseFloat(volShare) || 0, 100)}%;border-radius:4px"></div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">${volShare}%</div>
+      </td>
+      <td class="${makerCls}">${p.maker}</td>
+      <td class="${takerCls}">${p.taker}</td>
+      <td class="val-token">${p.token}</td>
+      <td>${airdropBadge}</td>
+    </tr>`;
+        };
+
+        let rows = sorted.map((p, i) => makeRow(p, i + 1, false)).join("");
+
+        if (prelaunched.length) {
+          rows += `<tr class="divider-row"><td colspan="9" style="padding:10px 24px"><span style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600">⏳ Pre-launch (${prelaunched.length})</span></td></tr>`;
+          rows += prelaunched
+            .map((p, i) => makeRow(p, sorted.length + i + 1, true))
+            .join("");
+        }
+
+        tbody.innerHTML = rows;
+      }
+
+      function filterPerps(chain, btn) {
+        perpsFilter = chain;
+        document
+          .querySelectorAll(".pfilt-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderPerps();
+      }
+
+      function sortPerps(key, th) {
+        if (perpsSortKey === key) perpsSortAsc = !perpsSortAsc;
+        else {
+          perpsSortKey = key;
+          perpsSortAsc = false;
+        }
+        document
+          .querySelectorAll(".perps-table th")
+          .forEach((t) => t.classList.remove("sort-asc", "sort-desc"));
+        th.classList.add(perpsSortAsc ? "sort-asc" : "sort-desc");
+        renderPerps();
+      }
+
+      // ── DEXSCREENER HOT PAIRS ─────────────────────────────────────────────────────
+      async function loadDexScreener() {
+        const el = document.getElementById("dexsList");
+        document.getElementById("dexsTime").textContent = "";
+        try {
+          // Use DexScreener's boosted tokens endpoint (fully public, no key needed)
+          const res = await fetch(
+            "https://api.dexscreener.com/token-boosts/top/v1",
+          );
+          if (!res.ok) throw new Error("DexScreener " + res.status);
+          const boosts = await res.json();
+          if (!boosts || !boosts.length) throw new Error("No data");
+
+          // Get top 8, fetch their pair data
+          const top = boosts.slice(0, 8);
+          const addresses = top.map((t) => t.tokenAddress).join(",");
+          const chainId = top[0].chainId || "ethereum";
+
+          // Fetch price data for these tokens
+          let pairs = [];
+          try {
+            const pRes = await fetch(
+              `https://api.dexscreener.com/latest/dex/tokens/${addresses}`,
+            );
+            if (pRes.ok) {
+              const pData = await pRes.json();
+              pairs = pData.pairs || [];
+            }
+          } catch (e) {
+            /* pairs optional */
+          }
+
+          // Build lookup: tokenAddress → best pair (highest liquidity)
+          const pairMap = {};
+          pairs.forEach((pair) => {
+            const addr = (pair.baseToken?.address || "").toLowerCase();
+            if (
+              !pairMap[addr] ||
+              (pair.liquidity?.usd || 0) > (pairMap[addr].liquidity?.usd || 0)
+            ) {
+              pairMap[addr] = pair;
+            }
+          });
+
+          el.innerHTML = top
+            .map((tok) => {
+              const pair = pairMap[(tok.tokenAddress || "").toLowerCase()];
+              const sym =
+                pair?.baseToken?.symbol || tok.tokenAddress.slice(0, 6) + "…";
+              const name = pair?.baseToken?.name || "Unknown";
+              const price = pair?.priceUsd
+                ? "$" + fmtPrice(parseFloat(pair.priceUsd))
+                : "—";
+              const chg24 = pair?.priceChange?.h24;
+              const vol24 = pair?.volume?.h24;
+              const liq = pair?.liquidity?.usd;
+              const chain = (tok.chainId || "")
+                .replace("bsc", "BSC")
+                .replace("ethereum", "ETH")
+                .replace("avalanche", "AVAX")
+                .replace("solana", "SOL")
+                .replace("arbitrum", "ARB")
+                .replace("base", "BASE")
+                .replace("polygon", "POL");
+              const chgHtml =
+                chg24 != null
+                  ? `<span class="dex-chg" style="color:${chg24 >= 0 ? "var(--flesh)" : "var(--red)"}">${chg24 >= 0 ? "+" : ""}${chg24.toFixed(2)}%</span>`
+                  : `<span class="dex-chg" style="color:var(--muted)">—</span>`;
+              return `<div class="dex-pair-item">
+        <span class="dex-chain-badge">${chain}</span>
+        <span class="dex-sym" title="${name}">${sym}</span>
+        <span class="dex-price">${price}</span>
+        ${chgHtml}
+        ${vol24 ? `<span class="dex-vol">Vol $${fmtBig(vol24)}</span>` : ""}
+        ${liq ? `<span class="dex-liq">Liq $${fmtBig(liq)}</span>` : ""}
+      </div>`;
+            })
+            .join("");
+
+          document.getElementById("dexsTime").textContent =
+            new Date().toLocaleTimeString();
+        } catch (e) {
+          el.innerHTML =
+            '<div class="error-state" style="font-size:13px">⚠️ DexScreener unavailable — ' +
+            e.message +
+            "</div>";
+        }
+      }
+
+      // ── SCROLL REVEAL ─────────────────────────────────────────────────────────────
+      const revealObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              e.target.classList.add("visible");
+              revealObserver.unobserve(e.target);
+            }
+          });
+        },
+        { threshold: 0.12 },
+      );
+      function bindReveal() {
+        document
+          .querySelectorAll(".reveal:not(.visible)")
+          .forEach((el) => revealObserver.observe(el));
+      }
+      bindReveal();
+
+      // ── NAV SLIDING INDICATOR ─────────────────────────────────────────────────────
+      function updateIndicator() {
+        const active = document.querySelector(".htab.active");
+        if (!active) return;
+        let indicator = document.querySelector(".nav-indicator");
+        if (!indicator) {
+          indicator = document.createElement("div");
+          indicator.className = "nav-indicator";
+          document.querySelector(".header-tabs").appendChild(indicator);
+        }
+        indicator.style.left = active.offsetLeft + "px";
+        indicator.style.width = active.offsetWidth + "px";
+      }
+      updateIndicator();
+
+      // ── MOBILE NAV ────────────────────────────────────────────────────────────────
+      function toggleMobileNav() {
+        document.getElementById("mobileNav").classList.toggle("open");
+      }
+      function showPanelMobile(id) {
+        const btn = document.querySelector(
+          `.header-tabs .htab:nth-child(${["intel", "compare", "heatmap", "signals", "perps"].indexOf(id) + 1})`,
+        );
+        showPanel(id, btn || document.querySelector(".htab"));
+        toggleMobileNav();
+      }
+
+      // ── COUNTER ANIMATION FOR STATS ───────────────────────────────────────────────
+      function animateCounter(el, target, suffix) {
+        const dur = 1200,
+          start = performance.now();
+        (function step(now) {
+          const p = Math.min((now - start) / dur, 1);
+          const ease = 1 - Math.pow(1 - p, 3);
+          el.textContent = Math.round(ease * target) + (suffix || "");
+          if (p < 1) requestAnimationFrame(step);
+        })(start);
+      }
+
+      // Observe stat items for counter
+      const counterObs = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              const el = e.target.querySelector("[data-target]");
+              if (el) animateCounter(el, parseInt(el.dataset.target), "");
+              counterObs.unobserve(e.target);
+            }
+          });
+        },
+        { threshold: 0.5 },
+      );
+      document
+        .querySelectorAll(".stat-item")
+        .forEach((el) => counterObs.observe(el));
+
+      // ── SINGLE AUTHORITATIVE PANEL SWITCHER ──────────────────────────────────────
+      let perpsLoaded = false;
+      let heatmapSwitched = false;
+
+      window.showPanel = function (id, btn) {
+        // Switch panels
+        document
+          .querySelectorAll(".panel")
+          .forEach((p) => p.classList.remove("active"));
+        document
+          .querySelectorAll(".htab")
+          .forEach((b) => b.classList.remove("active"));
+        const panel = document.getElementById("panel-" + id);
+        if (!panel) return;
+        panel.classList.add("active");
+        if (btn) btn.classList.add("active");
+
+        // Animate reveal + indicator
+        setTimeout(() => {
+          try {
+            bindReveal();
+          } catch (e) {}
+          try {
+            updateIndicator();
+          } catch (e) {}
+        }, 50);
+
+        // Per-panel lazy loading
+        if (id === "heatmap" && !heatmapLoaded)
+          loadHeatmap("decentralized-finance-defi");
+        if (id === "compare" && document.getElementById("assetInput"))
+          document.getElementById("assetInput").focus();
+        if (id === "perps" && !perpsLoaded) {
+          perpsLoaded = true;
+          loadPerps();
+        }
+        if (id === "signals") {
+          if (!signalsLoaded) {
+            signalsLoaded = true;
+            loadSignals();
+          }
+          if (!arbLoaded) {
+            setTimeout(loadArbitrage, 1500);
+          }
+        }
+      };
+    </script>
+  </body>
+</html>

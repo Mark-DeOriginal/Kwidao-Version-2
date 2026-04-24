@@ -1,0 +1,314 @@
+.p2p-app {
+  --p2p-bg: var(--theme-canvas);
+  --p2p-bg-soft: var(--theme-canvas-alt);
+  --p2p-panel: color-mix(in srgb, white 84%, var(--theme-surface) 16%);
+  --p2p-text: var(--theme-text-strong);
+  --p2p-muted: var(--theme-text-muted);
+  --p2p-border: var(--theme-border-subtle);
+  --p2p-primary: var(--theme-primary);
+  --p2p-primary-strong: var(--theme-primary-strong);
+  --p2p-danger: var(--theme-danger);
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 12% 18%, var(--theme-spotlight), transparent 38%),
+    radial-gradient(circle at 92% 10%, var(--theme-spotlight-warm), transparent 32%),
+    linear-gradient(180deg, var(--p2p-bg) 0%, var(--p2p-bg-soft) 100%);
+  color: var(--p2p-text);
+  font-family: var(--font-p2p-ui), "Segoe UI", sans-serif;
+}
+
+.p2p-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid color-mix(in srgb, var(--p2p-border) 80%, white);
+  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--p2p-bg) 86%, white);
+}
+
+.p2p-topbar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.9rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.p2p-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--p2p-text);
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.p2p-brand-logo {
+  height: 1.75rem;
+  width: auto;
+}
+
+.p2p-nav-links {
+  display: none;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.p2p-nav-link {
+  border-radius: 0.75rem;
+  text-decoration: none;
+  color: var(--p2p-muted);
+  font-size: 0.86rem;
+  padding: 0.45rem 0.75rem;
+  transition: 160ms ease;
+}
+
+.p2p-nav-link:hover {
+  color: var(--p2p-text);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.p2p-topbar-cta {
+  margin-left: auto;
+}
+
+.p2p-view {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 2rem;
+}
+
+.p2p-hero {
+  border: 1px solid var(--p2p-border);
+  border-radius: 1.6rem;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--theme-info) 16%, transparent), transparent 40%),
+    linear-gradient(
+      160deg,
+      var(--p2p-panel),
+      color-mix(in srgb, var(--theme-primary-soft) 38%, white)
+    );
+  box-shadow: 0 20px 45px color-mix(in srgb, var(--theme-primary) 16%, transparent);
+  padding: 1.5rem;
+}
+
+.p2p-panel {
+  border: 1px solid var(--p2p-border);
+  border-radius: 1.2rem;
+  background: var(--p2p-panel);
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--theme-primary) 10%, transparent);
+  padding: 1.15rem;
+}
+
+.p2p-eyebrow {
+  display: inline-flex;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 28%, var(--p2p-border));
+  background: color-mix(in srgb, var(--theme-primary) 10%, white);
+  color: var(--p2p-primary-strong);
+  padding: 0.3rem 0.65rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.p2p-title {
+  margin-top: 0.75rem;
+  font-size: 1.95rem;
+  line-height: 1.15;
+  font-weight: 700;
+  color: var(--p2p-text);
+}
+
+.p2p-subtitle {
+  margin-top: 0.65rem;
+  color: var(--p2p-muted);
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.p2p-section-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--p2p-text);
+}
+
+.p2p-muted {
+  color: var(--p2p-muted);
+}
+
+.p2p-grid-2 {
+  display: grid;
+  gap: 1rem;
+}
+
+.p2p-grid-3 {
+  display: grid;
+  gap: 1rem;
+}
+
+.p2p-btn-primary,
+.p2p-btn-secondary,
+.p2p-btn-danger {
+  border-radius: 0.78rem;
+  padding: 0.58rem 0.95rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 140ms ease;
+  border: 1px solid transparent;
+}
+
+.p2p-btn-primary {
+  background: linear-gradient(135deg, var(--theme-primary), var(--theme-info));
+  color: white;
+}
+
+.p2p-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--theme-primary) 26%, transparent);
+}
+
+.p2p-btn-secondary {
+  background: white;
+  color: var(--p2p-text);
+  border-color: var(--p2p-border);
+}
+
+.p2p-btn-secondary:hover {
+  background: color-mix(in srgb, var(--theme-surface-soft) 50%, white);
+}
+
+.p2p-btn-danger {
+  color: var(--p2p-danger);
+  border-color: color-mix(in srgb, var(--p2p-danger) 50%, var(--p2p-border));
+  background: white;
+}
+
+.p2p-btn-danger:hover {
+  background: color-mix(in srgb, var(--p2p-danger) 8%, white);
+}
+
+.p2p-input,
+.p2p-select,
+.p2p-textarea {
+  width: 100%;
+  border: 1px solid var(--p2p-border);
+  border-radius: 0.78rem;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--p2p-text);
+  padding: 0.58rem 0.7rem;
+  font-size: 0.87rem;
+}
+
+.p2p-textarea {
+  resize: vertical;
+}
+
+.p2p-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.p2p-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.p2p-kbd {
+  font-family: var(--font-p2p-mono), Consolas, monospace;
+  font-size: 0.78rem;
+}
+
+.p2p-card-compact {
+  border: 1px solid var(--p2p-border);
+  border-radius: 0.95rem;
+  background: color-mix(in srgb, white 88%, var(--theme-surface) 12%);
+  padding: 0.85rem;
+}
+
+.p2p-stat {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--theme-primary-strong);
+}
+
+.p2p-offer-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.p2p-offer-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.p2p-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--theme-positive) 18%, white);
+  color: var(--theme-positive);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.p2p-faq-item summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--p2p-text);
+}
+
+.p2p-faq-item p {
+  margin-top: 0.45rem;
+}
+
+@media (min-width: 768px) {
+  .p2p-topbar-inner {
+    padding: 0.95rem 1.4rem;
+  }
+
+  .p2p-view {
+    padding: 1.6rem 1.4rem 2.4rem;
+  }
+
+  .p2p-nav-links {
+    display: inline-flex;
+  }
+
+  .p2p-hero {
+    padding: 2rem;
+  }
+
+  .p2p-title {
+    font-size: 2.7rem;
+  }
+
+  .p2p-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .p2p-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .p2p-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .p2p-offer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+

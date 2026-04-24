@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Subscriber {
+  id        Int      @id @default(autoincrement())
+  name      String
+  surname   String
+  email     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("subscribers")
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum ModeratorApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TradeStatus {
+  AWAITING_PAYMENT
+  PAYMENT_SENT
+  RELEASED
+  DISPUTED
+  CANCELLED
+}
+
+enum MessageType {
+  TEXT
+  RECEIPT
+  SYSTEM
+}
+
+enum DisputeStatus {
+  OPEN
+  RESOLVED
+}
+
+enum NotificationType {
+  DISPUTE_ASSIGNED
+  DISPUTE_OPENED
+  TRADE_UPDATED
+  MODERATOR_APPLICATION
+}
+
+model User {
+  id                     String                 @id @default(cuid())
+  walletAddress          String                 @unique @map("wallet_address")
+  role                   UserRole               @default(USER)
+  createdAt              DateTime               @default(now()) @map("created_at")
+  updatedAt              DateTime               @updatedAt @map("updated_at")
+  sessions               Session[]
+  moderatorApplication   ModeratorApplication?
+  moderatorAssignments   Dispute[]              @relation("ModeratorAssignments")
+  openedDisputes         Dispute[]              @relation("DisputeOpenedBy")
+  buyerTrades            Trade[]                @relation("TradeBuyer")
+  sellerTrades           Trade[]                @relation("TradeSeller")
+  messages               TradeMessage[]
+  notifications          Notification[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model AuthNonce {
+  walletAddress String   @id @map("wallet_address")
+  nonce         String
+  expiresAt     DateTime @map("expires_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("auth_nonces")
+}
+
+model ModeratorApplication {
+  id              String                     @id @default(cuid())
+  userId          String                     @unique @map("user_id")
+  fullName        String                     @map("full_name")
+  email           String
+  country         String
+  idType          String                     @map("id_type")
+  idNumber        String                     @map("id_number")
+  experience      String
+  status          ModeratorApplicationStatus @default(PENDING)
+  createdAt       DateTime                   @default(now()) @map("created_at")
+  reviewedAt      DateTime?                  @map("reviewed_at")
+  reviewedByUserId String?                   @map("reviewed_by_user_id")
+  user            User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@map("moderator_applications")
+}
+
+model Trade {
+  id               String        @id @default(cuid())
+  buyerId          String        @map("buyer_id")
+  sellerId         String        @map("seller_id")
+  assetSymbol      String        @map("asset_symbol")
+  cryptoAmount     Decimal       @db.Decimal(20, 8) @map("crypto_amount")
+  fiatAmount       Decimal       @db.Decimal(20, 2) @map("fiat_amount")
+  fiatCurrency     String        @default("USD") @map("fiat_currency")
+  status           TradeStatus   @default(AWAITING_PAYMENT)
+  receiptUrl       String?       @map("receipt_url")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+  buyer            User          @relation("TradeBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  seller           User          @relation("TradeSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  messages         TradeMessage[]
+  dispute          Dispute?
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([status])
+  @@map("trades")
+}
+
+model TradeMessage {
+  id        String      @id @default(cuid())
+  tradeId   String      @map("trade_id")
+  senderId  String      @map("sender_id")
+  type      MessageType @default(TEXT)
+  content   String
+  createdAt DateTime    @default(now()) @map("created_at")
+  trade     Trade       @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  sender    User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([tradeId, createdAt])
+  @@map("trade_messages")
+}
+
+model Dispute {
+  id                  String       @id @default(cuid())
+  tradeId             String       @unique @map("trade_id")
+  openedByUserId      String       @map("opened_by_user_id")
+  assignedModeratorId String?      @map("assigned_moderator_id")
+  status              DisputeStatus @default(OPEN)
+  reason              String
+  resolutionNote      String?      @map("resolution_note")
+  createdAt           DateTime     @default(now()) @map("created_at")
+  resolvedAt          DateTime?    @map("resolved_at")
+  trade               Trade        @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  openedBy            User         @relation("DisputeOpenedBy", fields: [openedByUserId], references: [id], onDelete: Cascade)
+  assignedModerator   User?        @relation("ModeratorAssignments", fields: [assignedModeratorId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([assignedModeratorId])
+  @@map("disputes")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String           @map("user_id")
+  type      NotificationType
+  title     String
+  body      String
+  readAt    DateTime?        @map("read_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}

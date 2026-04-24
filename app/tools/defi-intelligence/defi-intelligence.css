@@ -1,0 +1,101 @@
+.defi-ticker-mask {
+  overflow: hidden;
+  position: relative;
+}
+
+.defi-ticker-track {
+  display: flex;
+  width: max-content;
+  animation: defiTicker 42s linear infinite;
+}
+
+.defi-ticker-mask:hover .defi-ticker-track {
+  animation-play-state: paused;
+}
+
+@keyframes defiTicker {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.defi-arc {
+  transform-origin: center;
+  transition: stroke-dasharray 240ms ease;
+}
+
+.di-page {
+  --di-card-radius: 14px;
+  --di-panel-radius: 18px;
+}
+
+.di-shell {
+  max-width: 1200px;
+}
+
+.di-tabsbar {
+  border: 1px solid var(--theme-border-subtle);
+  background: color-mix(in srgb, var(--theme-surface-strong) 76%, white);
+  border-radius: 12px;
+  padding: 8px;
+}
+
+.di-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.di-tab {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--theme-text-soft);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.di-tab:hover {
+  color: var(--theme-text-strong);
+}
+
+.di-tab.active {
+  color: var(--theme-primary);
+  border-color: color-mix(in srgb, var(--theme-primary) 22%, var(--theme-border));
+  background: color-mix(in srgb, var(--theme-primary) 9%, white);
+}
+
+.di-panel {
+  background: linear-gradient(145deg, var(--theme-surface) 0%, var(--theme-surface-contrast) 100%);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: var(--di-panel-radius);
+  padding: 36px;
+}
+
+@media (max-width: 768px) {
+  .di-panel {
+    padding: 24px 18px;
+  }
+}
+
+.di-panel .theme-card,
+.di-panel .theme-table-shell,
+.di-panel .theme-panel,
+.di-panel .theme-panel-solid {
+  border-radius: var(--di-card-radius) !important;
+}
+
+.di-panel .theme-button-primary,
+.di-panel .theme-button-secondary {
+  border-radius: 9px;
+}
+
+.di-panel .theme-field {
+  border-radius: 10px;
+}
