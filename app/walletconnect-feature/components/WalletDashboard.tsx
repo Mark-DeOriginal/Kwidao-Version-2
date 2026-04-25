@@ -141,18 +141,18 @@ export default function WalletDashboard() {
             <div className={styles.table}>
               <div className={styles.tableHead}>Asset</div>
               <div className={styles.tableHead}>Balance</div>
-              <div className={styles.tableHead}>Price</div>
               <div className={styles.tableHead}>Value</div>
+              <div className={styles.tableHead}>Asset Price</div>
 
               {details.assets.map((asset) => (
                 <div key={asset.symbol} className={styles.tableRow}>
                   <div>{asset.symbol}</div>
                   <div>{formatDisplayAmount(asset.balance, 8)}</div>
                   <div>
-                    {asset.priceUsd !== null ? formatCurrencyUsd(asset.priceUsd) : "Unavailable"}
+                    {asset.valueUsd !== null ? formatCurrencyUsd(asset.valueUsd) : "Unavailable"}
                   </div>
                   <div>
-                    {asset.valueUsd !== null ? formatCurrencyUsd(asset.valueUsd) : "Unavailable"}
+                    {asset.priceUsd !== null ? formatCurrencyUsd(asset.priceUsd) : "Unavailable"}
                   </div>
                 </div>
               ))}
