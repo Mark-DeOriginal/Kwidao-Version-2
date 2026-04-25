@@ -5,7 +5,12 @@ import { usePathname } from "next/navigation";
 import Footer from "./Footer";
 import Header from "./Header";
 
-const IMMERSIVE_TOOL_PREFIXES = ["/tools/grid-bot", "/tools/market-analyzer", "/p2p"];
+const IMMERSIVE_TOOL_PREFIXES = [
+  "/tools/grid-bot",
+  "/tools/market-analyzer",
+  "/p2p",
+  "/walletconnect",
+];
 
 export default function SiteShell({
   children,

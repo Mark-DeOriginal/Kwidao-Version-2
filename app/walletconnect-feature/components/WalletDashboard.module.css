@@ -1,0 +1,194 @@
+.emptyState,
+.dashboard {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2.5rem;
+}
+
+.emptyState {
+  border: 1px solid var(--wc-border);
+  border-radius: 1rem;
+  background: var(--wc-surface);
+  box-shadow: var(--wc-shadow-soft);
+}
+
+.emptyState h2 {
+  margin: 0;
+  color: var(--wc-text-strong);
+}
+
+.emptyState p {
+  margin: 0.75rem 0 0;
+  color: var(--wc-text-muted);
+}
+
+.heroCard {
+  border: 1px solid var(--wc-border);
+  border-radius: 1rem;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--wc-brand-primary) 8%, white),
+    color-mix(in srgb, var(--wc-brand-primary) 2%, #f8fafc)
+  );
+  box-shadow: var(--wc-shadow-soft);
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.kicker {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: color-mix(in srgb, var(--wc-brand-primary) 76%, #0f172a);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.title {
+  margin: 0.45rem 0 0;
+  color: var(--wc-text-strong);
+  font-size: 1.25rem;
+}
+
+.meta {
+  margin: 0.45rem 0 0;
+  color: var(--wc-text-muted);
+  font-size: 0.92rem;
+}
+
+.disconnectButton {
+  border: 1px solid color-mix(in srgb, var(--wc-danger) 36%, #fff);
+  background: color-mix(in srgb, var(--wc-danger) 10%, #fff);
+  color: color-mix(in srgb, var(--wc-danger) 70%, #1f2937);
+  border-radius: 999px;
+  padding: 0.5rem 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.info {
+  margin: 1rem 0 0;
+  color: var(--wc-text-muted);
+}
+
+.error {
+  margin: 1rem 0 0;
+  color: color-mix(in srgb, var(--wc-danger) 76%, #2f1d1d);
+  font-weight: 600;
+}
+
+.grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.card {
+  border: 1px solid var(--wc-border);
+  border-radius: 1rem;
+  background: var(--wc-surface);
+  box-shadow: var(--wc-shadow-soft);
+  padding: 0.9rem;
+}
+
+.cardLabel {
+  margin: 0;
+  color: var(--wc-text-muted);
+  font-size: 0.82rem;
+}
+
+.cardValue {
+  margin: 0.5rem 0 0;
+  color: var(--wc-text-strong);
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.cardValueSmall {
+  margin: 0.5rem 0 0;
+  color: var(--wc-text-strong);
+  font-size: 0.92rem;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.cardHint {
+  margin: 0.4rem 0 0;
+  color: var(--wc-text-muted);
+  font-size: 0.8rem;
+}
+
+.actionRow {
+  margin-top: 0.55rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.actionButton {
+  border: 1px solid var(--wc-border);
+  border-radius: 0.65rem;
+  background: #fff;
+  color: var(--wc-text-strong);
+  padding: 0.35rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.tableCard {
+  margin-top: 0.9rem;
+  border: 1px solid var(--wc-border);
+  border-radius: 1rem;
+  background: var(--wc-surface);
+  box-shadow: var(--wc-shadow-soft);
+  padding: 1rem;
+}
+
+.tableCard h3 {
+  margin: 0 0 0.75rem;
+  color: var(--wc-text-strong);
+}
+
+.table {
+  display: grid;
+  grid-template-columns: 1.1fr 1.3fr 1fr 1fr;
+  gap: 0.4rem 0.65rem;
+  align-items: center;
+}
+
+.tableHead {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--wc-text-muted);
+  font-weight: 700;
+}
+
+.tableRow {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1.1fr 1.3fr 1fr 1fr;
+  gap: 0.4rem 0.65rem;
+  align-items: center;
+  border-top: 1px solid color-mix(in srgb, var(--wc-border) 82%, white);
+  padding-top: 0.45rem;
+  font-size: 0.9rem;
+  color: var(--wc-text-strong);
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .table,
+  .tableRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+

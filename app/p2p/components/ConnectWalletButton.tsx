@@ -12,7 +12,7 @@ type EIP1193Provider = {
 
 declare global {
   interface Window {
-    ethereum?: EIP1193Provider;
+    ethereum?: any;
   }
 }
 
@@ -43,7 +43,7 @@ function getInjectedProviders(): EIP1193Provider[] {
   if (!window.ethereum) return [];
   const walletPool = window.ethereum.providers || [window.ethereum];
   const uniqueProviders = Array.from(new Set(walletPool));
-  return uniqueProviders;
+  return uniqueProviders as EIP1193Provider[];
 }
 
 function pickProvider(type: "metamask" | "evm"): EIP1193Provider | null {

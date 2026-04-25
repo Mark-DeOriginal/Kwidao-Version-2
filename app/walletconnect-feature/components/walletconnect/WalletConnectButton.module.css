@@ -1,0 +1,65 @@
+.connectButton,
+.connectedButton,
+.warningButton {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+  min-height: 42px;
+  padding: 0.55rem 1rem;
+}
+
+.connectButton {
+  background: linear-gradient(
+    140deg,
+    var(--wc-brand-primary),
+    color-mix(in srgb, var(--wc-brand-primary) 60%, #111827)
+  );
+  color: #ffffff;
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--wc-brand-primary) 28%, transparent);
+}
+
+.connectButton:hover {
+  transform: translateY(-1px);
+}
+
+.connectedButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: color-mix(in srgb, var(--wc-brand-primary) 10%, white);
+  border-color: color-mix(in srgb, var(--wc-brand-primary) 26%, white);
+  color: var(--wc-text-strong);
+}
+
+.connectedButton:hover {
+  transform: translateY(-1px);
+}
+
+.chainDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--wc-positive);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--wc-positive) 24%, transparent);
+}
+
+.connectedLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.warningButton {
+  background: color-mix(in srgb, var(--wc-warning) 16%, white);
+  border-color: color-mix(in srgb, var(--wc-warning) 36%, white);
+  color: var(--wc-text-strong);
+}
+
