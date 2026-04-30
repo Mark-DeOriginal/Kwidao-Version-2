@@ -55,6 +55,12 @@ const TOKENS = {
   },
 };
 
+const AVALANCHE_RPC_URL =
+  process.env.NEXT_PUBLIC_WALLETCONNECT_EVM_RPC_URL?.trim() ||
+  "https://api.avax.network/ext/bc/C/rpc";
+const BASE_RPC_URL =
+  process.env.NEXT_PUBLIC_BASE_RPC_URL?.trim() || "https://mainnet.base.org";
+
 function cloneBot(bot: BotState): BotState {
   return {
     ...bot,
@@ -1167,14 +1173,14 @@ export function useGridBot() {
         chainId: "0xa86a",
         chainName: "Avalanche C-Chain",
         nativeCurrency: { name: "AVAX", symbol: "AVAX", decimals: 18 },
-        rpcUrls: ["https://api.avax.network/ext/bc/C/rpc"],
+        rpcUrls: [AVALANCHE_RPC_URL],
         blockExplorerUrls: ["https://snowtrace.io"],
       },
       base: {
         chainId: "0x2105",
         chainName: "Base",
         nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
-        rpcUrls: ["https://mainnet.base.org"],
+        rpcUrls: [BASE_RPC_URL],
         blockExplorerUrls: ["https://basescan.org"],
       },
     };

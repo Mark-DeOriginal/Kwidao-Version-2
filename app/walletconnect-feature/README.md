@@ -29,6 +29,8 @@ Optional:
 ```env
 NEXT_PUBLIC_WALLETCONNECT_DEFAULT_CHAIN=43114
 WALLETCONNECT_EVM_RPC_URL=https://api.avax.network/ext/bc/C/rpc
+NEXT_PUBLIC_WALLETCONNECT_EVM_RPC_URL=https://api.avax.network/ext/bc/C/rpc
+NEXT_PUBLIC_BASE_RPC_URL=https://mainnet.base.org
 ```
 
 ## Copy Checklist (Another Project)

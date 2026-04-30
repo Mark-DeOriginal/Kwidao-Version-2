@@ -20,6 +20,10 @@ type Props = {
   walletAddress?: string;
 };
 
+const AVALANCHE_RPC_URL =
+  process.env.NEXT_PUBLIC_WALLETCONNECT_EVM_RPC_URL?.trim() ||
+  "https://api.avax.network/ext/bc/C/rpc";
+
 async function loginWallet(walletAddress: string) {
   const response = await fetch("/api/p2p/auth/wallet", {
     method: "POST",
@@ -70,7 +74,7 @@ async function ensureAvalancheChain(provider: EIP1193Provider) {
             chainId: "0xa86a",
             chainName: "Avalanche C-Chain",
             nativeCurrency: { name: "AVAX", symbol: "AVAX", decimals: 18 },
-            rpcUrls: ["https://api.avax.network/ext/bc/C/rpc"],
+            rpcUrls: [AVALANCHE_RPC_URL],
             blockExplorerUrls: ["https://snowtrace.io/"],
           },
         ],

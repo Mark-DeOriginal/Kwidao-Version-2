@@ -7,7 +7,7 @@ export async function getWalletDetails(
   connection: WalletConnectionMeta,
 ): Promise<WalletDetailsResponse> {
   const [nativeBalance, pricesResult] = await Promise.all([
-    getNativeBalance(connection.address),
+    getNativeBalance(connection.address).catch(() => "0"),
     getWalletPrices().catch(() => ({
       prices: [] as Array<{ symbol: string; usd: number; usd24hChange: number | null }>,
       updatedAt: new Date().toISOString(),
@@ -28,7 +28,7 @@ export async function getWalletDetails(
         asset.contract as string,
         connection.address,
         asset.decimals,
-      );
+      ).catch(() => "0");
       return { symbol: asset.symbol, balance };
     }),
   );

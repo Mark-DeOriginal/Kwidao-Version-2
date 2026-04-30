@@ -4,6 +4,7 @@ export const WALLETCONNECT_DEFAULT_CHAIN_ID = Number(
 
 export const WALLETCONNECT_EVM_RPC =
   process.env.WALLETCONNECT_EVM_RPC_URL?.trim() ||
+  process.env.NEXT_PUBLIC_WALLETCONNECT_EVM_RPC_URL?.trim() ||
   "https://api.avax.network/ext/bc/C/rpc";
 
 export const WALLETCONNECT_ASSETS = [

@@ -29,37 +29,51 @@ export default function WalletDashboard() {
 
   useEffect(() => {
     let active = true;
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
     if (!connection.address || connection.status !== "connected") {
       setDetails(null);
       setError("");
+      setIsLoading(false);
       return () => {
         active = false;
+        if (timer) clearTimeout(timer);
       };
     }
+
+    const scheduleNext = (delayMs: number) => {
+      if (!active) return;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        void run();
+      }, delayMs);
+    };
 
     const run = async () => {
       try {
         setIsLoading(true);
         setError("");
         const data = await fetchWalletDetails(connection.address, connection.chainId);
-        if (active) setDetails(data);
+        if (!active) return;
+        setDetails(data);
+        scheduleNext(10_000);
       } catch (requestError) {
-        if (active) {
-          setError(
-            requestError instanceof Error
-              ? requestError.message
-              : "Unable to load wallet dashboard.",
-          );
-        }
+        if (!active) return;
+        setError(
+          requestError instanceof Error
+            ? requestError.message
+            : "Unable to load wallet dashboard.",
+        );
+        scheduleNext(3_000);
       } finally {
         if (active) setIsLoading(false);
       }
     };
 
-    run();
+    void run();
     return () => {
       active = false;
+      if (timer) clearTimeout(timer);
     };
   }, [connection.address, connection.chainId, connection.status]);
 
@@ -101,7 +115,6 @@ export default function WalletDashboard() {
         </button>
       </div>
 
-      {isLoading ? <p className={styles.info}>Loading wallet details...</p> : null}
       {error ? <p className={styles.error}>{error}</p> : null}
 
       {details ? (
