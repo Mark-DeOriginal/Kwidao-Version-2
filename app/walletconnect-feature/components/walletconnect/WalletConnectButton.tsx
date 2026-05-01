@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { AnimatePresence, motion } from "framer-motion";
 import { useAccount, useDisconnect } from "wagmi";
 import { shortenAddress } from "../../services/format";
 import styles from "./WalletConnectButton.module.css";
@@ -21,6 +22,7 @@ export default function WalletConnectButton({
   label = "Connect Wallet",
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const accountState = useAccount();
   const { disconnect } = useDisconnect();
@@ -63,6 +65,7 @@ export default function WalletConnectButton({
         const displayAddress =
           account?.displayName ||
           (accountState.address ? shortenAddress(accountState.address, 6, 4) : "");
+        const displayChain = chain?.name || "Unknown";
 
         if (!connected) {
           return (
@@ -103,14 +106,24 @@ export default function WalletConnectButton({
               <span className={styles.connectedMain}>
                 <WalletIcon />
                 <span className={styles.connectedAddress}>{displayAddress}</span>
+                <span className={styles.connectedDivider} />
+                <span className={styles.connectedChain}>{displayChain}</span>
               </span>
               <span className={classNames(styles.caret, menuOpen && styles.caretOpen)}>
                 <CaretIcon />
               </span>
             </button>
 
-            {menuOpen ? (
-                <div className={styles.menu} role="menu">
+            <AnimatePresence>
+              {menuOpen ? (
+                <motion.div
+                  className={styles.menu}
+                  role="menu"
+                  initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.97 }}
+                  transition={{ duration: 0.16, ease: "easeOut" }}
+                >
                   <Link
                     href="/usdc-bridge"
                     className={styles.menuItem}
@@ -120,6 +133,24 @@ export default function WalletConnectButton({
                     <BridgeIcon />
                     USDC Bridge
                   </Link>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!accountState.address) return;
+                      try {
+                        await navigator.clipboard.writeText(accountState.address);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 1200);
+                      } catch {
+                        setCopied(false);
+                      }
+                    }}
+                    className={styles.menuItem}
+                    role="menuitem"
+                  >
+                    <CopyIcon />
+                    {copied ? "Copied" : "Copy Address"}
+                  </button>
                   <button
                     type="button"
                     onClick={() => {
@@ -132,8 +163,9 @@ export default function WalletConnectButton({
                     <DisconnectIcon />
                     Disconnect
                   </button>
-                </div>
-            ) : null}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           </div>
         );
       }}
@@ -203,6 +235,24 @@ function BridgeIcon() {
         strokeWidth="1.8"
         strokeLinecap="round"
         strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function CopyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className={styles.menuIcon} fill="none" aria-hidden="true">
+      <path
+        d="M9 9.5A1.5 1.5 0 0 1 10.5 8h8A1.5 1.5 0 0 1 20 9.5v10a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 9 19.5v-10Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M15 8V6.5A1.5 1.5 0 0 0 13.5 5h-8A1.5 1.5 0 0 0 4 6.5v10A1.5 1.5 0 0 0 5.5 18H9"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
       />
     </svg>
   );

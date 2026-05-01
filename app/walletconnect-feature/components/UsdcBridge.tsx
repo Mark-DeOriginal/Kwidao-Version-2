@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { isAddress } from "viem";
 import { readContract, waitForTransactionReceipt } from "wagmi/actions";
 import { useAccount, useConfig, useSwitchChain, useWalletClient } from "wagmi";
@@ -56,6 +57,38 @@ function classNames(...parts: Array<string | false | undefined>) {
 
 function shortHash(hash?: string) {
   return hash ? `${hash.slice(0, 8)}...${hash.slice(-6)}` : "";
+}
+
+function simplifyBridgeError(error: unknown) {
+  const raw =
+    error instanceof Error
+      ? `${error.name} ${error.message}`
+      : typeof error === "string"
+        ? error
+        : "Unknown error";
+  const message = raw.toLowerCase();
+
+  if (
+    message.includes("user rejected") ||
+    message.includes("rejected the request") ||
+    message.includes("user denied")
+  ) {
+    return "Transaction was rejected in your wallet.";
+  }
+
+  if (message.includes("does not match the target chain") || message.includes("chain mismatch")) {
+    return "Wrong network selected in wallet. Please switch to the required chain and try again.";
+  }
+
+  if (message.includes("insufficient funds")) {
+    return "Insufficient gas balance for this transaction.";
+  }
+
+  if (message.includes("nonce")) {
+    return "Transaction nonce issue. Please retry in a few seconds.";
+  }
+
+  return "Transaction failed. Please try again.";
 }
 
 function formatInputAmount(value: string) {
@@ -167,7 +200,7 @@ export default function UsdcBridge() {
   }, [amountRaw, destination, mode, source]);
 
   const validationError = useMemo(() => {
-    if (!connected) return "Connect a wallet from the header to bridge USDC.";
+    if (!connected) return "Connect a wallet to bridge USDC.";
     if (!amountRaw || amountRaw <= BigInt(0)) return "Enter a valid USDC amount.";
     if (source.chainId === destination.chainId) return "Choose two different chains.";
     if (!recipientAddress || !isValidEvmRecipient(recipientAddress)) {
@@ -307,11 +340,7 @@ export default function UsdcBridge() {
       await claimTransfer(burnHash, source, destination);
     } catch (bridgeError) {
       setPhase("failed");
-      setError(
-        bridgeError instanceof Error
-          ? bridgeError.message
-          : "The bridge transaction could not be completed.",
-      );
+      setError(simplifyBridgeError(bridgeError));
     }
   };
 
@@ -322,7 +351,7 @@ export default function UsdcBridge() {
       await claimTransfer(tx.burnHash, tx.source, tx.destination);
     } catch (claimError) {
       setPhase("failed");
-      setError(claimError instanceof Error ? claimError.message : "Claim failed. Please try again.");
+      setError(simplifyBridgeError(claimError));
     }
   };
 
@@ -345,6 +374,14 @@ export default function UsdcBridge() {
               chainId={source.chainId}
               onChange={setSourceChainId}
               balance={formatUsdc(balance)}
+              amountValue={displayAmount}
+              amountPlaceholder="0.00"
+              onAmountChange={(value) => setAmount(value)}
+              onAmountFocus={() => setAmountFocused(true)}
+              onAmountBlur={() => setAmountFocused(false)}
+              showMaxButton
+              onMax={selectMax}
+              maxDisabled={!connected || balance <= BigInt(0)}
             />
             <button
               type="button"
@@ -360,35 +397,10 @@ export default function UsdcBridge() {
               label="To"
               chainId={destination.chainId}
               onChange={setDestinationChainId}
+              amountValue={amountRaw && amountRaw > BigInt(0) ? formatUsdc(expectedAmount) : ""}
+              amountPlaceholder="0.00"
+              amountReadOnly
             />
-          </div>
-
-          <div className={classNames(styles.inputPanel, error && styles.inputPanelError)}>
-            <div className={styles.inputHeader}>
-              <label htmlFor="bridge-amount">Amount</label>
-              <button type="button" onClick={selectMax} disabled={!connected || balance <= BigInt(0)}>
-                Max
-              </button>
-            </div>
-            <div className={styles.amountRow}>
-              <input
-                id="bridge-amount"
-                value={displayAmount}
-                inputMode="decimal"
-                placeholder="0.00"
-                onFocus={() => setAmountFocused(true)}
-                onBlur={() => setAmountFocused(false)}
-                onChange={(event) =>
-                  setAmount(
-                    event.target.value
-                      .replace(/,/g, "")
-                      .replace(/[^\d.]/g, ""),
-                  )
-                }
-              />
-              <span>USDC</span>
-            </div>
-            <p>Balance: {formatUsdc(balance)} USDC</p>
           </div>
 
           <div className={styles.modeControl} role="tablist" aria-label="Transfer speed">
@@ -401,7 +413,6 @@ export default function UsdcBridge() {
               >
                 {mode === option ? <span className={styles.modePill} /> : null}
                 <span>{option === "standard" ? "Standard" : "Fast"}</span>
-                <small>{option === "standard" ? "Finalized" : "Confirmed"}</small>
               </button>
             ))}
           </div>
@@ -511,11 +522,29 @@ function ChainSelect({
   chainId,
   onChange,
   balance,
+  amountValue,
+  amountPlaceholder,
+  onAmountChange,
+  onAmountFocus,
+  onAmountBlur,
+  amountReadOnly,
+  showMaxButton,
+  onMax,
+  maxDisabled,
 }: {
   label: string;
   chainId: number;
   onChange: (chainId: number) => void;
   balance?: string;
+  amountValue?: string;
+  amountPlaceholder?: string;
+  onAmountChange?: (value: string) => void;
+  onAmountFocus?: () => void;
+  onAmountBlur?: () => void;
+  amountReadOnly?: boolean;
+  showMaxButton?: boolean;
+  onMax?: () => void;
+  maxDisabled?: boolean;
 }) {
   const chain = getBridgeChain(chainId);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -565,31 +594,68 @@ function ChainSelect({
             </svg>
           </span>
         </button>
-        {menuOpen ? (
-          <div className={styles.chainMenu} role="listbox" aria-label={`${label} chain options`}>
-            {BRIDGE_CHAINS.map((option) => {
-              const selected = option.chainId === chainId;
-              return (
-                <button
-                  key={option.chainId}
-                  type="button"
-                  role="option"
-                  aria-selected={selected}
-                  className={classNames(styles.chainOption, selected && styles.chainOptionActive)}
-                  onClick={() => {
-                    onChange(option.chainId);
-                    setMenuOpen(false);
-                  }}
-                >
-                  <ChainIcon chain={option} />
-                  <span>{option.name}</span>
-                </button>
-              );
-            })}
-          </div>
-        ) : null}
+        <AnimatePresence>
+          {menuOpen ? (
+            <motion.div
+              className={styles.chainMenu}
+              role="listbox"
+              aria-label={`${label} chain options`}
+              initial={{ opacity: 0, y: 8, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 6, scale: 0.97 }}
+              transition={{ duration: 0.16, ease: "easeOut" }}
+            >
+              {BRIDGE_CHAINS.map((option) => {
+                const selected = option.chainId === chainId;
+                return (
+                  <button
+                    key={option.chainId}
+                    type="button"
+                    role="option"
+                    aria-selected={selected}
+                    className={classNames(styles.chainOption, selected && styles.chainOptionActive)}
+                    onClick={() => {
+                      onChange(option.chainId);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    <ChainIcon chain={option} />
+                    <span>{option.name}</span>
+                  </button>
+                );
+              })}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </div>
-      {balance ? <small>{balance} USDC</small> : <small>Native USDC</small>}
+      <div className={styles.chainAmount}>
+        <div className={styles.chainAmountHeader}>
+          {showMaxButton ? (
+            <button type="button" onClick={onMax} disabled={maxDisabled}>
+              Max
+            </button>
+          ) : null}
+        </div>
+        <div className={styles.chainAmountRow}>
+          <input
+            value={amountValue ?? ""}
+            inputMode={amountReadOnly ? undefined : "decimal"}
+            placeholder={amountPlaceholder ?? "0.00"}
+            readOnly={amountReadOnly}
+            onFocus={onAmountFocus}
+            onBlur={onAmountBlur}
+            onChange={(event) => {
+              if (!onAmountChange) return;
+              onAmountChange(
+                event.target.value
+                  .replace(/,/g, "")
+                  .replace(/[^\d.]/g, ""),
+              );
+            }}
+          />
+        </div>
+      </div>
+      {balance ? <small>{balance} USDC</small> : null}
     </div>
   );
 }

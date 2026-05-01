@@ -61,6 +61,12 @@
   font-weight: 600;
 }
 
+.connectedChain {
+  font-weight: 600;
+  color: #b7d5f3;
+  white-space: nowrap;
+}
+
 .connectedDivider {
   width: 1px;
   align-self: stretch;

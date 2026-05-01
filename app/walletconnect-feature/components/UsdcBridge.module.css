@@ -57,10 +57,13 @@
   padding: 1rem;
   display: grid;
   gap: 0.75rem;
+  overflow: visible;
 }
 
 .routeGrid {
   position: relative;
+  isolation: isolate;
+  z-index: 3;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.7rem;
@@ -81,9 +84,12 @@
 }
 
 .chainSelect {
-  min-height: 106px;
+  position: relative;
+  min-height: 148px;
   padding: 0.85rem;
   display: grid;
+  align-content: start;
+  grid-auto-rows: max-content;
   gap: 0.65rem;
   cursor: pointer;
 }
@@ -92,10 +98,6 @@
 .inputPanel:focus-within {
   border-color: rgba(87, 171, 255, 0.62);
   background: rgba(9, 20, 36, 0.92);
-}
-
-.chainSelect:active {
-  transform: scale(0.985);
 }
 
 .chainSelect > span,
@@ -116,6 +118,11 @@
   display: flex;
   align-items: center;
   gap: 0.55rem;
+  transition: transform 180ms ease;
+}
+
+.chainSelectInner:active {
+  transform: scale(0.985);
 }
 
 .chainTrigger,
@@ -137,11 +144,6 @@
   font-weight: 800;
   cursor: pointer;
   padding: 0;
-  transition: transform 180ms ease;
-}
-
-.chainTrigger:active {
-  transform: scale(0.98);
 }
 
 .chainCaret {
@@ -188,7 +190,7 @@
   top: calc(100% + 0.6rem);
   left: 0;
   width: min(210px, calc(100vw - 5rem));
-  z-index: 6;
+  z-index: 1200;
   border: 1px solid rgba(118, 213, 255, 0.26);
   border-radius: 0.9rem;
   background: rgba(7, 18, 33, 0.97);
@@ -231,12 +233,77 @@
   color: #fff;
 }
 
+.chainAmount {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.chainAmountHeader {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.chainAmountHeader button {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  border: 1px solid rgba(118, 213, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(39, 117, 202, 0.14);
+  color: #76d5ff;
+  font-weight: 800;
+  font-size: 0.72rem;
+  padding: 0.22rem 0.58rem;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease, opacity 160ms ease;
+}
+
+.chainAmountHeader button:hover {
+  transform: translateY(-1px);
+  background: rgba(39, 117, 202, 0.24);
+}
+
+.chainAmountHeader button:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.chainAmountHeader button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.chainAmountRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.1rem 0;
+}
+
+.chainAmountRow input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: rgba(248, 251, 255, 0.78);
+  font-size: clamp(1.35rem, 2.8vw, 2rem);
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.chainAmountRow input::placeholder {
+  color: rgba(141, 170, 202, 0.6);
+}
+
 .routeSwitch {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 52px;
-  height: 52px;
+  width: 40px;
+  height: 40px;
   transform: translate(-50%, -50%);
   z-index: 2;
   border: 1px solid rgba(109, 182, 255, 0.3);
@@ -252,8 +319,8 @@
 }
 
 .routeSwitch svg {
-  width: 24px;
-  height: 24px;
+  width: 17px;
+  height: 17px;
   fill: currentColor;
 }
 
@@ -345,7 +412,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
-  padding: 0.35rem;
+  padding: 0.3rem;
   border-radius: 1rem;
   background: rgba(6, 13, 24, 0.76);
   border: 1px solid rgba(142, 186, 240, 0.16);
@@ -354,7 +421,7 @@
 .modeButton {
   position: relative;
   isolation: isolate;
-  min-height: 64px;
+  min-height: 40px;
   border: 0;
   border-radius: 0.75rem;
   background: transparent;
@@ -436,6 +503,7 @@
   padding: 0.75rem 0.85rem;
   font-size: 0.9rem;
   line-height: 1.45;
+  overflow: auto;
   animation: statusIn 180ms ease-out both;
 }
 
