@@ -3,12 +3,11 @@
   top: 0;
   z-index: 30;
   border-bottom: 1px solid var(--wc-border);
-  background: color-mix(in srgb, white 78%, var(--wc-surface));
-  backdrop-filter: blur(14px);
+  background: rgba(5, 12, 23, 0.96);
 }
 
 .inner {
-  max-width: 1100px;
+  max-width: 1160px;
   margin: 0 auto;
   padding: 1rem 1rem;
   display: flex;

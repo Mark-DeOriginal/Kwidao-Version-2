@@ -9,7 +9,7 @@ const IMMERSIVE_TOOL_PREFIXES = [
   "/tools/grid-bot",
   "/tools/market-analyzer",
   "/p2p",
-  "/walletconnect",
+  "/usdc-bridge",
 ];
 
 export default function SiteShell({

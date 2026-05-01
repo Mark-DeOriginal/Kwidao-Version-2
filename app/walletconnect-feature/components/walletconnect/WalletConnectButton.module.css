@@ -15,12 +15,13 @@
 }
 
 .connectButton {
-  background: linear-gradient(135deg, #662e91 0%, #6fe0e0 100%);
+  border: 1px solid rgba(118, 213, 255, 0.24);
+  background: linear-gradient(135deg, #2775ca 0%, #33c7ff 100%);
   color: #ffffff;
 }
 
 .connectButton:hover {
-  background: linear-gradient(135deg, #4f2372 0%, #4fb4b4 100%);
+  background: linear-gradient(135deg, #1f67b3 0%, #22aee6 100%);
   transform: translateY(-1px);
 }
 
@@ -29,12 +30,13 @@
 }
 
 .connectedButton {
-  background: linear-gradient(135deg, #662e91 0%, #6fe0e0 100%);
+  border: 1px solid rgba(118, 213, 255, 0.24);
+  background: rgba(9, 20, 36, 0.9);
   color: #ffffff;
 }
 
 .connectedButton:hover {
-  background: linear-gradient(135deg, #4f2372 0%, #4fb4b4 100%);
+  background: rgba(16, 39, 68, 0.96);
   transform: translateY(-1px);
 }
 
@@ -112,17 +114,18 @@
   right: 0;
   min-width: 180px;
   border-radius: 0.8rem;
-  background: #ffffff;
-  box-shadow: 0px -7px 36px #10182829;
+  border: 1px solid rgba(142, 186, 240, 0.18);
+  background: #07111f;
   padding: 0.35rem;
   z-index: 40;
+  animation: walletMenuIn 140ms ease-out;
 }
 
 .menuItem {
   width: 100%;
   border: 1px solid transparent;
   background: transparent;
-  color: #662e91;
+  color: #d7e8fb;
   text-decoration: none;
   border-radius: 0.55rem;
   padding: 0.55rem 0.65rem;
@@ -135,13 +138,25 @@
 }
 
 .menuItem:hover {
-  background: color-mix(in srgb, #662e91 8%, #ffffff);
-  color: #4f2372;
+  background: rgba(39, 117, 202, 0.16);
+  color: #76d5ff;
 }
 
 .menuIcon,
 .disconnectIcon {
   width: 16px;
   height: 16px;
-  color: #dd7045;
+  color: #76d5ff;
+}
+
+@keyframes walletMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

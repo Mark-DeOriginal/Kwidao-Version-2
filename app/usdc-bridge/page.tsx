@@ -1,6 +1,5 @@
 import WalletConnectFeaturePage from "@/app/walletconnect-feature/WalletConnectFeaturePage";
 
-export default function WalletConnectRoutePage() {
+export default function UsdcBridgeRoutePage() {
   return <WalletConnectFeaturePage />;
 }
-

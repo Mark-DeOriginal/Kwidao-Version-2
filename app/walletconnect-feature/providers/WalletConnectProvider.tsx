@@ -33,8 +33,8 @@ export default function WalletConnectProvider({ children }: Props) {
             overlayBlur: "small",
           })}
           appInfo={{
-            appName: "Kwidao WalletConnect",
-            learnMoreUrl: "/walletconnect",
+            appName: "Kwidao USDC Bridge",
+            learnMoreUrl: "/usdc-bridge",
           }}
         >
          
