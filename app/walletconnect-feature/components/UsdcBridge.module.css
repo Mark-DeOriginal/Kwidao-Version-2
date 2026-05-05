@@ -304,9 +304,9 @@
   height: 40px;
   transform: translate(-50%, -50%);
   z-index: 2;
-  border: 1px solid color-mix(in srgb, var(--wc-brand-primary) 35%, var(--theme-border-soft));
+  border: 1px solid #190b232b;
   border-radius: 999px;
-  background: linear-gradient(135deg, #2775ca, var(--wc-brand-secondary));
+  background: color-mix(in srgb, var(--wc-surface-elevated) 96%, white);
   color: #fff;
   display: grid;
   place-items: center;
@@ -319,12 +319,11 @@
 .routeSwitch svg {
   width: 17px;
   height: 17px;
-  fill: currentColor;
+  fill: var(--theme-text-strong);
 }
 
 .routeSwitch:hover {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--wc-brand-primary) 84%, var(--theme-primary)), color-mix(in srgb, var(--wc-brand-secondary) 82%, var(--wc-brand-primary)));
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--wc-brand-primary) 40%, transparent);
+  background: color-mix(in srgb, var(--wc-brand-primary) 8%, white);
 }
 
 .routeSwitch:active {
@@ -594,7 +593,7 @@
   display: grid;
   place-items: center;
   border-radius: 999px;
-  background: #decaee;
+  background: #ebddf7;
   color: var(--theme-text-soft);
   font-size: 0.8rem;
   font-weight: 700;
