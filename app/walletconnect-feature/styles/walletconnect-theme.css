@@ -1,31 +1,17 @@
-.walletconnect-missing-projectid {
-  max-width: 1100px;
-  margin: 0.75rem auto 0;
-  border: 1px solid rgba(244, 192, 97, 0.36);
-  background: rgba(244, 192, 97, 0.12);
-  color: #ffe2ad;
-  border-radius: 0.8rem;
-  padding: 0.6rem 0.9rem;
-  font-size: 0.86rem;
-}
-
-.walletconnect-missing-projectid code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
-  font-size: 0.83rem;
-}
-
 :root {
-  --wc-canvas: #07111f;
-  --wc-canvas-alt: #030813;
-  --wc-surface: #0d192a;
-  --wc-text: #d7e8fb;
-  --wc-text-strong: #f8fbff;
-  --wc-text-muted: #91a8c4;
-  --wc-brand-primary: #2775ca;
-  --wc-border: rgba(142, 186, 240, 0.18);
-  --wc-positive: #5ad2a9;
-  --wc-warning: #f4c061;
-  --wc-danger: #ff7e93;
-  --wc-shadow-soft: none;
+  --wc-canvas: var(--theme-canvas);
+  --wc-canvas-alt: var(--theme-canvas-alt);
+  --wc-surface: color-mix(in srgb, var(--theme-surface) 88%, white);
+  --wc-surface-elevated: color-mix(in srgb, var(--theme-surface-strong) 82%, white);
+  --wc-text: var(--theme-text);
+  --wc-text-strong: var(--theme-text-strong);
+  --wc-text-muted: var(--theme-text-muted);
+  --wc-brand-primary: #372f4e;
+  --wc-brand-secondary: #58a6ff;
+  --wc-brand-soft: color-mix(in srgb, var(--wc-brand-primary) 12%, white);
+  --wc-border: color-mix(in srgb, var(--wc-brand-primary) 16%, var(--theme-border-subtle));
+  --wc-positive: var(--theme-positive);
+  --wc-warning: var(--theme-warning);
+  --wc-danger: var(--theme-danger);
+  --wc-shadow-soft: 0 16px 36px color-mix(in srgb, var(--wc-brand-primary) 12%, transparent);
 }

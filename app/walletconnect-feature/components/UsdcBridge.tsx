@@ -358,11 +358,8 @@ export default function UsdcBridge() {
   return (
     <section className={classNames(styles.bridgePage, styles.reveal)}>
       <div className={styles.bridgeIntro}>
-        <p className={styles.kicker}>Circle CCTP V2</p>
-        <h1>Bridge native USDC across chains</h1>
-        <p>
-          Burn on the source chain, wait for Circle attestation, and mint native USDC on
-          the destination chain.
+        <h1>Bridge native USDC <br/>across chains</h1>
+        <p>Move USDC between blockchains smoothly and securely without the complexity of traditional bridges, via Circle's CCTP.
         </p>
       </div>
 

@@ -1,9 +1,12 @@
 .header {
   position: sticky;
   top: 0;
-  z-index: 30;
-  border-bottom: 1px solid var(--wc-border);
-  background: rgba(5, 12, 23, 0.96);
+  z-index: 50;
+  border-bottom: 1px solid var(--theme-border-subtle);
+  background: color-mix(in srgb, var(--theme-surface-strong) 78%, transparent);
+  box-shadow: var(--theme-shadow-soft);
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
 }
 
 .inner {

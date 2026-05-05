@@ -24,7 +24,7 @@
     );
 
     --theme-text: color-mix(in srgb, var(--palette-ink) 96%, var(--palette-blue));
-    --theme-text-strong: var(--palette-ink);
+    --theme-text-strong: var(--palette-primary);
     --theme-text-muted: color-mix(in srgb, var(--palette-ink) 72%, var(--palette-off-white));
     --theme-text-soft: color-mix(in srgb, var(--palette-ink) 52%, var(--palette-off-white));
 
