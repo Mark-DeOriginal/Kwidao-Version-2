@@ -300,7 +300,7 @@ export default function UsdcBridge() {
 
       if (allowance < amountRaw) {
         setPhase("approving");
-        setMessage("Approving USDC for Circle TokenMessengerV2.");
+        setMessage("Waiting for you to approve the transaction");
         const approveHash = await walletClient.writeContract({
           address: source.usdc,
           abi: ERC20_ABI,

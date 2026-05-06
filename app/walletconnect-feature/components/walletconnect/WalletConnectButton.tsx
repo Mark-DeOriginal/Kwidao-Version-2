@@ -105,7 +105,10 @@ export default function WalletConnectButton({
             >
               <span className={styles.connectedMain}>
                 <WalletIcon />
-                <span className={styles.connectedAddress}>{displayAddress}</span>
+                <span className={styles.connectedAddress}>
+                  <span className="inline max-[570px]:hidden">{displayAddress}</span>
+                  <span className="hidden max-[570px]:inline">{displayAddress.slice(0, 4)}</span>
+                </span>
                 <span className={styles.connectedDivider} />
                 <span className={styles.connectedChain}>
                   <ChainIcon chainName={displayChain} />

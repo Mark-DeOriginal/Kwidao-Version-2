@@ -11,6 +11,7 @@
 .bridgeIntro {
   max-width: 680px;
   margin-bottom: 1.4rem;
+  margin-inline: 1rem;
   margin-top: 2rem;
 }
 
@@ -60,6 +61,8 @@
   display: grid;
   gap: 0.75rem;
   overflow: visible;
+  
+  box-shadow: 0px 0px 9px 0px #77707f2b;
 }
 
 .routeGrid {
@@ -72,10 +75,10 @@
   align-items: stretch;
 }
 
-.chainSelect,
+
 .inputPanel,
 .quoteBox {
-  border: 1px solid color-mix(in srgb, var(--wc-brand-primary) 22%, var(--theme-border-subtle));
+  border: 1px solid #a8a3ac7d;
   border-radius: 1rem;
   background: color-mix(in srgb, var(--wc-surface) 92%, white);
   transition:
@@ -94,11 +97,19 @@
   grid-auto-rows: max-content;
   gap: 0.65rem;
   cursor: pointer;
+  border: 2px solid #a8a3ac7d;
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--wc-surface) 92%, white);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease,
+    background 180ms ease;
 }
 
 .chainSelect:hover,
 .inputPanel:focus-within {
-  border-color: #372f4e96;
+  border-color: #372f4e6c;
   background: color-mix(in srgb, var(--wc-brand-primary) 8%, white);
 }
 
@@ -247,10 +258,10 @@
   position: absolute;
   top: 0.75rem;
   right: 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--wc-brand-primary) 28%, var(--theme-border-soft));
+  border: 1px solid #190b232b;
   border-radius: 999px;
   background: color-mix(in srgb, var(--wc-brand-primary) 14%, white);
-  color: var(--wc-brand-primary);
+  color: var(--theme-text-soft);
   font-weight: 800;
   font-size: 0.72rem;
   padding: 0.22rem 0.58rem;
@@ -412,7 +423,7 @@
   padding: 0.3rem;
   border-radius: 1rem;
   background: color-mix(in srgb, var(--wc-surface) 90%, white);
-  border: 1px solid color-mix(in srgb, var(--wc-brand-primary) 20%, var(--theme-border-subtle));
+  border: 1px solid #a8a3ac7d;
 }
 
 .modeButton {
@@ -440,7 +451,7 @@
 .modeButton span:not(.modePill) {
   position: relative;
   z-index: 1;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .modeButton small {
@@ -577,7 +588,7 @@
   grid-template-columns: 34px minmax(0, 1fr);
   gap: 0.7rem;
   align-items: center;
-  border: 1px solid color-mix(in srgb, var(--wc-brand-primary) 18%, var(--theme-border-subtle));
+  border: 1px solid #a8a3ac7d;
   border-radius: 0.85rem;
   background: color-mix(in srgb, var(--theme-surface-contrast) 82%, white);
   padding: 0.65rem;
@@ -617,13 +628,13 @@
 }
 
 .timelineActive > span {
-  background: #2775ca;
+  background: #ebad51;
   color: #ffffff;
 }
 
 .timelineComplete > span {
-  background: var(--theme-positive);
-  color: color-mix(in srgb, var(--theme-positive) 35%, var(--theme-text-strong));
+  background: rgb(117, 165, 117);
+  color: #ffffff;
 }
 
 .txLinks {

@@ -13,6 +13,7 @@
   align-items: center;
   gap: 0.55rem;
   transition: 0.3s;
+  width: max-content;
 }
 
 .connectButton {
@@ -68,6 +69,7 @@
 
 .connectedAddress {
   font-weight: 600;
+  min-width: 0;
 }
 
 .connectedChain {
@@ -101,9 +103,16 @@
   .chainName {
     display: none;
   }
-  
+
   .connectedChain {
     gap: 0;
+  }
+
+  .connectedAddress {
+    max-width: 4ch;
+    overflow: hidden;
+    white-space: nowrap;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   }
 }
 
