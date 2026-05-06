@@ -107,7 +107,10 @@ export default function WalletConnectButton({
                 <WalletIcon />
                 <span className={styles.connectedAddress}>{displayAddress}</span>
                 <span className={styles.connectedDivider} />
-                <span className={styles.connectedChain}>{displayChain}</span>
+                <span className={styles.connectedChain}>
+                  <ChainIcon chainName={displayChain} />
+                  <span className={styles.chainName}>{displayChain}</span>
+                </span>
               </span>
               <span className={classNames(styles.caret, menuOpen && styles.caretOpen)}>
                 <CaretIcon />
@@ -254,6 +257,94 @@ function CopyIcon() {
         strokeWidth="1.8"
         strokeLinecap="round"
       />
+    </svg>
+  );
+}
+
+function ChainIcon({ chainName }: { chainName: string }) {
+  return (
+    <span className={styles.chainIcon}>
+      {getChainIcon(chainName)}
+    </span>
+  );
+}
+
+function getChainIcon(chainName: string) {
+  const name = chainName.toUpperCase();
+
+  // Map full chain names to short codes
+  const shortNameMap: Record<string, string> = {
+    ETHEREUM: "ETH",
+    "ETHEREUM MAINNET": "ETH",
+    AVALANCHE: "AVAX",
+    "AVALANCHE C-CHAIN": "AVAX",
+    "OPTIMISM MAINNET": "OP",
+    OPTIMISM: "OP",
+    ARBITRUM: "ARB",
+    "ARBITRUM ONE": "ARB",
+    BASE: "BASE",
+    "BASE MAINNET": "BASE",
+  };
+
+  const key = shortNameMap[name] || name.slice(0, 3).toUpperCase();
+
+  if (key === "ETH") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="#8C8C8C" d="M12 2.8 6.2 12l5.8-2.8L17.8 12 12 2.8Z" />
+        <path fill="#3C3C3B" d="M12 9.9 6.2 12 12 15.5 17.8 12 12 9.9Z" />
+        <path fill="#8C8C8C" d="M6.2 13.2 12 21.2V16.8L6.2 13.2Z" />
+        <path fill="#3C3C3B" d="M12 16.8v4.4l5.8-8-5.8 3.6Z" />
+      </svg>
+    );
+  }
+
+  if (key === "AVAX") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="11" fill="#E84142" />
+        <path fill="#fff" d="M12.7 6.7a1 1 0 0 0-1.8 0L7.2 14a1 1 0 0 0 .9 1.4h7.8a1 1 0 0 0 .9-1.4l-4.1-7.3Z" />
+        <rect x="8.2" y="16.2" width="3.6" height="3.2" rx=".8" fill="#fff" />
+      </svg>
+    );
+  }
+
+  if (key === "OP") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="11" fill="#FF0420" />
+        <text x="12" y="15" textAnchor="middle" fontSize="8" fontWeight="700" fill="#fff">
+          OP
+        </text>
+      </svg>
+    );
+  }
+
+  if (key === "ARB") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <polygon points="12,2.5 20,7 20,17 12,21.5 4,17 4,7" fill="#213147" />
+        <polygon points="12,5.5 17.2,8.5 17.2,15.5 12,18.5 6.8,15.5 6.8,8.5" fill="#2D374B" />
+        <path fill="#28A0F0" d="M10 8.2h2l3 7.6h-2L10 8.2Z" />
+        <path fill="#fff" d="M8.6 8.2h1.8l3 7.6h-1.8l-3-7.6Z" />
+      </svg>
+    );
+  }
+
+  if (key === "BASE") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="11" fill="#0052FF" />
+        <circle cx="12" cy="12" r="5.2" fill="#fff" />
+        <circle cx="12" cy="12" r="2.6" fill="#0052FF" />
+      </svg>
+    );
+  }
+
+  // Fallback icon
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="11" fill="#1C2A3D" />
     </svg>
   );
 }
