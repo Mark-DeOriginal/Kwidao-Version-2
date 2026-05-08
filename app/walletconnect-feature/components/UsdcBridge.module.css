@@ -131,10 +131,9 @@
   display: flex;
   align-items: center;
   gap: 0.55rem;
-  transition: transform 180ms ease;
 }
 
-.chainSelectInner:active {
+.chainTrigger:active {
   transform: scale(0.985);
 }
 
@@ -188,7 +187,6 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--wc-brand-primary) 26%, var(--theme-border-subtle));
   background: color-mix(in srgb, var(--wc-brand-primary) 8%, white);
 }
 
@@ -211,6 +209,11 @@
   padding: 0.35rem;
   display: grid;
   gap: 0.2rem;
+}
+
+.chainMenuAbove {
+  top: auto;
+  bottom: calc(100% + 0.4rem);
 }
 
 .chainOption {
@@ -528,6 +531,12 @@
   color: color-mix(in srgb, var(--theme-positive) 52%, var(--theme-text-strong));
 }
 
+.statusInfo {
+  border: 1px solid #007bff75;
+  background: #e7f3ff;
+  color: #3778bd;
+}
+
 .primaryButton,
 .secondaryButton {
   width: 100%;
@@ -658,6 +667,152 @@
 
 .txLinks a:hover {
   color: var(--wc-brand-primary);
+}
+
+.historyPanel,
+.manualClaimPanel {
+  border-top: 1px solid color-mix(in srgb, var(--wc-brand-primary) 18%, var(--theme-border-subtle));
+  padding-top: 0.9rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.historyTitle {
+  margin: 0;
+  color: var(--theme-text-strong);
+  font-weight: 700;
+  font-size: 0.96rem;
+}
+
+.historyEmpty {
+  color: var(--theme-text-soft);
+  font-size: 0.86rem;
+}
+
+.historyTableWrap {
+  overflow-x: auto;
+}
+
+.historyTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.historyTable th,
+.historyTable td {
+  text-align: left;
+  padding: 0.48rem 0.36rem;
+  border-bottom: 1px solid #a8a3ac4d;
+  color: var(--theme-text-soft);
+  vertical-align: middle;
+}
+
+.historyTable th {
+  color: var(--theme-text-strong);
+  font-weight: 700;
+}
+
+.routeCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.statusChip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.16rem 0.46rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.chipNeutral {
+  background: color-mix(in srgb, var(--theme-surface-contrast) 84%, white);
+  border-color: #a8a3ac7d;
+  color: var(--theme-text-soft);
+}
+
+.chipWorking {
+  background: color-mix(in srgb, var(--wc-brand-primary) 14%, white);
+  border-color: color-mix(in srgb, var(--wc-brand-primary) 30%, var(--theme-border-soft));
+  color: color-mix(in srgb, var(--wc-brand-primary) 42%, var(--theme-text-strong));
+}
+
+.chipPending {
+  background: var(--theme-warning-soft);
+  border-color: color-mix(in srgb, var(--theme-warning) 34%, var(--theme-border));
+  color: color-mix(in srgb, var(--theme-warning) 52%, var(--theme-text-strong));
+}
+
+.chipSuccess {
+  background: var(--theme-positive-soft);
+  border-color: color-mix(in srgb, var(--theme-positive) 34%, var(--theme-border));
+  color: color-mix(in srgb, var(--theme-positive) 52%, var(--theme-text-strong));
+}
+
+.chipFailed {
+  background: var(--theme-danger-soft);
+  border-color: color-mix(in srgb, var(--theme-danger) 34%, var(--theme-border));
+  color: color-mix(in srgb, var(--theme-danger) 46%, var(--theme-text-strong));
+}
+
+.reclaimInline {
+  border: 1px solid color-mix(in srgb, var(--wc-brand-primary) 30%, var(--theme-border-soft));
+  background: color-mix(in srgb, var(--wc-brand-primary) 12%, white);
+  color: color-mix(in srgb, var(--wc-brand-primary) 44%, var(--theme-text-strong));
+  border-radius: 999px;
+  padding: 0.2rem 0.52rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.reclaimInline:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.manualClaimPanel small {
+  color: var(--theme-text-soft);
+  font-size: 0.8rem;
+}
+
+.manualHashInput {
+  min-height: 2.35rem;
+  border: 1px solid #a8a3ac7d;
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--wc-surface) 92%, white);
+  color: var(--theme-text-strong);
+  padding: 0.5rem 0.62rem;
+  outline: none;
+}
+
+.manualRouteGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+}
+
+.manualChainField {
+  position: relative;
+  border: 1px solid #a8a3ac7d;
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--wc-surface) 92%, white);
+  padding: 0.38rem 0.5rem;
+  display: grid;
+  gap: 0.22rem;
+}
+
+.manualChainField small {
+  color: var(--theme-text-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 @keyframes bridgeShake {

@@ -1,7 +1,7 @@
 "use client";
 
 import { formatUnits, isAddress, pad, parseUnits } from "viem";
-import { arbitrum, avalanche, base, mainnet, optimism } from "wagmi/chains";
+import { arbitrum, avalanche, base, mainnet, optimism, polygon } from "wagmi/chains";
 
 export type BridgeMode = "fast" | "standard";
 
@@ -78,6 +78,17 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     tokenMessenger: TOKEN_MESSENGER_V2,
     messageTransmitter: MESSAGE_TRANSMITTER_V2,
   },
+  {
+    chainId: polygon.id,
+    domain: 7,
+    name: "Polygon",
+    shortName: "POLYGON",
+    accent: "#8247e5",
+    explorer: "https://polygonscan.com/tx/",
+    usdc: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+    tokenMessenger: TOKEN_MESSENGER_V2,
+    messageTransmitter: MESSAGE_TRANSMITTER_V2,
+  },
 ];
 
 export const ERC20_ABI = [
@@ -143,6 +154,10 @@ export const MESSAGE_TRANSMITTER_V2_ABI = [
 
 export function getBridgeChain(chainId: number) {
   return BRIDGE_CHAINS.find((chain) => chain.chainId === chainId) ?? BRIDGE_CHAINS[0];
+}
+
+export function isEvmBridgeChain(chain: BridgeChain) {
+  return BRIDGE_CHAINS.some((candidate) => candidate.chainId === chain.chainId);
 }
 
 export function parseUsdcAmount(value: string) {
