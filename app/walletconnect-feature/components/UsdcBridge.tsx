@@ -196,7 +196,7 @@ export default function UsdcBridge() {
       return null;
     }
   }, [amount]);
-  const recipientAddress = recipient.trim() || account.address || "";
+  const recipientAddress = recipient.trim();
   const expectedAmount =
     amountRaw && amountRaw > maxFee ? amountRaw - maxFee : amountRaw ?? BigInt(0);
   const busy = !["idle", "success", "claimPending", "failed"].includes(phase);
@@ -382,7 +382,10 @@ export default function UsdcBridge() {
     }
     if (!amountRaw || amountRaw <= BigInt(0)) return "Enter a valid USDC amount.";
     if (source.chainId === destination.chainId) return "Choose two different chains.";
-    if (!recipientAddress || !isValidEvmRecipient(recipientAddress)) {
+    if (!recipientAddress) {
+      return "Please provide a recipient address to receive the bridged funds.";
+    }
+    if (!isValidEvmRecipient(recipientAddress)) {
       return "Enter a valid EVM recipient address.";
     }
     if (amountRaw > balance) return "Insufficient native USDC balance on the source chain.";
@@ -707,7 +710,7 @@ export default function UsdcBridge() {
             <input
               id="bridge-recipient"
               value={recipient}
-              placeholder={account.address || "Defaults to connected wallet"}
+              placeholder="Input recipient address"
               onChange={(event) => setRecipient(event.target.value)}
             />
           </div>
