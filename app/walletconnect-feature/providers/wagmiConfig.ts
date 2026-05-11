@@ -7,6 +7,7 @@ import {
 } from "@rainbow-me/rainbowkit/wallets";
 import { createConfig, http } from "wagmi";
 import { arbitrum, avalanche, base, mainnet, optimism } from "wagmi/chains";
+import type { Chain } from "wagmi/chains";
 
 const projectId =
   process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID?.trim() ||
@@ -15,6 +16,31 @@ const projectId =
 const appName = "Kwidao WalletConnect";
 const avalancheRpcUrl = process.env.NEXT_PUBLIC_WALLETCONNECT_EVM_RPC_URL?.trim();
 const baseRpcUrl = process.env.NEXT_PUBLIC_BASE_RPC_URL?.trim();
+const injectiveRpcUrl = process.env.NEXT_PUBLIC_INJECTIVE_RPC_URL?.trim();
+
+const injective: Chain = {
+  id: 1776,
+  name: "Injective EVM",
+  nativeCurrency: {
+    name: "Injective",
+    symbol: "INJ",
+    decimals: 18,
+  },
+  rpcUrls: {
+    default: {
+      http: [injectiveRpcUrl || "https://sentry.evm-rpc.injective.network/"],
+    },
+    public: {
+      http: [injectiveRpcUrl || "https://sentry.evm-rpc.injective.network/"],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: "Injective Blockscout",
+      url: "https://blockscout.injective.network",
+    },
+  },
+};
 
 const connectors = connectorsForWallets(
   [
@@ -29,7 +55,7 @@ const connectors = connectorsForWallets(
   },
 );
 
-export const walletConnectChains = [avalanche, mainnet, base, arbitrum, optimism] as const;
+export const walletConnectChains = [avalanche, mainnet, base, arbitrum, optimism, injective] as const;
 
 export const walletConnectWagmiConfig = createConfig({
   chains: walletConnectChains,
@@ -40,6 +66,7 @@ export const walletConnectWagmiConfig = createConfig({
     [base.id]: http(baseRpcUrl),
     [arbitrum.id]: http(),
     [optimism.id]: http(),
+    [injective.id]: http(injectiveRpcUrl || "https://sentry.evm-rpc.injective.network/"),
   },
   ssr: true,
 });

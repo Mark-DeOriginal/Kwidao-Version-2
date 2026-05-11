@@ -19,6 +19,7 @@ export type BridgeChain = {
 
 export const TOKEN_MESSENGER_V2 = "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d";
 export const MESSAGE_TRANSMITTER_V2 = "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64";
+export const INJECTIVE_EVM_CHAIN_ID = 1776;
 export const ZERO_BYTES_32 =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
 
@@ -86,6 +87,17 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     accent: "#8247e5",
     explorer: "https://polygonscan.com/tx/",
     usdc: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+    tokenMessenger: TOKEN_MESSENGER_V2,
+    messageTransmitter: MESSAGE_TRANSMITTER_V2,
+  },
+  {
+    chainId: INJECTIVE_EVM_CHAIN_ID,
+    domain: 29,
+    name: "Injective",
+    shortName: "INJ",
+    accent: "#00D9FF",
+    explorer: "https://blockscout.injective.network/tx/",
+    usdc: "0xa00C59fF5a080D2b954d0c75e46E22a0c371235a",
     tokenMessenger: TOKEN_MESSENGER_V2,
     messageTransmitter: MESSAGE_TRANSMITTER_V2,
   },
