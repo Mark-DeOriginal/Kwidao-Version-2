@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { isAddress } from "viem";
-import { readContract, waitForTransactionReceipt } from "wagmi/actions";
-import { useAccount, useConfig, useSwitchChain, useWalletClient } from "wagmi";
+import { readContract, waitForTransactionReceipt, writeContract } from "wagmi/actions";
+import { useAccount, useConfig, useSwitchChain } from "wagmi";
 import {
   addressToBytes32,
   BRIDGE_CHAINS,
@@ -59,19 +59,7 @@ type BridgeHistoryItem = {
 };
 
 type PersistedBridgeState = {
-  sourceChainId: number;
-  destinationChainId: number;
-  mode: BridgeMode;
-  amount: string;
-  recipient: string;
-  phase: BridgePhase;
-  message: string;
-  tx: BridgeTx;
   history: Array<Omit<BridgeHistoryItem, "amount"> & { amount: string }>;
-  reclaimCooldowns: Record<string, number>;
-  manualBurnHash: string;
-  manualSourceChainId: number;
-  manualDestinationChainId: number;
   updatedAt: number;
 };
 
@@ -158,7 +146,6 @@ function formatInputAmount(value: string) {
 export default function UsdcBridge() {
   const config = useConfig();
   const account = useAccount();
-  const { data: walletClient } = useWalletClient();
   const { switchChainAsync } = useSwitchChain();
   const [hasMounted, setHasMounted] = useState(false);
   const [sourceChainId, setSourceChainId] = useState(8453);
@@ -201,6 +188,14 @@ export default function UsdcBridge() {
     amountRaw && amountRaw > maxFee ? amountRaw - maxFee : amountRaw ?? BigInt(0);
   const busy = !["idle", "success", "claimPending", "failed"].includes(phase);
   const displayAmount = amountFocused ? amount : formatInputAmount(amount);
+  const activeTrailRow = useMemo(
+    () => (tx.burnHash ? history.find((row) => row.burnHash === tx.burnHash) : undefined),
+    [history, tx.burnHash],
+  );
+  const trailSource = activeTrailRow?.source ?? tx.source;
+  const trailDestination = activeTrailRow?.destination ?? tx.destination;
+  const trailBurnHash = activeTrailRow?.burnHash ?? tx.burnHash;
+  const trailClaimHash = activeTrailRow?.claimHash ?? tx.claimHash;
 
   useEffect(() => {
     setManualSourceChainId(sourceChainId);
@@ -239,57 +234,54 @@ export default function UsdcBridge() {
         return;
       }
       const parsed = JSON.parse(raw) as Partial<PersistedBridgeState>;
-      if (typeof parsed.sourceChainId === "number") setSourceChainId(parsed.sourceChainId);
-      if (typeof parsed.destinationChainId === "number") setDestinationChainId(parsed.destinationChainId);
-      if (parsed.mode === "fast" || parsed.mode === "standard") setMode(parsed.mode);
-      if (typeof parsed.amount === "string") setAmount(parsed.amount);
-      if (typeof parsed.recipient === "string") setRecipient(parsed.recipient);
-      if (typeof parsed.phase === "string") setPhase(parsed.phase as BridgePhase);
-      if (typeof parsed.message === "string") setMessage(parsed.message);
       setError("");
       setManualError("");
       setManualMessage("");
-      if (parsed.tx && typeof parsed.tx === "object") setTx(parsed.tx as BridgeTx);
+      setPhase("idle");
+      setMessage("");
+      setTx({});
+      setAmount("");
+      setRecipient("");
       if (Array.isArray(parsed.history)) {
-        setHistory(
-          parsed.history.map((row) => ({
-            ...row,
-            amount: BigInt(String(row.amount)),
-          })),
-        );
+        const restoredHistory = parsed.history.map((row) => ({
+          ...row,
+          amount: BigInt(String(row.amount)),
+        }));
+        setHistory(restoredHistory);
+        // Normalize any legacy payload to history-only storage.
+        const payload: PersistedBridgeState = {
+          history: restoredHistory.map((row) => ({ ...row, amount: row.amount.toString() })),
+          updatedAt: Date.now(),
+        };
+        window.localStorage.setItem(BRIDGE_STORAGE_KEY, JSON.stringify(payload));
+      } else {
+        // Drop legacy/broken payloads that don't contain valid history.
+        window.localStorage.removeItem(BRIDGE_STORAGE_KEY);
       }
-      if (parsed.reclaimCooldowns && typeof parsed.reclaimCooldowns === "object") {
-        setReclaimCooldowns(parsed.reclaimCooldowns as Record<string, number>);
-      }
-      if (typeof parsed.manualBurnHash === "string") setManualBurnHash(parsed.manualBurnHash);
-      if (typeof parsed.manualSourceChainId === "number") setManualSourceChainId(parsed.manualSourceChainId);
-      if (typeof parsed.manualDestinationChainId === "number") {
-        setManualDestinationChainId(parsed.manualDestinationChainId);
-      }
+      setReclaimCooldowns({});
+      setManualBurnHash("");
     } catch {
       // ignore corrupted persisted state
+      window.localStorage.removeItem(BRIDGE_STORAGE_KEY);
     } finally {
       setHydrated(true);
     }
   }, [hasMounted, hydrated]);
 
   useEffect(() => {
+    if (phase !== "claiming") return;
+    const timer = setTimeout(() => {
+      setPhase("claimPending");
+      setMessage("Claim is taking longer than expected. Retry claim to continue.");
+    }, 90_000);
+    return () => clearTimeout(timer);
+  }, [phase]);
+
+  useEffect(() => {
     if (!hasMounted || !hydrated) return;
     try {
       const payload: PersistedBridgeState = {
-        sourceChainId,
-        destinationChainId,
-        mode,
-        amount,
-        recipient,
-        phase,
-        message,
-        tx,
         history: history.map((row) => ({ ...row, amount: row.amount.toString() })),
-        reclaimCooldowns,
-        manualBurnHash,
-        manualSourceChainId,
-        manualDestinationChainId,
         updatedAt: Date.now(),
       };
       window.localStorage.setItem(BRIDGE_STORAGE_KEY, JSON.stringify(payload));
@@ -297,22 +289,9 @@ export default function UsdcBridge() {
       // no-op if persistence unavailable
     }
   }, [
-    amount,
-    destinationChainId,
-    error,
     hasMounted,
     history,
     hydrated,
-    manualBurnHash,
-    manualDestinationChainId,
-    manualSourceChainId,
-    message,
-    mode,
-    phase,
-    recipient,
-    reclaimCooldowns,
-    sourceChainId,
-    tx,
   ]);
 
   useEffect(() => {
@@ -375,6 +354,14 @@ export default function UsdcBridge() {
     };
   }, [amountRaw, destination, mode, routeSupported, source]);
 
+  useEffect(() => {
+    if (phase !== "success") return;
+    const timer = setTimeout(() => {
+      resetBridgeUi();
+    }, 2200);
+    return () => clearTimeout(timer);
+  }, [phase]);
+
   const validationError = useMemo(() => {
     if (!connected) return "Connect a wallet to bridge USDC.";
     if (!routeSupported) {
@@ -407,6 +394,14 @@ export default function UsdcBridge() {
     setDestinationChainId(source.chainId);
   };
 
+  const resetBridgeUi = useCallback(() => {
+    setPhase("idle");
+    setMessage("");
+    setError("");
+    setTx({});
+    setAmount("");
+  }, []);
+
   const selectMax = () => {
     setAmount(formatUsdc(balance));
   };
@@ -427,37 +422,46 @@ export default function UsdcBridge() {
   };
 
   const claimTransfer = async (burnHash: `0x${string}`, txSource = source, txDestination = destination) => {
-    if (!walletClient || !account.address) {
+    if (!account.address) {
       throw new Error("Wallet client is not ready.");
     }
+    setTx((current) => ({
+      ...current,
+      source: txSource,
+      destination: txDestination,
+      burnHash,
+      claimHash: undefined,
+    }));
 
     setPhase("attesting");
     setMessage("Waiting for Circle Iris to attest the burn.");
     updateHistory(burnHash, { status: "attesting", note: "Waiting for Circle attestation" });
     const attestation = await waitForCircleAttestation(txSource.domain, burnHash);
     if (!attestation) {
-      setTx((current) => ({ ...current, source: txSource, destination: txDestination, burnHash }));
       setPhase("claimPending");
-      setMessage("Circle attestation is still pending. You can retry the claim shortly.");
+      setMessage(
+        mode === "fast"
+          ? "Fast transfer attestation is still pending. This can still take a few minutes; retry claim shortly."
+          : "Standard transfer attestation is still pending. Retry claim shortly.",
+      );
       updateHistory(burnHash, { status: "claimPending", note: "Attestation still pending" });
       return;
     }
 
-    // This block switches the wallet to the destination chain, which isn't necessary
-    // if (account.chainId !== txDestination.chainId) {
-    //   setMessage(`Switching wallet to ${txDestination.name}.`);
-    //   await switchChainAsync({ chainId: txDestination.chainId });
-    // }
+    if (account.chainId !== txDestination.chainId) {
+      setMessage(`Switching wallet to ${txDestination.name}.`);
+      await switchChainAsync({ chainId: txDestination.chainId });
+    }
 
     setPhase("claiming");
     setMessage(`Minting native USDC on ${txDestination.name}.`);
     updateHistory(burnHash, { status: "claiming", note: "Mint transaction submitted" });
-    const claimHash = await walletClient.writeContract({
+    const claimHash = await writeContract(config, {
       address: txDestination.messageTransmitter,
       abi: MESSAGE_TRANSMITTER_V2_ABI,
       functionName: "receiveMessage",
       args: [attestation.message, attestation.attestation],
-      chain: undefined,
+      chainId: txDestination.chainId,
       account: account.address,
     } as any);
     setTx((current) => ({ ...current, destination: txDestination, claimHash }));
@@ -471,6 +475,7 @@ export default function UsdcBridge() {
   const startBridge = async () => {
     setError("");
     setMessage("");
+    let submittedBurnHash: `0x${string}` | undefined;
 
     if (validationError) {
       setPhase("failed");
@@ -478,16 +483,19 @@ export default function UsdcBridge() {
       return;
     }
 
-    if (!walletClient || !account.address || !amountRaw || !isAddress(recipientAddress)) {
+    if (!account.address || !amountRaw || !isAddress(recipientAddress)) {
       setPhase("failed");
       setError("Wallet is not ready for signing.");
       return;
     }
+    setHistory([]);
+    setReclaimCooldowns({});
+    setTx({});
 
     try {
       setPhase("checking");
       setMessage("Checking allowance and route details.");
-      setTx({ source, destination });
+      setTx({ source, destination, claimHash: undefined });
 
       if (account.chainId !== source.chainId) {
         setMessage(`Switching wallet to ${source.name}.`);
@@ -505,12 +513,12 @@ export default function UsdcBridge() {
       if (allowance < amountRaw) {
         setPhase("approving");
         setMessage("Waiting for you to approve the transaction");
-        const approveHash = await walletClient.writeContract({
+        const approveHash = await writeContract(config, {
           address: source.usdc,
           abi: ERC20_ABI,
           functionName: "approve",
           args: [source.tokenMessenger, amountRaw],
-          chain: undefined,
+          chainId: source.chainId,
           account: account.address,
         } as any);
         await waitForTransactionReceipt(config, { hash: approveHash, chainId: source.chainId });
@@ -523,7 +531,7 @@ export default function UsdcBridge() {
 
       setPhase("burning");
       setMessage(`Burning USDC on ${source.name}.`);
-      const burnHash = await walletClient.writeContract({
+      const burnHash = await writeContract(config, {
         address: source.tokenMessenger,
         abi: TOKEN_MESSENGER_V2_ABI,
         functionName: "depositForBurn",
@@ -536,10 +544,11 @@ export default function UsdcBridge() {
           routeMaxFee,
           getFinalityThreshold(mode),
         ],
-        chain: undefined,
+        chainId: source.chainId,
         account: account.address,
       } as any);
-      setTx({ source, destination, burnHash });
+      submittedBurnHash = burnHash;
+      setTx({ source, destination, burnHash, claimHash: undefined });
       setHistory((current) => [
         {
           id: `${burnHash}-${Date.now()}`,
@@ -558,8 +567,9 @@ export default function UsdcBridge() {
     } catch (bridgeError) {
       setPhase("failed");
       setError(simplifyBridgeError(bridgeError));
-      if (tx.burnHash) {
-        updateHistory(tx.burnHash, { status: "failed", note: "Claim failed. Retry available." });
+      const latestBurnHash = submittedBurnHash ?? tx.burnHash;
+      if (latestBurnHash) {
+        updateHistory(latestBurnHash, { status: "failed", note: "Claim failed. Retry available." });
       }
     }
   };
@@ -568,6 +578,7 @@ export default function UsdcBridge() {
     if (!tx.burnHash || !tx.source || !tx.destination) return;
     try {
       setError("");
+      setTx((current) => ({ ...current, claimHash: undefined }));
       await claimTransfer(tx.burnHash, tx.source, tx.destination);
     } catch (claimError) {
       setPhase("failed");
@@ -611,6 +622,7 @@ export default function UsdcBridge() {
     }
 
     const burnHash = normalized as `0x${string}`;
+    setTx({ source: sourceChain, destination: destinationChain, burnHash, claimHash: undefined });
     setHistory((current) => {
       if (current.some((row) => row.burnHash === burnHash)) return current;
       return [
@@ -784,16 +796,16 @@ export default function UsdcBridge() {
 
           <div className={styles.txLinks}>
             <p>Transaction trail</p>
-            {tx.burnHash && tx.source ? (
-              <a href={`${tx.source.explorer}${tx.burnHash}`} target="_blank" rel="noreferrer">
-                Burn: {shortHash(tx.burnHash)}
+            {trailBurnHash && trailSource ? (
+              <a href={`${trailSource.explorer}${trailBurnHash}`} target="_blank" rel="noreferrer">
+                Burn: {shortHash(trailBurnHash)}
               </a>
             ) : (
               <span>Burn transaction pending</span>
             )}
-            {tx.claimHash && tx.destination ? (
-              <a href={`${tx.destination.explorer}${tx.claimHash}`} target="_blank" rel="noreferrer">
-                Claim: {shortHash(tx.claimHash)}
+            {trailClaimHash && trailDestination ? (
+              <a href={`${trailDestination.explorer}${trailClaimHash}`} target="_blank" rel="noreferrer">
+                Claim: {shortHash(trailClaimHash)}
               </a>
             ) : (
               <span>Claim transaction pending</span>
