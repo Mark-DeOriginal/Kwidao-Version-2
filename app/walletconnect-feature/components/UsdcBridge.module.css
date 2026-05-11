@@ -500,10 +500,6 @@
   border-top: 1px solid color-mix(in srgb, var(--wc-brand-primary) 20%, var(--theme-border-subtle));
 }
 
-.quoteStrong b {
-  color: var(--wc-brand-primary);
-}
-
 .statusPanel {
   border-radius: 0.85rem;
   padding: 0.75rem 0.85rem;

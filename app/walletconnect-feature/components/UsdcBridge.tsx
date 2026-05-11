@@ -654,8 +654,13 @@ export default function UsdcBridge() {
   return (
     <section className={classNames(styles.bridgePage, styles.reveal)}>
       <div className={styles.bridgeIntro}>
-        <h1>Bridge native USDC <br/>across chains</h1>
-        <p>Move USDC between blockchains smoothly and securely without the complexity of traditional bridges, via Circle's CCTP.
+        <h1>
+          Bridge native USDC <br />
+          across chains
+        </h1>
+        <p>
+          Move USDC between blockchains smoothly and securely without the
+          complexity of traditional bridges, via Circle's CCTP.
         </p>
       </div>
 
@@ -690,18 +695,29 @@ export default function UsdcBridge() {
               label="To"
               chainId={destination.chainId}
               onChange={setDestinationChainId}
-              amountValue={amountRaw && amountRaw > BigInt(0) ? formatUsdc(expectedAmount) : ""}
+              amountValue={
+                amountRaw && amountRaw > BigInt(0)
+                  ? formatUsdc(expectedAmount)
+                  : ""
+              }
               amountPlaceholder="0.00"
               amountReadOnly
             />
           </div>
 
-          <div className={styles.modeControl} role="tablist" aria-label="Transfer speed">
+          <div
+            className={styles.modeControl}
+            role="tablist"
+            aria-label="Transfer speed"
+          >
             {(["standard", "fast"] as BridgeMode[]).map((option) => (
               <button
                 key={option}
                 type="button"
-                className={classNames(styles.modeButton, mode === option && styles.modeActive)}
+                className={classNames(
+                  styles.modeButton,
+                  mode === option && styles.modeActive,
+                )}
                 onClick={() => setMode(option)}
               >
                 {mode === option ? <span className={styles.modePill} /> : null}
@@ -713,8 +729,7 @@ export default function UsdcBridge() {
           <div className={classNames(styles.statusPanel, styles.statusInfo)}>
             {mode === "standard"
               ? "Standard mode is free, but may take about 1 hour or more to complete transactions depending on network conditions."
-              : "Fast mode makes transactions faster but incurs a fee."
-            }
+              : "Fast mode makes transactions faster but incurs a fee."}
           </div>
 
           <div className={styles.inputPanel}>
@@ -728,23 +743,37 @@ export default function UsdcBridge() {
           </div>
 
           <div className={styles.quoteBox}>
-            <QuoteRow label="Fee" value={feeBps === null ? "Fetching route fee" : `${feeBps} bps`} />
+            <QuoteRow
+              label="Fee"
+              value={feeBps === null ? "Fetching route fee" : `${feeBps} bps`}
+            />
             <QuoteRow label="Max fee" value={`${formatUsdc(maxFee)} USDC`} />
-            <QuoteRow label="Expected receive" value={`${formatUsdc(expectedAmount)} USDC`} strong />
+            <QuoteRow
+              label="Expected receive"
+              value={`${formatUsdc(expectedAmount)} USDC`}
+              strong
+            />
           </div>
 
-          {(error || validationError || phase === "success" || phase === "claimPending") && (
-              <div
-                key={`${phase}-${error || validationError || message}`}
-                className={classNames(
-                  styles.statusPanel,
-                  phase === "success" && styles.statusSuccess,
-                  phase === "claimPending" && styles.statusWarning,
-                  (error || validationError) && phase !== "success" && styles.statusError,
-                )}
-              >
-                {phase === "success" ? message : error || validationError || message}
-              </div>
+          {(error ||
+            validationError ||
+            phase === "success" ||
+            phase === "claimPending") && (
+            <div
+              key={`${phase}-${error || validationError || message}`}
+              className={classNames(
+                styles.statusPanel,
+                phase === "success" && styles.statusSuccess,
+                phase === "claimPending" && styles.statusWarning,
+                (error || validationError) &&
+                  phase !== "success" &&
+                  styles.statusError,
+              )}
+            >
+              {phase === "success"
+                ? message
+                : error || validationError || message}
+            </div>
           )}
 
           <button
@@ -753,9 +782,13 @@ export default function UsdcBridge() {
             disabled={busy || !!validationError}
             onClick={startBridge}
           >
-              <span>
-                {busy ? message || "Working..." : validationError ? "Review bridge details" : "Bridge USDC"}
-              </span>
+            <span>
+              {busy
+                ? message || "Working..."
+                : validationError
+                  ? "Review bridge details"
+                  : "Bridge USDC"}
+            </span>
           </button>
 
           {phase === "claimPending" ? (
@@ -772,8 +805,12 @@ export default function UsdcBridge() {
         <aside className={styles.bridgeAside}>
           <div className={styles.timeline}>
             {STEPS.map((step, index) => {
-              const currentIndex = STEPS.findIndex((item) => item.key === phase);
-              const complete = phase === "success" || (currentIndex > index && currentIndex !== -1);
+              const currentIndex = STEPS.findIndex(
+                (item) => item.key === phase,
+              );
+              const complete =
+                phase === "success" ||
+                (currentIndex > index && currentIndex !== -1);
               const active = step.key === phase;
               return (
                 <div
@@ -787,7 +824,13 @@ export default function UsdcBridge() {
                   <span>{complete ? "OK" : index + 1}</span>
                   <div>
                     <p>{step.label}</p>
-                    <small>{active ? message || "In progress" : complete ? "Complete" : "Waiting"}</small>
+                    <small>
+                      {active
+                        ? message || "In progress"
+                        : complete
+                          ? "Complete"
+                          : "Waiting"}
+                    </small>
                   </div>
                 </div>
               );
@@ -797,14 +840,22 @@ export default function UsdcBridge() {
           <div className={styles.txLinks}>
             <p>Transaction trail</p>
             {trailBurnHash && trailSource ? (
-              <a href={`${trailSource.explorer}${trailBurnHash}`} target="_blank" rel="noreferrer">
+              <a
+                href={`${trailSource.explorer}${trailBurnHash}`}
+                target="_blank"
+                rel="noreferrer"
+              >
                 Burn: {shortHash(trailBurnHash)}
               </a>
             ) : (
               <span>Burn transaction pending</span>
             )}
             {trailClaimHash && trailDestination ? (
-              <a href={`${trailDestination.explorer}${trailClaimHash}`} target="_blank" rel="noreferrer">
+              <a
+                href={`${trailDestination.explorer}${trailClaimHash}`}
+                target="_blank"
+                rel="noreferrer"
+              >
                 Claim: {shortHash(trailClaimHash)}
               </a>
             ) : (
@@ -815,7 +866,9 @@ export default function UsdcBridge() {
           <div className={styles.historyPanel}>
             <p className={styles.historyTitle}>Bridge history</p>
             {history.length === 0 ? (
-              <span className={styles.historyEmpty}>No bridge transactions yet.</span>
+              <span className={styles.historyEmpty}>
+                No bridge transactions yet.
+              </span>
             ) : (
               <div className={styles.historyTableWrap}>
                 <table className={styles.historyTable}>
@@ -835,12 +888,24 @@ export default function UsdcBridge() {
                           <td>
                             <div className={styles.routeCell}>
                               <ChainIcon chain={row.source} />
-                              <span>{row.source.shortName} to {row.destination.shortName}</span>
+                              <span>
+                                {row.source.shortName} to{" "}
+                                {row.destination.shortName}
+                              </span>
                             </div>
                           </td>
-                          <td>{row.amount > BigInt(0) ? `${formatUsdc(row.amount)} USDC` : "-"}</td>
                           <td>
-                            <span className={classNames(styles.statusChip, statusChipClass(row.status))}>
+                            {row.amount > BigInt(0)
+                              ? `${formatUsdc(row.amount)} USDC`
+                              : "-"}
+                          </td>
+                          <td>
+                            <span
+                              className={classNames(
+                                styles.statusChip,
+                                statusChipClass(row.status),
+                              )}
+                            >
                               {row.status}
                             </span>
                           </td>
@@ -851,7 +916,9 @@ export default function UsdcBridge() {
                               disabled={cooldown > 0}
                               onClick={() => void startRowReclaim(row)}
                             >
-                              {cooldown > 0 ? `Try again in ${formatCooldown(cooldown)}` : "Reclaim"}
+                              {cooldown > 0
+                                ? `Try again in ${formatCooldown(cooldown)}`
+                                : "Reclaim"}
                             </button>
                           </td>
                         </tr>
@@ -865,11 +932,13 @@ export default function UsdcBridge() {
 
           <div className={styles.manualClaimPanel}>
             <p className={styles.historyTitle}>Manual claim</p>
-            <small>Paste burn hash and retry mint if Circle attestation was delayed.</small>
+            <small>
+              Paste burn hash and retry mint if Circle attestation was delayed.
+            </small>
             <input
               value={manualBurnHash}
               onChange={(event) => setManualBurnHash(event.target.value)}
-              placeholder="0x burn transaction hash"
+              placeholder="Enter burn transaction hash"
               className={styles.manualHashInput}
             />
             <div className={styles.manualRouteGrid}>
@@ -885,17 +954,33 @@ export default function UsdcBridge() {
               />
             </div>
             {manualError ? (
-              <div className={classNames(styles.statusPanel, styles.statusError)}>{manualError}</div>
+              <div
+                className={classNames(styles.statusPanel, styles.statusError)}
+              >
+                {manualError}
+              </div>
             ) : null}
             {manualMessage ? (
-              <div className={classNames(styles.statusPanel, styles.statusInfo)}>{manualMessage}</div>
+              <div
+                className={classNames(styles.statusPanel, styles.statusInfo)}
+              >
+                {manualMessage}
+              </div>
             ) : null}
-            <button type="button" className={styles.secondaryButton} onClick={() => void manualClaim()}>
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={() => void manualClaim()}
+            >
               Claim with burn hash
             </button>
           </div>
         </aside>
       </div>
+      <footer className="mt-20">
+        
+        <p className="text-center opacity-50 text-[14px]">© {new Date().getFullYear()} Kwizerana DAO</p>
+      </footer>
     </section>
   );
 }
@@ -1077,13 +1162,38 @@ function ManualChainSelect({
     };
   }, []);
 
+  const measureMenuHeight = () => {
+    if (!menuRef.current) return 0;
+
+    const probe = document.createElement("div");
+    probe.className = styles.chainMenu;
+    probe.style.position = "fixed";
+    probe.style.left = "-99999px";
+    probe.style.top = "0";
+    probe.style.visibility = "hidden";
+    probe.style.pointerEvents = "none";
+    probe.style.width = `${menuRef.current.offsetWidth}px`;
+
+    for (const option of BRIDGE_CHAINS) {
+      const row = document.createElement("div");
+      row.className = styles.chainOption;
+      row.textContent = option.name;
+      probe.appendChild(row);
+    }
+
+    document.body.appendChild(probe);
+    const height = probe.getBoundingClientRect().height || probe.scrollHeight || 0;
+    document.body.removeChild(probe);
+    return height;
+  };
+
   const computeMenuDirection = () => {
     if (!menuRef.current) return;
     const rect = menuRef.current.getBoundingClientRect();
-    const estimatedMenuHeight = 260;
     const viewportHeight = window.innerHeight;
     const spaceBelow = viewportHeight - rect.bottom;
-    setOpenAbove(spaceBelow < estimatedMenuHeight);
+    const menuHeight = measureMenuHeight();
+    setOpenAbove(spaceBelow < menuHeight);
   };
 
   return (
@@ -1093,10 +1203,11 @@ function ManualChainSelect({
         type="button"
         className={styles.chainTrigger}
         onClick={() => {
-          if (!menuOpen) {
+          const nextOpen = !menuOpen;
+          if (nextOpen) {
             computeMenuDirection();
           }
-          setMenuOpen((current) => !current);
+          setMenuOpen(nextOpen);
         }}
         aria-expanded={menuOpen}
         aria-haspopup="listbox"
