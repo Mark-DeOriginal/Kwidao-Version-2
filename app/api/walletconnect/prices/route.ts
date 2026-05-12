@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getWalletPrices } from "@/app/walletconnect-feature/services/prices";
+import { getWalletPrices } from "@/app/wallet-connect-btn/services/prices";
 
 export async function GET() {
   try {
@@ -13,4 +13,3 @@ export async function GET() {
     );
   }
 }
-

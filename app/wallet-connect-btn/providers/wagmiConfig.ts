@@ -6,7 +6,7 @@ import {
   walletConnectWallet,
 } from "@rainbow-me/rainbowkit/wallets";
 import { createConfig, http } from "wagmi";
-import { arbitrum, avalanche, base, mainnet, optimism } from "wagmi/chains";
+import { arbitrum, avalanche, base, mainnet, optimism, polygon } from "wagmi/chains";
 import type { Chain } from "wagmi/chains";
 
 const projectId =
@@ -55,7 +55,7 @@ const connectors = connectorsForWallets(
   },
 );
 
-export const walletConnectChains = [avalanche, mainnet, base, arbitrum, optimism, injective] as const;
+export const walletConnectChains = [avalanche, mainnet, base, arbitrum, optimism, polygon, injective] as const;
 
 export const walletConnectWagmiConfig = createConfig({
   chains: walletConnectChains,
@@ -66,6 +66,7 @@ export const walletConnectWagmiConfig = createConfig({
     [base.id]: http(baseRpcUrl),
     [arbitrum.id]: http(),
     [optimism.id]: http(),
+    [polygon.id]: http(),
     [injective.id]: http(injectiveRpcUrl || "https://sentry.evm-rpc.injective.network/"),
   },
   ssr: true,

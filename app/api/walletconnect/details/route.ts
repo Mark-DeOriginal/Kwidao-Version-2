@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getWalletDetails } from "@/app/walletconnect-feature/services/walletDetailsService";
-import { isValidEvmAddress } from "@/app/walletconnect-feature/services/format";
+import { getWalletDetails } from "@/app/wallet-connect-btn/services/walletDetailsService";
+import { isValidEvmAddress } from "@/app/wallet-connect-btn/services/format";
 
 function parseChainId(input: string | null) {
   if (!input) return null;
@@ -35,4 +35,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

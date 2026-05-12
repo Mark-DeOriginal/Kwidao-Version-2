@@ -15,26 +15,26 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: "Kwizerana DAO",
   description:
-    "Kwidao is a DeFi platform that helps you earn yields riskfree, safely and efficiently.",
+    "Kwizerana DAO is a DeFi platform for secure yield opportunities, portfolio intelligence, and cross-chain USDC flows.",
   openGraph: {
     title: "Kwizerana DAO",
     description:
-      "Kwidao is a DeFi platform that helps you earn yields riskfree, safely and efficiently.",
+      "Kwizerana DAO is a DeFi platform for secure yield opportunities, portfolio intelligence, and cross-chain USDC flows.",
     images: [
       {
         url: "/opengraph.jpg",
         width: 1200,
         height: 1200,
-        alt: "Kwidao Open Graph Image",
+        alt: "Kwizerana DAO Open Graph Image",
       },
     ],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title:
-      "Kwidao is a DeFi platform that helps you earn yields riskfree, safely and efficiently.",
-    description: "Kwizerana DAO",
+    title: "Kwizerana DAO",
+    description:
+      "Kwizerana DAO is a DeFi platform for secure yield opportunities, portfolio intelligence, and cross-chain USDC flows.",
     images: ["/opengraph-twitter.jpg"],
   },
 };
@@ -48,13 +48,6 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <head>
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        {/* Social preview meta tags */}
-        <meta property="og:image" content="/opengraph.jpg" />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="1200" />
-        <meta property="og:image:alt" content="Kwidao Open Graph Image" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:image" content="/opengraph-twitter.jpg" />
         {/* Optional runtime script for analytics or integrations */}
         <Script
           crossOrigin="anonymous"

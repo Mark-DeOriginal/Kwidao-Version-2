@@ -1,11 +1,11 @@
 "use client";
 
-import WalletConnectHeader from "./components/WalletConnectHeader";
+import WalletConnectHeader from "../wallet-connect-btn/components/WalletConnectHeader";
 import UsdcBridge from "./components/UsdcBridge";
-import WalletConnectProvider from "./providers/WalletConnectProvider";
-import styles from "./WalletConnectFeaturePage.module.css";
+import WalletConnectProvider from "../wallet-connect-btn/providers/WalletConnectProvider";
+import styles from "./UsdcBridgePage.module.css";
 
-export default function WalletConnectFeaturePage() {
+export default function UsdcBridgePage() {
   return (
     <WalletConnectProvider>
       <div className={styles.pageShell}>

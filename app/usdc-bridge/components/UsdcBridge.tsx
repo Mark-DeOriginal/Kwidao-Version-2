@@ -64,6 +64,7 @@ type PersistedBridgeState = {
 };
 
 const BRIDGE_STORAGE_KEY = "kwidao-usdc-bridge-state-v1";
+const HISTORY_RETENTION_MS = 3 * 24 * 60 * 60 * 1000;
 
 const STEPS: Array<{ key: BridgePhase; label: string }> = [
   { key: "checking", label: "Review" },
@@ -141,6 +142,11 @@ function formatInputAmount(value: string) {
   const whole = wholeRaw.replace(/^0+(?=\d)/, "") || "0";
   const withCommas = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return fractionRaw !== undefined ? `${withCommas}.${fractionRaw}` : withCommas;
+}
+
+function pruneBridgeHistory(rows: BridgeHistoryItem[], now = Date.now()) {
+  const cutoff = now - HISTORY_RETENTION_MS;
+  return rows.filter((row) => Number.isFinite(row.createdAt) && row.createdAt >= cutoff);
 }
 
 export default function UsdcBridge() {
@@ -247,10 +253,11 @@ export default function UsdcBridge() {
           ...row,
           amount: BigInt(String(row.amount)),
         }));
-        setHistory(restoredHistory);
+        const prunedHistory = pruneBridgeHistory(restoredHistory);
+        setHistory(prunedHistory);
         // Normalize any legacy payload to history-only storage.
         const payload: PersistedBridgeState = {
-          history: restoredHistory.map((row) => ({ ...row, amount: row.amount.toString() })),
+          history: prunedHistory.map((row) => ({ ...row, amount: row.amount.toString() })),
           updatedAt: Date.now(),
         };
         window.localStorage.setItem(BRIDGE_STORAGE_KEY, JSON.stringify(payload));
@@ -280,8 +287,13 @@ export default function UsdcBridge() {
   useEffect(() => {
     if (!hasMounted || !hydrated) return;
     try {
+      const prunedHistory = pruneBridgeHistory(history);
+      if (prunedHistory.length !== history.length) {
+        setHistory(prunedHistory);
+        return;
+      }
       const payload: PersistedBridgeState = {
-        history: history.map((row) => ({ ...row, amount: row.amount.toString() })),
+        history: prunedHistory.map((row) => ({ ...row, amount: row.amount.toString() })),
         updatedAt: Date.now(),
       };
       window.localStorage.setItem(BRIDGE_STORAGE_KEY, JSON.stringify(payload));
