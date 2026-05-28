@@ -75,7 +75,8 @@ export default function WalletConnectButton({
               className={classNames(styles.connectButton, className)}
             >
               <WalletIcon />
-              {label}
+              <span className="inline max-[435px]:hidden">{label}</span>
+              <span className="hidden max-[435px]:inline">Connect</span>
             </button>
           );
         }
