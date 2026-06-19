@@ -1,14 +1,66 @@
+import dynamic from "next/dynamic";
+
 import HeroSection from "./components/HeroSection";
-import LiveMarketWidget from "./components/LiveMarketWidget";
-import TrustPartnersStrip from "./components/TrustPartnersStrip";
-import WhatIsKwidaoSection from "./components/WhatIsKwidaoSection";
-import EcosystemSection from "./components/EcosystemSection";
-import LiveMarketAnalyticsSection from "./components/LiveMarketAnalyticsSection";
-import HowItWorksSection from "./components/HowItWorksSection";
-import ToolsPreviewSection from "./components/ToolsPreviewSection";
-import EducationAlphaHubSection from "./components/EducationAlphaHubSection";
-import DAOTokenSection from "./components/DAOTokenSection";
-import CommunitySection from "./components/CommunitySection";
+
+function SectionFallback({ className }: { className: string }) {
+  return <section aria-hidden="true" className={`animate-pulse ${className}`} />;
+}
+
+const LiveMarketWidget = dynamic(() => import("./components/LiveMarketWidget"), {
+  ssr: false,
+  loading: () => <SectionFallback className="min-h-[180px]" />,
+});
+
+const TrustPartnersStrip = dynamic(() => import("./components/TrustPartnersStrip"), {
+  ssr: false,
+  loading: () => <SectionFallback className="min-h-[280px]" />,
+});
+
+const WhatIsKwidaoSection = dynamic(() => import("./components/WhatIsKwidaoSection"), {
+  ssr: false,
+  loading: () => <SectionFallback className="min-h-[520px]" />,
+});
+
+const EcosystemSection = dynamic(() => import("./components/EcosystemSection"), {
+  ssr: false,
+  loading: () => <SectionFallback className="min-h-[320px]" />,
+});
+
+const LiveMarketAnalyticsSection = dynamic(
+  () => import("./components/LiveMarketAnalyticsSection"),
+  {
+    ssr: false,
+    loading: () => <SectionFallback className="min-h-[640px]" />,
+  },
+);
+
+const HowItWorksSection = dynamic(() => import("./components/HowItWorksSection"), {
+  ssr: false,
+  loading: () => <SectionFallback className="min-h-[360px]" />,
+});
+
+const ToolsPreviewSection = dynamic(() => import("./components/ToolsPreviewSection"), {
+  ssr: false,
+  loading: () => <SectionFallback className="min-h-[460px]" />,
+});
+
+const EducationAlphaHubSection = dynamic(
+  () => import("./components/EducationAlphaHubSection"),
+  {
+    ssr: false,
+    loading: () => <SectionFallback className="min-h-[540px]" />,
+  },
+);
+
+const DAOTokenSection = dynamic(() => import("./components/DAOTokenSection"), {
+  ssr: false,
+  loading: () => <SectionFallback className="min-h-[760px]" />,
+});
+
+const CommunitySection = dynamic(() => import("./components/CommunitySection"), {
+  ssr: false,
+  loading: () => <SectionFallback className="min-h-[480px]" />,
+});
 
 export default function Home() {
   return (

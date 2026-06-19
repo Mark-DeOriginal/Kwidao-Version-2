@@ -8,6 +8,7 @@ import { useAccount, useConfig, useSwitchChain } from "wagmi";
 import {
   addressToBytes32,
   BRIDGE_CHAINS,
+  BRIDGE_CHAIN_OPTIONS,
   ERC20_ABI,
   estimateMaxFee,
   fetchAttestation,
@@ -1085,22 +1086,28 @@ function ChainSelect({
               exit={{ opacity: 0, y: 6, scale: 0.97 }}
               transition={{ duration: 0.16, ease: "easeOut" }}
             >
-              {BRIDGE_CHAINS.map((option) => {
+              {BRIDGE_CHAIN_OPTIONS.map((option) => {
                 const selected = option.chainId === chainId;
                 return (
                   <button
-                    key={option.chainId}
+                    key={`${option.domain}-${option.name}`}
                     type="button"
                     role="option"
                     aria-selected={selected}
-                    className={classNames(styles.chainOption, selected && styles.chainOptionActive)}
+                    disabled={option.status !== "active"}
+                    className={classNames(
+                      styles.chainOption,
+                      selected && styles.chainOptionActive,
+                      option.status !== "active" && styles.chainOptionPlanned,
+                    )}
                     onClick={() => {
-                      onChange(option.chainId);
+                      if (option.chainId) onChange(option.chainId);
                       setMenuOpen(false);
                     }}
                   >
                     <ChainIcon chain={option} />
                     <span>{option.name}</span>
+                    {option.status !== "active" ? <span className={styles.chainBadge}>Soon</span> : null}
                   </button>
                 );
               })}
@@ -1186,7 +1193,7 @@ function ManualChainSelect({
     probe.style.pointerEvents = "none";
     probe.style.width = `${menuRef.current.offsetWidth}px`;
 
-    for (const option of BRIDGE_CHAINS) {
+    for (const option of BRIDGE_CHAIN_OPTIONS) {
       const row = document.createElement("div");
       row.className = styles.chainOption;
       row.textContent = option.name;
@@ -1248,22 +1255,28 @@ function ManualChainSelect({
             exit={{ opacity: 0, y: 6, scale: 0.97 }}
             transition={{ duration: 0.16, ease: "easeOut" }}
           >
-            {BRIDGE_CHAINS.map((option) => {
+            {BRIDGE_CHAIN_OPTIONS.map((option) => {
               const selected = option.chainId === chainId;
               return (
                 <button
-                  key={`manual-${label}-${option.chainId}`}
+                  key={`manual-${label}-${option.domain}-${option.name}`}
                   type="button"
                   role="option"
                   aria-selected={selected}
-                  className={classNames(styles.chainOption, selected && styles.chainOptionActive)}
+                  disabled={option.status !== "active"}
+                  className={classNames(
+                    styles.chainOption,
+                    selected && styles.chainOptionActive,
+                    option.status !== "active" && styles.chainOptionPlanned,
+                  )}
                   onClick={() => {
-                    onChange(option.chainId);
+                    if (option.chainId) onChange(option.chainId);
                     setMenuOpen(false);
                   }}
                 >
                   <ChainIcon chain={option} />
                   <span>{option.name}</span>
+                  {option.status !== "active" ? <span className={styles.chainBadge}>Soon</span> : null}
                 </button>
               );
             })}
@@ -1274,8 +1287,14 @@ function ManualChainSelect({
   );
 }
 
-function ChainIcon({ chain }: { chain: BridgeChain }) {
-  return <span className={styles.chainIcon}>{getChainIcon(chain.shortName)}</span>;
+function ChainIcon({ chain }: { chain: { shortName: string; accent: string } }) {
+  const icon = getChainIcon(chain.shortName);
+
+  return (
+    <span className={styles.chainIcon} style={{ background: chain.accent }}>
+      {icon ?? <span className={styles.chainIconFallback}>{chain.shortName.slice(0, 4)}</span>}
+    </span>
+  );
 }
 
 function getChainIcon(shortName: string) {
@@ -1378,11 +1397,7 @@ function getChainIcon(shortName: string) {
     );
   }
 
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="11" fill="#1C2A3D" />
-    </svg>
-  );
+  return null;
 }
 
 function QuoteRow({ label, value, strong }: { label: string; value: string; strong?: boolean }) {

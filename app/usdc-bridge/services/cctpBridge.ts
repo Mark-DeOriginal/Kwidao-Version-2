@@ -1,7 +1,27 @@
 "use client";
 
 import { formatUnits, isAddress, pad, parseUnits } from "viem";
-import { arbitrum, avalanche, base, mainnet, optimism, polygon } from "wagmi/chains";
+import {
+  arbitrum,
+  avalanche,
+  base,
+  mainnet,
+  optimism,
+  polygon,
+} from "wagmi/chains";
+import {
+  hyperEvm,
+  ink,
+  linea,
+  monad,
+  morph,
+  plumeMainnet,
+  sei,
+  sonic,
+  unichain,
+  worldchain,
+  xdc,
+} from "viem/chains";
 
 export type BridgeMode = "fast" | "standard";
 
@@ -15,6 +35,15 @@ export type BridgeChain = {
   usdc: `0x${string}`;
   tokenMessenger: `0x${string}`;
   messageTransmitter: `0x${string}`;
+};
+
+export type BridgeChainOption = {
+  name: string;
+  shortName: string;
+  accent: string;
+  status: "active" | "planned";
+  chainId?: number;
+  domain: number;
 };
 
 export const TOKEN_MESSENGER_V2 = "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d";
@@ -91,6 +120,116 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     messageTransmitter: MESSAGE_TRANSMITTER_V2,
   },
   {
+    chainId: unichain.id,
+    domain: 10,
+    name: "Unichain",
+    shortName: "UNI",
+    accent: "#fc72ff",
+    explorer: "https://uniscan.xyz/tx/",
+    usdc: "0x078D782b760474a361dDA0AF3839290b0EF57AD6",
+    tokenMessenger: TOKEN_MESSENGER_V2,
+    messageTransmitter: MESSAGE_TRANSMITTER_V2,
+  },
+  {
+    chainId: linea.id,
+    domain: 11,
+    name: "Linea",
+    shortName: "LINEA",
+    accent: "#61dfff",
+    explorer: "https://lineascan.build/tx/",
+    usdc: "0x176211869cA2b568f2A7D4EE941E073a821EE1ff",
+    tokenMessenger: TOKEN_MESSENGER_V2,
+    messageTransmitter: MESSAGE_TRANSMITTER_V2,
+  },
+  {
+    chainId: sonic.id,
+    domain: 13,
+    name: "Sonic",
+    shortName: "S",
+    accent: "#111111",
+    explorer: "https://sonicscan.org/tx/",
+    usdc: "0x29219dd400f2Bf60E5a23d13Be72B486D4038894",
+    tokenMessenger: TOKEN_MESSENGER_V2,
+    messageTransmitter: MESSAGE_TRANSMITTER_V2,
+  },
+  {
+    chainId: worldchain.id,
+    domain: 14,
+    name: "World Chain",
+    shortName: "WORLD",
+    accent: "#000000",
+    explorer: "https://worldscan.org/tx/",
+    usdc: "0x79A02482A880bCe3F13E09da970dC34dB4cD24D1",
+    tokenMessenger: TOKEN_MESSENGER_V2,
+    messageTransmitter: MESSAGE_TRANSMITTER_V2,
+  },
+  {
+    chainId: monad.id,
+    domain: 15,
+    name: "Monad",
+    shortName: "MON",
+    accent: "#836ef9",
+    explorer: "https://monadvision.com/tx/",
+    usdc: "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
+    tokenMessenger: TOKEN_MESSENGER_V2,
+    messageTransmitter: MESSAGE_TRANSMITTER_V2,
+  },
+  {
+    chainId: sei.id,
+    domain: 16,
+    name: "Sei",
+    shortName: "SEI",
+    accent: "#9b111e",
+    explorer: "https://seiscan.io/tx/",
+    usdc: "0xe15fC38F6D8c56aF07bbCBe3BAf5708A2Bf42392",
+    tokenMessenger: TOKEN_MESSENGER_V2,
+    messageTransmitter: MESSAGE_TRANSMITTER_V2,
+  },
+  {
+    chainId: xdc.id,
+    domain: 18,
+    name: "XDC",
+    shortName: "XDC",
+    accent: "#2a5ada",
+    explorer: "https://xdcscan.com/tx/",
+    usdc: "0xfA2958CB79b0491CC627c1557F441eF849Ca8eb1",
+    tokenMessenger: TOKEN_MESSENGER_V2,
+    messageTransmitter: MESSAGE_TRANSMITTER_V2,
+  },
+  {
+    chainId: hyperEvm.id,
+    domain: 19,
+    name: "HyperEVM",
+    shortName: "HYPE",
+    accent: "#00e6b0",
+    explorer: "https://hyperscan.com/tx/",
+    usdc: "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+    tokenMessenger: TOKEN_MESSENGER_V2,
+    messageTransmitter: MESSAGE_TRANSMITTER_V2,
+  },
+  {
+    chainId: ink.id,
+    domain: 21,
+    name: "Ink",
+    shortName: "INK",
+    accent: "#7132f5",
+    explorer: "https://explorer.inkonchain.com/tx/",
+    usdc: "0x2D270e6886d130D724215A266106e6832161EAEd",
+    tokenMessenger: TOKEN_MESSENGER_V2,
+    messageTransmitter: MESSAGE_TRANSMITTER_V2,
+  },
+  {
+    chainId: plumeMainnet.id,
+    domain: 22,
+    name: "Plume",
+    shortName: "PLUME",
+    accent: "#ff4f9a",
+    explorer: "https://explorer.plume.org/tx/",
+    usdc: "0x222365EF19F7947e5484218551B56bb3965Aa7aF",
+    tokenMessenger: TOKEN_MESSENGER_V2,
+    messageTransmitter: MESSAGE_TRANSMITTER_V2,
+  },
+  {
     chainId: INJECTIVE_EVM_CHAIN_ID,
     domain: 29,
     name: "Injective",
@@ -100,6 +239,77 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     usdc: "0xa00C59fF5a080D2b954d0c75e46E22a0c371235a",
     tokenMessenger: TOKEN_MESSENGER_V2,
     messageTransmitter: MESSAGE_TRANSMITTER_V2,
+  },
+  {
+    chainId: morph.id,
+    domain: 30,
+    name: "Morph",
+    shortName: "MORPH",
+    accent: "#00ff7f",
+    explorer: "https://explorer.morph.network/tx/",
+    usdc: "0xCfb1186F4e93D60E60a8bDd997427D1F33bc372B",
+    tokenMessenger: TOKEN_MESSENGER_V2,
+    messageTransmitter: MESSAGE_TRANSMITTER_V2,
+  },
+];
+
+export const BRIDGE_CHAIN_OPTIONS: BridgeChainOption[] = [
+  ...BRIDGE_CHAINS.map((chain) => ({
+    chainId: chain.chainId,
+    domain: chain.domain,
+    name: chain.name,
+    shortName: chain.shortName,
+    accent: chain.accent,
+    status: "active" as const,
+  })),
+  {
+    domain: 12,
+    name: "Codex",
+    shortName: "CODEX",
+    accent: "#7c3aed",
+    status: "planned",
+  },
+  {
+    domain: 26,
+    name: "Arc",
+    shortName: "ARC",
+    accent: "#0ea5e9",
+    status: "planned",
+  },
+  {
+    domain: 28,
+    name: "EDGE",
+    shortName: "EDGE",
+    accent: "#111827",
+    status: "planned",
+  },
+  {
+    domain: 31,
+    name: "Pharos",
+    shortName: "PHAROS",
+    accent: "#14b8a6",
+    status: "planned",
+  },
+  {
+    domain: 5,
+    name: "Solana",
+    shortName: "SOL",
+    accent: "#14f195",
+    status: "planned",
+  },
+  {
+    domain: 25,
+    name: "Starknet",
+    shortName: "STRK",
+    accent: "#fc5b3f",
+    status: "planned",
+  },
+  {
+    domain: 27,
+    name: "Stellar",
+    shortName: "XLM",
+    accent: "#7d8cff",
+    status: "planned",
   },
 ];
 

@@ -6,7 +6,27 @@ import {
   walletConnectWallet,
 } from "@rainbow-me/rainbowkit/wallets";
 import { createConfig, http } from "wagmi";
-import { arbitrum, avalanche, base, mainnet, optimism, polygon } from "wagmi/chains";
+import {
+  arbitrum,
+  avalanche,
+  base,
+  mainnet,
+  optimism,
+  polygon,
+} from "wagmi/chains";
+import {
+  hyperEvm,
+  ink,
+  linea,
+  monad,
+  morph,
+  plumeMainnet,
+  sei,
+  sonic,
+  unichain,
+  worldchain,
+  xdc,
+} from "viem/chains";
 import type { Chain } from "wagmi/chains";
 
 const projectId =
@@ -17,6 +37,17 @@ const appName = "Kwidao WalletConnect";
 const avalancheRpcUrl = process.env.NEXT_PUBLIC_WALLETCONNECT_EVM_RPC_URL?.trim();
 const baseRpcUrl = process.env.NEXT_PUBLIC_BASE_RPC_URL?.trim();
 const injectiveRpcUrl = process.env.NEXT_PUBLIC_INJECTIVE_RPC_URL?.trim();
+const unichainRpcUrl = process.env.NEXT_PUBLIC_UNICHAIN_RPC_URL?.trim();
+const lineaRpcUrl = process.env.NEXT_PUBLIC_LINEA_RPC_URL?.trim();
+const sonicRpcUrl = process.env.NEXT_PUBLIC_SONIC_RPC_URL?.trim();
+const worldchainRpcUrl = process.env.NEXT_PUBLIC_WORLD_CHAIN_RPC_URL?.trim();
+const monadRpcUrl = process.env.NEXT_PUBLIC_MONAD_RPC_URL?.trim();
+const seiRpcUrl = process.env.NEXT_PUBLIC_SEI_RPC_URL?.trim();
+const xdcRpcUrl = process.env.NEXT_PUBLIC_XDC_RPC_URL?.trim();
+const hyperEvmRpcUrl = process.env.NEXT_PUBLIC_HYPEREVM_RPC_URL?.trim();
+const inkRpcUrl = process.env.NEXT_PUBLIC_INK_RPC_URL?.trim();
+const plumeRpcUrl = process.env.NEXT_PUBLIC_PLUME_RPC_URL?.trim();
+const morphRpcUrl = process.env.NEXT_PUBLIC_MORPH_RPC_URL?.trim();
 
 const injective: Chain = {
   id: 1776,
@@ -55,7 +86,26 @@ const connectors = connectorsForWallets(
   },
 );
 
-export const walletConnectChains = [avalanche, mainnet, base, arbitrum, optimism, polygon, injective] as const;
+export const walletConnectChains = [
+  avalanche,
+  mainnet,
+  base,
+  arbitrum,
+  optimism,
+  polygon,
+  unichain,
+  linea,
+  sonic,
+  worldchain,
+  monad,
+  sei,
+  xdc,
+  hyperEvm,
+  ink,
+  plumeMainnet,
+  injective,
+  morph,
+] as const;
 
 export const walletConnectWagmiConfig = createConfig({
   chains: walletConnectChains,
@@ -67,7 +117,18 @@ export const walletConnectWagmiConfig = createConfig({
     [arbitrum.id]: http(),
     [optimism.id]: http(),
     [polygon.id]: http(),
+    [unichain.id]: http(unichainRpcUrl),
+    [linea.id]: http(lineaRpcUrl),
+    [sonic.id]: http(sonicRpcUrl),
+    [worldchain.id]: http(worldchainRpcUrl),
+    [monad.id]: http(monadRpcUrl),
+    [sei.id]: http(seiRpcUrl),
+    [xdc.id]: http(xdcRpcUrl),
+    [hyperEvm.id]: http(hyperEvmRpcUrl),
+    [ink.id]: http(inkRpcUrl),
+    [plumeMainnet.id]: http(plumeRpcUrl),
     [injective.id]: http(injectiveRpcUrl || "https://sentry.evm-rpc.injective.network/"),
+    [morph.id]: http(morphRpcUrl),
   },
   ssr: true,
 });

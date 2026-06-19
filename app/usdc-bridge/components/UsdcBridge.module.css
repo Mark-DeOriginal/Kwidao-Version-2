@@ -196,6 +196,13 @@
   display: block;
 }
 
+.chainIconFallback {
+  color: white;
+  font-size: 0.42rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
 .chainMenu {
   position: absolute;
   top: calc(100% + 0.6rem);
@@ -240,9 +247,28 @@
   color: var(--theme-text-strong);
 }
 
+.chainOption:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.chainOptionPlanned {
+  background: color-mix(in srgb, var(--theme-text-soft) 8%, white);
+}
+
 .chainOptionActive {
   background: color-mix(in srgb, var(--wc-brand-primary) 32%, white);
   color: var(--theme-text-strong);
+}
+
+.chainBadge {
+  margin-left: auto;
+  border-radius: 999px;
+  padding: 0.12rem 0.4rem;
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: var(--theme-text-soft);
+  background: color-mix(in srgb, var(--theme-text-soft) 12%, white);
 }
 
 .chainAmount {

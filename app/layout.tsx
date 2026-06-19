@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 
 import "./globals.css";
 import ClientBody from "./ClientBody";
-import Script from "next/script";
 import SiteShell from "./components/SiteShell";
 
 const inter = Inter({
@@ -48,11 +48,13 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <head>
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        {/* Optional runtime script for analytics or integrations */}
-        <Script
-          crossOrigin="anonymous"
-          src="//unpkg.com/same-runtime/dist/index.global.js"
-        />
+        {process.env.NODE_ENV === "production" ? (
+          <Script
+            crossOrigin="anonymous"
+            src="https://unpkg.com/same-runtime/dist/index.global.js"
+            strategy="lazyOnload"
+          />
+        ) : null}
       </head>
       <body suppressHydrationWarning className="antialiased">
         <ClientBody>
