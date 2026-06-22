@@ -190,10 +190,12 @@
   background: color-mix(in srgb, var(--wc-brand-primary) 8%, white);
 }
 
-.chainIcon svg {
+.chainIcon svg,
+.chainIcon img {
   width: 100%;
   height: 100%;
   display: block;
+  object-fit: contain;
 }
 
 .chainIconFallback {
@@ -497,6 +499,13 @@
 
 .modeButton:active {
   transform: translateY(0) scale(0.98);
+}
+
+.modeButton:disabled,
+.modeDisabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  transform: none;
 }
 
 .modeButton span:not(.modePill) {

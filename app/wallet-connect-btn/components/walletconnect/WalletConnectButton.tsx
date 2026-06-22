@@ -266,11 +266,40 @@ function CopyIcon() {
 }
 
 function ChainIcon({ chainName }: { chainName: string }) {
+  const iconPath = getChainIconPath(chainName);
+
   return (
     <span className={styles.chainIcon}>
-      {getChainIcon(chainName)}
+      {iconPath ? (
+        <img src={iconPath} alt="" aria-hidden="true" />
+      ) : (
+        getChainIcon(chainName)
+      )}
     </span>
   );
+}
+
+function getChainIconPath(chainName: string) {
+  const name = chainName.toUpperCase();
+
+  const pathMap: Record<string, string> = {
+    UNICHAIN: "/chains/unichain.svg",
+    LINEA: "/chains/linea.svg",
+    SONIC: "/chains/sonic.svg",
+    "WORLD CHAIN": "/chains/world.svg",
+    WORLDCHAIN: "/chains/world.svg",
+    MONAD: "/chains/monad.svg",
+    SEI: "/chains/sei.svg",
+    XDC: "/chains/xdc.svg",
+    HYPEREVM: "/chains/hyperevm.svg",
+    "HYPER EVM": "/chains/hyperevm.svg",
+    INK: "/chains/ink.svg",
+    PLUME: "/chains/plume.svg",
+    "PLUME MAINNET": "/chains/plume.svg",
+    MORPH: "/chains/morph.svg",
+  };
+
+  return pathMap[name] || "";
 }
 
 function getChainIcon(chainName: string) {

@@ -31,6 +31,8 @@ export type BridgeChain = {
   name: string;
   shortName: string;
   accent: string;
+  icon?: string;
+  supportsFastTransfer: boolean;
   explorer: string;
   usdc: `0x${string}`;
   tokenMessenger: `0x${string}`;
@@ -41,6 +43,7 @@ export type BridgeChainOption = {
   name: string;
   shortName: string;
   accent: string;
+  icon?: string;
   status: "active" | "planned";
   chainId?: number;
   domain: number;
@@ -59,6 +62,7 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     name: "Ethereum",
     shortName: "ETH",
     accent: "#627eea",
+    supportsFastTransfer: true,
     explorer: "https://etherscan.io/tx/",
     usdc: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
     tokenMessenger: TOKEN_MESSENGER_V2,
@@ -70,6 +74,7 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     name: "Avalanche",
     shortName: "AVAX",
     accent: "#e84142",
+    supportsFastTransfer: false,
     explorer: "https://snowtrace.io/tx/",
     usdc: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
     tokenMessenger: TOKEN_MESSENGER_V2,
@@ -81,6 +86,7 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     name: "OP Mainnet",
     shortName: "OP",
     accent: "#ff0420",
+    supportsFastTransfer: true,
     explorer: "https://optimistic.etherscan.io/tx/",
     usdc: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
     tokenMessenger: TOKEN_MESSENGER_V2,
@@ -92,6 +98,7 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     name: "Arbitrum",
     shortName: "ARB",
     accent: "#28a0f0",
+    supportsFastTransfer: true,
     explorer: "https://arbiscan.io/tx/",
     usdc: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
     tokenMessenger: TOKEN_MESSENGER_V2,
@@ -103,6 +110,7 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     name: "Base",
     shortName: "BASE",
     accent: "#0052ff",
+    supportsFastTransfer: true,
     explorer: "https://basescan.org/tx/",
     usdc: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
     tokenMessenger: TOKEN_MESSENGER_V2,
@@ -114,6 +122,7 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     name: "Polygon",
     shortName: "POLYGON",
     accent: "#8247e5",
+    supportsFastTransfer: false,
     explorer: "https://polygonscan.com/tx/",
     usdc: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
     tokenMessenger: TOKEN_MESSENGER_V2,
@@ -125,6 +134,8 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     name: "Unichain",
     shortName: "UNI",
     accent: "#fc72ff",
+    icon: "/chains/unichain.svg",
+    supportsFastTransfer: true,
     explorer: "https://uniscan.xyz/tx/",
     usdc: "0x078D782b760474a361dDA0AF3839290b0EF57AD6",
     tokenMessenger: TOKEN_MESSENGER_V2,
@@ -136,6 +147,8 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     name: "Linea",
     shortName: "LINEA",
     accent: "#61dfff",
+    icon: "/chains/linea.svg",
+    supportsFastTransfer: true,
     explorer: "https://lineascan.build/tx/",
     usdc: "0x176211869cA2b568f2A7D4EE941E073a821EE1ff",
     tokenMessenger: TOKEN_MESSENGER_V2,
@@ -147,6 +160,8 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     name: "Sonic",
     shortName: "S",
     accent: "#111111",
+    icon: "/chains/sonic.svg",
+    supportsFastTransfer: false,
     explorer: "https://sonicscan.org/tx/",
     usdc: "0x29219dd400f2Bf60E5a23d13Be72B486D4038894",
     tokenMessenger: TOKEN_MESSENGER_V2,
@@ -158,6 +173,8 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     name: "World Chain",
     shortName: "WORLD",
     accent: "#000000",
+    icon: "/chains/world.svg",
+    supportsFastTransfer: true,
     explorer: "https://worldscan.org/tx/",
     usdc: "0x79A02482A880bCe3F13E09da970dC34dB4cD24D1",
     tokenMessenger: TOKEN_MESSENGER_V2,
@@ -169,6 +186,8 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     name: "Monad",
     shortName: "MON",
     accent: "#836ef9",
+    icon: "/chains/monad.svg",
+    supportsFastTransfer: false,
     explorer: "https://monadvision.com/tx/",
     usdc: "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
     tokenMessenger: TOKEN_MESSENGER_V2,
@@ -180,6 +199,8 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     name: "Sei",
     shortName: "SEI",
     accent: "#9b111e",
+    icon: "/chains/sei.svg",
+    supportsFastTransfer: false,
     explorer: "https://seiscan.io/tx/",
     usdc: "0xe15fC38F6D8c56aF07bbCBe3BAf5708A2Bf42392",
     tokenMessenger: TOKEN_MESSENGER_V2,
@@ -191,6 +212,8 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     name: "XDC",
     shortName: "XDC",
     accent: "#2a5ada",
+    icon: "/chains/xdc.svg",
+    supportsFastTransfer: false,
     explorer: "https://xdcscan.com/tx/",
     usdc: "0xfA2958CB79b0491CC627c1557F441eF849Ca8eb1",
     tokenMessenger: TOKEN_MESSENGER_V2,
@@ -202,6 +225,8 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     name: "HyperEVM",
     shortName: "HYPE",
     accent: "#00e6b0",
+    icon: "/chains/hyperevm.svg",
+    supportsFastTransfer: false,
     explorer: "https://hyperscan.com/tx/",
     usdc: "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
     tokenMessenger: TOKEN_MESSENGER_V2,
@@ -213,6 +238,8 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     name: "Ink",
     shortName: "INK",
     accent: "#7132f5",
+    icon: "/chains/ink.svg",
+    supportsFastTransfer: true,
     explorer: "https://explorer.inkonchain.com/tx/",
     usdc: "0x2D270e6886d130D724215A266106e6832161EAEd",
     tokenMessenger: TOKEN_MESSENGER_V2,
@@ -224,6 +251,8 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     name: "Plume",
     shortName: "PLUME",
     accent: "#ff4f9a",
+    icon: "/chains/plume.svg",
+    supportsFastTransfer: true,
     explorer: "https://explorer.plume.org/tx/",
     usdc: "0x222365EF19F7947e5484218551B56bb3965Aa7aF",
     tokenMessenger: TOKEN_MESSENGER_V2,
@@ -235,6 +264,7 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     name: "Injective",
     shortName: "INJ",
     accent: "#00D9FF",
+    supportsFastTransfer: false,
     explorer: "https://blockscout.injective.network/tx/",
     usdc: "0xa00C59fF5a080D2b954d0c75e46E22a0c371235a",
     tokenMessenger: TOKEN_MESSENGER_V2,
@@ -246,6 +276,8 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
     name: "Morph",
     shortName: "MORPH",
     accent: "#00ff7f",
+    icon: "/chains/morph.svg",
+    supportsFastTransfer: true,
     explorer: "https://explorer.morph.network/tx/",
     usdc: "0xCfb1186F4e93D60E60a8bDd997427D1F33bc372B",
     tokenMessenger: TOKEN_MESSENGER_V2,
@@ -260,6 +292,7 @@ export const BRIDGE_CHAIN_OPTIONS: BridgeChainOption[] = [
     name: chain.name,
     shortName: chain.shortName,
     accent: chain.accent,
+    icon: chain.icon,
     status: "active" as const,
   })),
   {
@@ -267,6 +300,7 @@ export const BRIDGE_CHAIN_OPTIONS: BridgeChainOption[] = [
     name: "Codex",
     shortName: "CODEX",
     accent: "#7c3aed",
+    icon: "/chains/codex.svg",
     status: "planned",
   },
   {
@@ -274,6 +308,7 @@ export const BRIDGE_CHAIN_OPTIONS: BridgeChainOption[] = [
     name: "Arc",
     shortName: "ARC",
     accent: "#0ea5e9",
+    icon: "/chains/arc.svg",
     status: "planned",
   },
   {
@@ -281,6 +316,7 @@ export const BRIDGE_CHAIN_OPTIONS: BridgeChainOption[] = [
     name: "EDGE",
     shortName: "EDGE",
     accent: "#111827",
+    icon: "/chains/edge.svg",
     status: "planned",
   },
   {
@@ -288,6 +324,7 @@ export const BRIDGE_CHAIN_OPTIONS: BridgeChainOption[] = [
     name: "Pharos",
     shortName: "PHAROS",
     accent: "#14b8a6",
+    icon: "/chains/pharos.svg",
     status: "planned",
   },
   {
@@ -295,6 +332,7 @@ export const BRIDGE_CHAIN_OPTIONS: BridgeChainOption[] = [
     name: "Solana",
     shortName: "SOL",
     accent: "#14f195",
+    icon: "/chains/solana.svg",
     status: "planned",
   },
   {
@@ -302,6 +340,7 @@ export const BRIDGE_CHAIN_OPTIONS: BridgeChainOption[] = [
     name: "Starknet",
     shortName: "STRK",
     accent: "#fc5b3f",
+    icon: "/chains/starknet.svg",
     status: "planned",
   },
   {
@@ -309,6 +348,7 @@ export const BRIDGE_CHAIN_OPTIONS: BridgeChainOption[] = [
     name: "Stellar",
     shortName: "XLM",
     accent: "#7d8cff",
+    icon: "/chains/stellar.svg",
     status: "planned",
   },
 ];
@@ -406,6 +446,10 @@ export function getFinalityThreshold(mode: BridgeMode) {
   return mode === "fast" ? 1000 : 2000;
 }
 
+export function supportsBridgeMode(chain: BridgeChain, mode: BridgeMode) {
+  return mode === "standard" || chain.supportsFastTransfer;
+}
+
 export function getIrisApiBase() {
   return process.env.NEXT_PUBLIC_CIRCLE_IRIS_API_URL?.trim() || "https://iris-api.circle.com";
 }
@@ -431,7 +475,13 @@ export async function fetchRouteFee(sourceDomain: number, destinationDomain: num
     (candidate: { finalityThreshold?: number }) =>
       candidate.finalityThreshold === finalityThreshold,
   );
-  return Number(row?.minimumFee ?? 0);
+  const minimumFee = Number(row?.minimumFee);
+
+  if (!row || !Number.isFinite(minimumFee)) {
+    throw new Error("Selected transfer speed is unavailable for this route.");
+  }
+
+  return minimumFee;
 }
 
 export async function fetchAttestation(sourceDomain: number, burnHash: `0x${string}`) {

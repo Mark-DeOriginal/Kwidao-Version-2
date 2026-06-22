@@ -20,6 +20,7 @@ import {
   isValidEvmRecipient,
   MESSAGE_TRANSMITTER_V2_ABI,
   parseUsdcAmount,
+  supportsBridgeMode,
   TOKEN_MESSENGER_V2_ABI,
   ZERO_BYTES_32,
   type BridgeChain,
@@ -164,6 +165,7 @@ export default function UsdcBridge() {
   const [balance, setBalance] = useState<bigint>(BigInt(0));
   const [feeBps, setFeeBps] = useState<number | null>(null);
   const [maxFee, setMaxFee] = useState<bigint>(BigInt(0));
+  const [routeFeeError, setRouteFeeError] = useState("");
   const [phase, setPhase] = useState<BridgePhase>("idle");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -182,6 +184,7 @@ export default function UsdcBridge() {
   const sourceSupported = isEvmBridgeChain(source);
   const destinationSupported = isEvmBridgeChain(destination);
   const routeSupported = sourceSupported && destinationSupported;
+  const fastModeAvailable = supportsBridgeMode(source, "fast");
   const connected = hasMounted && account.status === "connected" && !!account.address;
   const amountRaw = useMemo(() => {
     try {
@@ -337,16 +340,31 @@ export default function UsdcBridge() {
   }, [account.address, config, hasMounted, source, sourceSupported]);
 
   useEffect(() => {
+    if (mode === "fast" && !fastModeAvailable) {
+      setMode("standard");
+    }
+  }, [fastModeAvailable, mode]);
+
+  useEffect(() => {
     let active = true;
     const timer = setTimeout(() => {
       async function loadFee() {
         if (!routeSupported || !amountRaw || amountRaw <= BigInt(0) || source.chainId === destination.chainId) {
           setFeeBps(null);
           setMaxFee(BigInt(0));
+          setRouteFeeError("");
+          return;
+        }
+
+        if (!supportsBridgeMode(source, mode)) {
+          setFeeBps(null);
+          setMaxFee(BigInt(0));
+          setRouteFeeError(`Fast transfer is not available from ${source.name}.`);
           return;
         }
 
         try {
+          setRouteFeeError("");
           const nextFeeBps = await fetchRouteFee(source.domain, destination.domain, mode);
           if (!active) return;
           setFeeBps(nextFeeBps);
@@ -355,6 +373,7 @@ export default function UsdcBridge() {
           if (!active) return;
           setFeeBps(null);
           setMaxFee(BigInt(0));
+          setRouteFeeError("This transfer route is currently unavailable for the selected speed.");
         }
       }
 
@@ -382,12 +401,16 @@ export default function UsdcBridge() {
     }
     if (!amountRaw || amountRaw <= BigInt(0)) return "Enter a valid USDC amount.";
     if (source.chainId === destination.chainId) return "Choose two different chains.";
+    if (!supportsBridgeMode(source, mode)) {
+      return `Fast transfer is not available from ${source.name}. Switch to Standard.`;
+    }
     if (!recipientAddress) {
       return "Please provide a recipient address to receive the bridged funds.";
     }
     if (!isValidEvmRecipient(recipientAddress)) {
       return "Enter a valid EVM recipient address.";
     }
+    if (routeFeeError) return routeFeeError;
     if (amountRaw > balance) return "Insufficient native USDC balance on the source chain.";
     return "";
   }, [
@@ -396,10 +419,13 @@ export default function UsdcBridge() {
     connected,
     destination.chainId,
     destinationSupported,
+    mode,
     routeSupported,
+    routeFeeError,
     recipientAddress,
     source.chainId,
-    sourceSupported
+    source.name,
+    sourceSupported,
   ]);
 
   const switchRoute = () => {
@@ -501,8 +527,6 @@ export default function UsdcBridge() {
       setError("Wallet is not ready for signing.");
       return;
     }
-    setHistory([]);
-    setReclaimCooldowns({});
     setTx({});
 
     try {
@@ -730,8 +754,13 @@ export default function UsdcBridge() {
                 className={classNames(
                   styles.modeButton,
                   mode === option && styles.modeActive,
+                  option === "fast" && !fastModeAvailable && styles.modeDisabled,
                 )}
-                onClick={() => setMode(option)}
+                onClick={() => {
+                  if (option === "fast" && !fastModeAvailable) return;
+                  setMode(option);
+                }}
+                disabled={option === "fast" && !fastModeAvailable}
               >
                 {mode === option ? <span className={styles.modePill} /> : null}
                 <span>{option === "standard" ? "Standard" : "Fast"}</span>
@@ -740,7 +769,9 @@ export default function UsdcBridge() {
           </div>
 
           <div className={classNames(styles.statusPanel, styles.statusInfo)}>
-            {mode === "standard"
+            {!fastModeAvailable
+              ? `Fast transfer is not available from ${source.name}. Standard transfer will be used for this route.`
+              : mode === "standard"
               ? "Standard mode is free, but may take about 1 hour or more to complete transactions depending on network conditions."
               : "Fast mode makes transactions faster but incurs a fee."}
           </div>
@@ -758,7 +789,13 @@ export default function UsdcBridge() {
           <div className={styles.quoteBox}>
             <QuoteRow
               label="Fee"
-              value={feeBps === null ? "Fetching route fee" : `${feeBps} bps`}
+              value={
+                routeFeeError
+                  ? routeFeeError
+                  : feeBps === null
+                    ? "Fetching route fee"
+                    : `${feeBps} bps`
+              }
             />
             <QuoteRow label="Max fee" value={`${formatUsdc(maxFee)} USDC`} />
             <QuoteRow
@@ -1287,12 +1324,23 @@ function ManualChainSelect({
   );
 }
 
-function ChainIcon({ chain }: { chain: { shortName: string; accent: string } }) {
+function ChainIcon({
+  chain,
+}: {
+  chain: { shortName: string; accent: string; icon?: string };
+}) {
   const icon = getChainIcon(chain.shortName);
 
   return (
-    <span className={styles.chainIcon} style={{ background: chain.accent }}>
-      {icon ?? <span className={styles.chainIconFallback}>{chain.shortName.slice(0, 4)}</span>}
+    <span
+      className={styles.chainIcon}
+      style={chain.icon ? undefined : { background: chain.accent }}
+    >
+      {chain.icon ? (
+        <img src={chain.icon} alt="" aria-hidden="true" />
+      ) : (
+        icon ?? <span className={styles.chainIconFallback}>{chain.shortName.slice(0, 4)}</span>
+      )}
     </span>
   );
 }
