@@ -67,6 +67,7 @@ type PersistedBridgeState = {
 
 const BRIDGE_STORAGE_KEY = "kwidao-usdc-bridge-state-v1";
 const HISTORY_RETENTION_MS = 3 * 24 * 60 * 60 * 1000;
+const HIDDEN_EVM_SOON_CHAIN_NAMES = new Set(["Codex", "Arc", "EDGE", "Pharos"]);
 
 const STEPS: Array<{ key: BridgePhase; label: string }> = [
   { key: "checking", label: "Review" },
@@ -1065,6 +1066,7 @@ function ChainSelect({
   maxDisabled?: boolean;
 }) {
   const chain = getBridgeChain(chainId);
+  const chainOptions = BRIDGE_CHAIN_OPTIONS.filter((option) => !HIDDEN_EVM_SOON_CHAIN_NAMES.has(option.name));
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -1123,7 +1125,7 @@ function ChainSelect({
               exit={{ opacity: 0, y: 6, scale: 0.97 }}
               transition={{ duration: 0.16, ease: "easeOut" }}
             >
-              {BRIDGE_CHAIN_OPTIONS.map((option) => {
+              {chainOptions.map((option) => {
                 const selected = option.chainId === chainId;
                 return (
                   <button
@@ -1194,6 +1196,7 @@ function ManualChainSelect({
   onChange: (chainId: number) => void;
 }) {
   const chain = getBridgeChain(chainId);
+  const chainOptions = BRIDGE_CHAIN_OPTIONS.filter((option) => !HIDDEN_EVM_SOON_CHAIN_NAMES.has(option.name));
   const [menuOpen, setMenuOpen] = useState(false);
   const [openAbove, setOpenAbove] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -1230,7 +1233,7 @@ function ManualChainSelect({
     probe.style.pointerEvents = "none";
     probe.style.width = `${menuRef.current.offsetWidth}px`;
 
-    for (const option of BRIDGE_CHAIN_OPTIONS) {
+    for (const option of chainOptions) {
       const row = document.createElement("div");
       row.className = styles.chainOption;
       row.textContent = option.name;
@@ -1292,7 +1295,7 @@ function ManualChainSelect({
             exit={{ opacity: 0, y: 6, scale: 0.97 }}
             transition={{ duration: 0.16, ease: "easeOut" }}
           >
-            {BRIDGE_CHAIN_OPTIONS.map((option) => {
+            {chainOptions.map((option) => {
               const selected = option.chainId === chainId;
               return (
                 <button
