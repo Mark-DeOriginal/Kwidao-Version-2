@@ -1,6 +1,7 @@
 "use client";
 
-import { type Config, readContract, waitForTransactionReceipt, writeContract } from "wagmi/actions";
+import type { Config } from "wagmi";
+import { readContract, waitForTransactionReceipt, writeContract } from "wagmi/actions";
 import { type Address } from "viem";
 import { ERC20_ABI, TOKEN_MESSENGER_V2_ABI, MESSAGE_TRANSMITTER_V2_ABI, addressToBytes32, getFinalityThreshold, ZERO_BYTES_32, type BridgeChain, type BridgeMode } from "./cctpBridge";
 
