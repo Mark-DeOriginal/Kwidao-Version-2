@@ -17,15 +17,46 @@ import {
   getBridgeChain,
   getFinalityThreshold,
   isEvmBridgeChain,
-  isValidEvmRecipient,
+  isValidRecipient,
   MESSAGE_TRANSMITTER_V2_ABI,
   parseUsdcAmount,
   supportsBridgeMode,
   TOKEN_MESSENGER_V2_ABI,
   ZERO_BYTES_32,
   type BridgeChain,
+  type BridgeChainOption,
   type BridgeMode,
+  type ChainType,
 } from "../services/cctpBridge";
+import {
+  getEvmBalance,
+  getEvmAllowance,
+  approveEvmUsdc,
+  depositForBurnEvm,
+  receiveMessageEvm,
+} from "../services/evmBridge";
+import {
+  connectSolanaWallet,
+  getSolanaBalance,
+  depositForBurnSolana,
+  receiveMessageSolana,
+  hasSolanaWallet,
+} from "../services/solanaBridge";
+import {
+  connectStarknetWallet,
+  getStarknetBalance,
+  depositForBurnStarknet,
+  receiveMessageStarknet,
+  hasStarknetWallet,
+} from "../services/starknetBridge";
+import {
+  connectStellarWallet,
+  getStellarBalance,
+  depositForBurnStellar,
+  receiveMessageStellar,
+  hasStellarWallet,
+} from "../services/stellarBridge";
+import { useBridgeWallet } from "../services/bridgeContext";
 import styles from "./UsdcBridge.module.css";
 
 type BridgePhase =
@@ -42,7 +73,7 @@ type BridgePhase =
 type BridgeTx = {
   source?: BridgeChain;
   destination?: BridgeChain;
-  burnHash?: `0x${string}`;
+  burnHash?: string;
   claimHash?: `0x${string}`;
 };
 
@@ -54,8 +85,8 @@ type BridgeHistoryItem = {
   source: BridgeChain;
   destination: BridgeChain;
   amount: bigint;
-  burnHash: `0x${string}`;
-  claimHash?: `0x${string}`;
+  burnHash: string;
+  claimHash?: string;
   status: TxStatus;
   note?: string;
 };
@@ -152,10 +183,20 @@ function pruneBridgeHistory(rows: BridgeHistoryItem[], now = Date.now()) {
   return rows.filter((row) => Number.isFinite(row.createdAt) && row.createdAt >= cutoff);
 }
 
+async function waitForCircleAttestation(sourceDomain: number, burnHash: string) {
+  for (let attempt = 0; attempt < 450; attempt += 1) {
+    const attestation = await fetchAttestation(sourceDomain, burnHash);
+    if (attestation) return attestation;
+    await new Promise((resolve) => setTimeout(resolve, 2_000));
+  }
+  return null;
+}
+
 export default function UsdcBridge() {
   const config = useConfig();
   const account = useAccount();
   const { switchChainAsync } = useSwitchChain();
+  const { wallet: nonEvmWallet, connectWallet, hasWalletForChain } = useBridgeWallet();
   const [hasMounted, setHasMounted] = useState(false);
   const [sourceChainId, setSourceChainId] = useState(8453);
   const [destinationChainId, setDestinationChainId] = useState(42161);
@@ -182,11 +223,35 @@ export default function UsdcBridge() {
 
   const source = useMemo(() => getBridgeChain(sourceChainId), [sourceChainId]);
   const destination = useMemo(() => getBridgeChain(destinationChainId), [destinationChainId]);
-  const sourceSupported = isEvmBridgeChain(source);
-  const destinationSupported = isEvmBridgeChain(destination);
+  const sourceType = source.type;
+  const destType = destination.type;
+  const sourceSupported = isEvmBridgeChain(source) || sourceType !== "evm";
+  const destinationSupported = isEvmBridgeChain(destination) || destType !== "evm";
   const routeSupported = sourceSupported && destinationSupported;
   const fastModeAvailable = supportsBridgeMode(source, "fast");
-  const connected = hasMounted && account.status === "connected" && !!account.address;
+  const connected = useMemo(() => {
+    if (sourceType === "evm") {
+      return hasMounted && account.status === "connected" && !!account.address;
+    }
+    return nonEvmWallet.isConnected && nonEvmWallet.chainType === sourceType;
+  }, [sourceType, hasMounted, account, nonEvmWallet]);
+  const walletAddress = useMemo(() => {
+    if (sourceType === "evm") return account.address ?? null;
+    return nonEvmWallet.address;
+  }, [sourceType, account.address, nonEvmWallet.address]);
+
+  const connectedChainType = useMemo<ChainType | null>(() => {
+    if (hasMounted && account.status === "connected" && !!account.address) return "evm";
+    if (nonEvmWallet.isConnected) return nonEvmWallet.chainType;
+    return null;
+  }, [hasMounted, account, nonEvmWallet]);
+
+  const sourceChainOptions = useMemo(() => {
+    return BRIDGE_CHAIN_OPTIONS.filter(
+      (option) => !HIDDEN_EVM_SOON_CHAIN_NAMES.has(option.name) && (!connectedChainType || option.type === connectedChainType),
+    );
+  }, [connectedChainType]);
+
   const amountRaw = useMemo(() => {
     try {
       return amount.trim() ? parseUsdcAmount(amount) : BigInt(0);
@@ -237,6 +302,23 @@ export default function UsdcBridge() {
   }, []);
 
   useEffect(() => {
+    if (!connectedChainType) return;
+    if (sourceType === connectedChainType) return;
+
+    const chainIdByType: Record<ChainType, number> = {
+      evm: 1,
+      solana: 5,
+      starknet: 25,
+      stellar: 27,
+    };
+
+    const targetChainId = chainIdByType[connectedChainType];
+    if (targetChainId !== undefined) {
+      setSourceChainId(targetChainId);
+    }
+  }, [connectedChainType, sourceType]);
+
+  useEffect(() => {
     if (!hasMounted || hydrated) return;
     try {
       const raw = window.localStorage.getItem(BRIDGE_STORAGE_KEY);
@@ -260,20 +342,17 @@ export default function UsdcBridge() {
         }));
         const prunedHistory = pruneBridgeHistory(restoredHistory);
         setHistory(prunedHistory);
-        // Normalize any legacy payload to history-only storage.
         const payload: PersistedBridgeState = {
           history: prunedHistory.map((row) => ({ ...row, amount: row.amount.toString() })),
           updatedAt: Date.now(),
         };
         window.localStorage.setItem(BRIDGE_STORAGE_KEY, JSON.stringify(payload));
       } else {
-        // Drop legacy/broken payloads that don't contain valid history.
         window.localStorage.removeItem(BRIDGE_STORAGE_KEY);
       }
       setReclaimCooldowns({});
       setManualBurnHash("");
     } catch {
-      // ignore corrupted persisted state
       window.localStorage.removeItem(BRIDGE_STORAGE_KEY);
     } finally {
       setHydrated(true);
@@ -303,7 +382,6 @@ export default function UsdcBridge() {
       };
       window.localStorage.setItem(BRIDGE_STORAGE_KEY, JSON.stringify(payload));
     } catch {
-      // no-op if persistence unavailable
     }
   }, [
     hasMounted,
@@ -311,34 +389,41 @@ export default function UsdcBridge() {
     hydrated,
   ]);
 
+  const loadBalance = useCallback(async (chain: BridgeChain, address: string) => {
+    try {
+      switch (chain.type) {
+        case "evm":
+          if (!isAddress(address)) return BigInt(0);
+          return getEvmBalance(config, chain, address as `0x${string}`);
+        case "solana":
+          return getSolanaBalance(chain, address);
+        case "starknet":
+          return getStarknetBalance(chain, address);
+        case "stellar":
+          return getStellarBalance(chain, address);
+      }
+    } catch {
+      return BigInt(0);
+    }
+  }, [config]);
+
   useEffect(() => {
     let active = true;
 
-    async function loadBalance() {
-      if (!hasMounted || !account.address || !sourceSupported) {
+    async function refreshBalance() {
+      if (!hasMounted || !walletAddress || !sourceSupported) {
         setBalance(BigInt(0));
         return;
       }
-
-      try {
-        const nextBalance = (await readContract(config, {
-          address: source.usdc,
-          abi: ERC20_ABI,
-          functionName: "balanceOf",
-          args: [account.address],
-          chainId: source.chainId,
-        } as any)) as bigint;
-        if (active) setBalance(nextBalance);
-      } catch {
-        if (active) setBalance(BigInt(0));
-      }
+      const nextBalance = await loadBalance(source, walletAddress);
+      if (active) setBalance(nextBalance);
     }
 
-    void loadBalance();
+    void refreshBalance();
     return () => {
       active = false;
     };
-  }, [account.address, config, hasMounted, source, sourceSupported]);
+  }, [walletAddress, config, hasMounted, source, sourceSupported, loadBalance]);
 
   useEffect(() => {
     if (mode === "fast" && !fastModeAvailable) {
@@ -396,9 +481,12 @@ export default function UsdcBridge() {
   }, [phase]);
 
   const validationError = useMemo(() => {
-    if (!connected) return "Connect a wallet to bridge USDC.";
+    if (sourceType !== "evm" && !nonEvmWallet.isConnected) {
+      return `Connect your ${source.name} wallet to bridge USDC.`;
+    }
+    if (sourceType === "evm" && !connected) return "Connect a wallet to bridge USDC.";
     if (!routeSupported) {
-      return "Unsupported route. Source and destination must be EVM chains.";
+      return "Unsupported route. Source and destination must be active chains.";
     }
     if (!amountRaw || amountRaw <= BigInt(0)) return "Enter a valid USDC amount.";
     if (source.chainId === destination.chainId) return "Choose two different chains.";
@@ -408,25 +496,27 @@ export default function UsdcBridge() {
     if (!recipientAddress) {
       return "Please provide a recipient address to receive the bridged funds.";
     }
-    if (!isValidEvmRecipient(recipientAddress)) {
-      return "Enter a valid EVM recipient address.";
+    if (!isValidRecipient(destination, recipientAddress)) {
+      return `Enter a valid ${destination.name} recipient address.`;
     }
     if (routeFeeError) return routeFeeError;
-    if (amountRaw > balance) return "Insufficient native USDC balance on the source chain.";
+    if (amountRaw > balance) return "Insufficient USDC balance on the source chain.";
     return "";
   }, [
+    sourceType,
+    nonEvmWallet.isConnected,
+    connected,
     amountRaw,
     balance,
-    connected,
+    source.name,
+    source.chainId,
     destination.chainId,
-    destinationSupported,
+    destination.name,
+    destination,
     mode,
     routeSupported,
     routeFeeError,
     recipientAddress,
-    source.chainId,
-    source.name,
-    sourceSupported,
   ]);
 
   const switchRoute = () => {
@@ -446,25 +536,13 @@ export default function UsdcBridge() {
     setAmount(formatUsdc(balance));
   };
 
-  const waitForCircleAttestation = async (sourceDomain: number, burnHash: `0x${string}`) => {
-    for (let attempt = 0; attempt < 90; attempt += 1) {
-      const attestation = await fetchAttestation(sourceDomain, burnHash);
-      if (attestation) return attestation;
-      await new Promise((resolve) => setTimeout(resolve, 2_000));
-    }
-    return null;
-  };
-
-  const updateHistory = (burnHash: `0x${string}`, patch: Partial<BridgeHistoryItem>) => {
+  const updateHistory = (burnHash: string, patch: Partial<BridgeHistoryItem>) => {
     setHistory((current) =>
       current.map((row) => (row.burnHash === burnHash ? { ...row, ...patch } : row)),
     );
   };
 
-  const claimTransfer = async (burnHash: `0x${string}`, txSource = source, txDestination = destination) => {
-    if (!account.address) {
-      throw new Error("Wallet client is not ready.");
-    }
+  const claimTransfer = async (burnHash: string, txSource: BridgeChain, txDestination: BridgeChain) => {
     setTx((current) => ({
       ...current,
       source: txSource,
@@ -488,34 +566,55 @@ export default function UsdcBridge() {
       return;
     }
 
-    if (account.chainId !== txDestination.chainId) {
-      setMessage(`Switching wallet to ${txDestination.name}.`);
-      await switchChainAsync({ chainId: txDestination.chainId });
-    }
-
     setPhase("claiming");
-    setMessage(`Minting native USDC on ${txDestination.name}.`);
+    setMessage(`Minting USDC on ${txDestination.name}.`);
     updateHistory(burnHash, { status: "claiming", note: "Mint transaction submitted" });
-    const claimHash = await writeContract(config, {
-      address: txDestination.messageTransmitter,
-      abi: MESSAGE_TRANSMITTER_V2_ABI,
-      functionName: "receiveMessage",
-      args: [attestation.message, attestation.attestation],
-      chainId: txDestination.chainId,
-      account: account.address,
-    } as any);
-    setTx((current) => ({ ...current, destination: txDestination, claimHash }));
-    updateHistory(burnHash, { claimHash, note: "Waiting for destination confirmation" });
-    await waitForTransactionReceipt(config, { hash: claimHash, chainId: txDestination.chainId });
-    setPhase("success");
-    setMessage("USDC has been minted on the destination chain.");
-    updateHistory(burnHash, { status: "success", note: "USDC minted successfully" });
+
+    try {
+      let claimHashValue: string;
+      switch (txDestination.type) {
+        case "evm": {
+          if (account.chainId !== txDestination.chainId) {
+            setMessage(`Switching wallet to ${txDestination.name}.`);
+            await switchChainAsync({ chainId: txDestination.chainId });
+          }
+          if (!account.address) throw new Error("Wallet not connected.");
+          claimHashValue = await receiveMessageEvm(config, {
+            account: account.address,
+            destination: txDestination,
+            attestation,
+          });
+          break;
+        }
+        case "solana":
+          claimHashValue = await receiveMessageSolana(txDestination, attestation);
+          break;
+        case "starknet":
+          claimHashValue = await receiveMessageStarknet(txDestination, attestation);
+          break;
+        case "stellar":
+          claimHashValue = await receiveMessageStellar(txDestination, attestation);
+          break;
+        default:
+          throw new Error(`Unsupported destination chain: ${txDestination.type}`);
+      }
+      setTx((current) => ({ ...current, destination: txDestination, claimHash: claimHashValue as `0x${string}` }));
+      updateHistory(burnHash, { claimHash: claimHashValue, note: "Waiting for destination confirmation" });
+      setPhase("success");
+      setMessage("USDC has been minted on the destination chain.");
+      updateHistory(burnHash, { status: "success", note: "USDC minted successfully" });
+    } catch (claimError) {
+      setPhase("failed");
+      setMessage("");
+      setError(simplifyBridgeError(claimError));
+      updateHistory(burnHash, { status: "failed", note: "Mint failed. Retry available." });
+    }
   };
 
   const startBridge = async () => {
     setError("");
     setMessage("");
-    let submittedBurnHash: `0x${string}` | undefined;
+    let submittedBurnHash: string | undefined;
 
     if (validationError) {
       setPhase("failed");
@@ -523,7 +622,7 @@ export default function UsdcBridge() {
       return;
     }
 
-    if (!account.address || !amountRaw || !isAddress(recipientAddress)) {
+    if (!walletAddress || !amountRaw || !recipientAddress) {
       setPhase("failed");
       setError("Wallet is not ready for signing.");
       return;
@@ -532,76 +631,104 @@ export default function UsdcBridge() {
 
     try {
       setPhase("checking");
-      setMessage("Checking allowance and route details.");
+      setMessage("Checking route details.");
       setTx({ source, destination, claimHash: undefined });
 
-      if (account.chainId !== source.chainId) {
-        setMessage(`Switching wallet to ${source.name}.`);
-        await switchChainAsync({ chainId: source.chainId });
+      let burnHashValue: string;
+
+      switch (source.type) {
+        case "evm": {
+          if (!account.address) throw new Error("EVM wallet not connected.");
+          if (account.chainId !== source.chainId) {
+            setMessage(`Switching wallet to ${source.name}.`);
+            await switchChainAsync({ chainId: source.chainId });
+          }
+
+          const allowance = await getEvmAllowance(config, source, account.address);
+          if (allowance < amountRaw) {
+            setPhase("approving");
+            setMessage("Waiting for you to approve the transaction");
+            await approveEvmUsdc(config, source, account.address, amountRaw);
+          }
+
+          const routeFeeBps = feeBps ?? (await fetchRouteFee(source.domain, destination.domain, mode));
+          const routeMaxFee = estimateMaxFee(amountRaw, routeFeeBps);
+          setFeeBps(routeFeeBps);
+          setMaxFee(routeMaxFee);
+
+          setPhase("burning");
+          setMessage(`Burning USDC on ${source.name}.`);
+          burnHashValue = await depositForBurnEvm(config, {
+            config,
+            account: account.address,
+            source,
+            destination,
+            amount: amountRaw,
+            recipient: recipientAddress,
+            mode,
+            maxFee: routeMaxFee,
+          });
+          break;
+        }
+        case "solana": {
+          setPhase("burning");
+          setMessage(`Burning USDC on ${source.name}.`);
+          const solRecipientBytes = await addressToBytes32(recipientAddress, destination.type);
+          burnHashValue = await depositForBurnSolana(
+            source,
+            destination.domain,
+            amountRaw,
+            solRecipientBytes,
+          );
+          break;
+        }
+        case "starknet": {
+          setPhase("burning");
+          setMessage(`Burning USDC on ${source.name}.`);
+          const strkRecipientBytes = await addressToBytes32(recipientAddress, destination.type);
+          burnHashValue = await depositForBurnStarknet(
+            source,
+            destination.domain,
+            amountRaw,
+            strkRecipientBytes,
+          );
+          break;
+        }
+        case "stellar": {
+          setPhase("burning");
+          setMessage(`Burning USDC on ${source.name}.`);
+          const stelRecipientBytes = await addressToBytes32(recipientAddress, destination.type);
+          burnHashValue = await depositForBurnStellar(
+            source,
+            destination.domain,
+            amountRaw,
+            stelRecipientBytes,
+          );
+          break;
+        }
+        default:
+          throw new Error(`Unsupported source chain: ${source.type}`);
       }
 
-      const allowance = (await readContract(config, {
-        address: source.usdc,
-        abi: ERC20_ABI,
-        functionName: "allowance",
-        args: [account.address, source.tokenMessenger],
-        chainId: source.chainId,
-      } as any)) as bigint;
-
-      if (allowance < amountRaw) {
-        setPhase("approving");
-        setMessage("Waiting for you to approve the transaction");
-        const approveHash = await writeContract(config, {
-          address: source.usdc,
-          abi: ERC20_ABI,
-          functionName: "approve",
-          args: [source.tokenMessenger, amountRaw],
-          chainId: source.chainId,
-          account: account.address,
-        } as any);
-        await waitForTransactionReceipt(config, { hash: approveHash, chainId: source.chainId });
-      }
-
-      const routeFeeBps = feeBps ?? (await fetchRouteFee(source.domain, destination.domain, mode));
-      const routeMaxFee = estimateMaxFee(amountRaw, routeFeeBps);
-      setFeeBps(routeFeeBps);
-      setMaxFee(routeMaxFee);
-
-      setPhase("burning");
-      setMessage(`Burning USDC on ${source.name}.`);
-      const burnHash = await writeContract(config, {
-        address: source.tokenMessenger,
-        abi: TOKEN_MESSENGER_V2_ABI,
-        functionName: "depositForBurn",
-        args: [
-          amountRaw,
-          destination.domain,
-          addressToBytes32(recipientAddress),
-          source.usdc,
-          ZERO_BYTES_32,
-          routeMaxFee,
-          getFinalityThreshold(mode),
-        ],
-        chainId: source.chainId,
-        account: account.address,
-      } as any);
-      submittedBurnHash = burnHash;
-      setTx({ source, destination, burnHash, claimHash: undefined });
+      submittedBurnHash = burnHashValue;
+      setTx({ source, destination, burnHash: burnHashValue, claimHash: undefined });
       setHistory((current) => [
         {
-          id: `${burnHash}-${Date.now()}`,
+          id: `${burnHashValue}-${Date.now()}`,
           createdAt: Date.now(),
-          source,
-          destination,
+          source: { ...source },
+          destination: { ...destination },
           amount: amountRaw,
-          burnHash,
+          burnHash: burnHashValue,
           status: "pending",
           note: "Burn transaction submitted",
         },
         ...current,
       ]);
-      await waitForTransactionReceipt(config, { hash: burnHash, chainId: source.chainId });
-      await claimTransfer(burnHash, source, destination);
+      if (source.type === "evm") {
+        await waitForTransactionReceipt(config, { hash: burnHashValue as `0x${string}`, chainId: source.chainId });
+      }
+      await claimTransfer(burnHashValue, source, destination);
     } catch (bridgeError) {
       setPhase("failed");
       setError(simplifyBridgeError(bridgeError));
@@ -718,6 +845,8 @@ export default function UsdcBridge() {
               showMaxButton
               onMax={selectMax}
               maxDisabled={!connected || balance <= BigInt(0)}
+              connectedWallet={walletAddress}
+              chainOptions={sourceChainOptions}
             />
             <button
               type="button"
@@ -740,6 +869,7 @@ export default function UsdcBridge() {
               }
               amountPlaceholder="0.00"
               amountReadOnly
+              connectedWallet={walletAddress}
             />
           </div>
 
@@ -782,7 +912,7 @@ export default function UsdcBridge() {
             <input
               id="bridge-recipient"
               value={recipient}
-              placeholder="Input recipient address"
+              placeholder={`Input ${destination.shortName} address`}
               onChange={(event) => setRecipient(event.target.value)}
             />
           </div>
@@ -830,15 +960,17 @@ export default function UsdcBridge() {
           <button
             type="button"
             className={styles.primaryButton}
-            disabled={busy || !!validationError}
+            disabled={busy || !!validationError || (sourceType !== "evm" && !connected)}
             onClick={startBridge}
           >
             <span>
               {busy
                 ? message || "Working..."
-                : validationError
-                  ? "Review bridge details"
-                  : "Bridge USDC"}
+                : sourceType !== "evm" && !connected
+                  ? `Connect ${source.name} wallet`
+                  : validationError
+                    ? "Review bridge details"
+                    : "Bridge USDC"}
             </span>
           </button>
 
@@ -926,6 +1058,7 @@ export default function UsdcBridge() {
                   <thead>
                     <tr>
                       <th>Route</th>
+                      <th>Tx</th>
                       <th>Amount</th>
                       <th>Status</th>
                       <th>Action</th>
@@ -943,6 +1076,30 @@ export default function UsdcBridge() {
                                 {row.source.shortName} to{" "}
                                 {row.destination.shortName}
                               </span>
+                            </div>
+                          </td>
+                          <td>
+                            <div className={styles.txCell}>
+                              <a
+                                href={row.source.explorer + row.burnHash}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.txLink}
+                                title={row.burnHash}
+                              >
+                                {`${row.burnHash.slice(0, 6)}...`}
+                              </a>
+                              <button
+                                type="button"
+                                className={styles.copyBtn}
+                                onClick={() => navigator.clipboard.writeText(row.burnHash)}
+                                title="Copy transaction hash"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                </svg>
+                              </button>
                             </div>
                           </td>
                           <td>
@@ -968,7 +1125,7 @@ export default function UsdcBridge() {
                               onClick={() => void startRowReclaim(row)}
                             >
                               {cooldown > 0
-                                ? `Try again in ${formatCooldown(cooldown)}`
+                                ? `Reclaiming ${formatCooldown(cooldown)}`
                                 : "Reclaim"}
                             </button>
                           </td>
@@ -1050,6 +1207,8 @@ function ChainSelect({
   showMaxButton,
   onMax,
   maxDisabled,
+  connectedWallet,
+  chainOptions: chainOptionsProp,
 }: {
   label: string;
   chainId: number;
@@ -1064,9 +1223,11 @@ function ChainSelect({
   showMaxButton?: boolean;
   onMax?: () => void;
   maxDisabled?: boolean;
+  connectedWallet?: string | null;
+  chainOptions?: BridgeChainOption[];
 }) {
   const chain = getBridgeChain(chainId);
-  const chainOptions = BRIDGE_CHAIN_OPTIONS.filter((option) => !HIDDEN_EVM_SOON_CHAIN_NAMES.has(option.name));
+  const chainOptions = (chainOptionsProp ?? BRIDGE_CHAIN_OPTIONS).filter((option) => !HIDDEN_EVM_SOON_CHAIN_NAMES.has(option.name));
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -1443,7 +1604,44 @@ function getChainIcon(shortName: string) {
     return (
       <svg viewBox="0 0 128 128" aria-hidden="true">
         <path d="M64 0c35.348 0 64 28.652 64 64s-28.652 64-64 64S0 99.348 0 64 28.652 0 64 0zm0 0" fill="#fff"/>
-        <path d="M85.898 49.242a5.76 5.76 0 00-5.418 0l-12.214 7.223-8.532 4.742-12.214 7.227a5.76 5.76 0 01-5.418 0l-9.707-5.649a5.423 5.423 0 01-2.711-4.52V46.989a4.972 4.972 0 012.71-4.52l9.708-5.417a5.738 5.738 0 015.418 0l9.707 5.418a5.423 5.423 0 012.71 4.52v7.218l8.329-4.965v-6.996a4.963 4.963 0 00-2.664-4.52l-17.86-10.382a5.738 5.738 0 00-5.418 0L24.266 37.727a4.608 4.608 0 00-2.934 4.52v20.991a4.967 4.967 0 002.711 4.496l18.059 10.407a5.76 5.76 0 005.418 0l12.214-7 8.352-4.965 12.172-6.977a5.76 5.76 0 015.418 0l9.707 5.418a5.419 5.419 0 012.707 4.52v11.062a4.967 4.967 0 01-2.707 4.516l-9.707 5.64a5.738 5.738 0 01-5.418 0l-9.707-5.418a5.416 5.416 0 01-2.711-4.515v-7.25l-8.106 4.738v7.219a4.969 4.969 0 002.707 4.52L80.5 100.03a5.746 5.746 0 005.422 0l18.058-10.383a5.42 5.42 0 002.688-4.511v-21a4.964 4.964 0 00-2.711-4.516zm0 0" fill="#7950DD"/>
+        <path d="M83.414 50.422c-1.238-.715-2.855-.715-4.094 0l-9.555 5.52-6.492 3.59-9.554 5.52c-1.238.715-2.855.715-4.094 0l-7.586-4.41c-1.238-.715-2.094-2.078-2.094-3.508v-8.781c0-1.43.715-2.793 2.094-3.508l7.586-4.41c1.238-.715 2.855-.715 4.094 0l7.586 4.41c1.238.715 2.094 2.078 2.094 3.508v5.52l6.492-3.73v-5.66c0-1.43-.715-2.793-2.094-3.508l-13.96-8.082c-1.238-.715-2.855-.715-4.094 0L40.45 46.082c-1.238.715-2.234 2.078-2.234 3.508v16.164c0 1.43.855 2.793 2.094 3.508l14.102 8.082c1.238.715 2.855.715 4.094 0l9.554-5.52 6.492-3.73 9.554-5.52c1.238-.715 2.855-.715 4.094 0l7.586 4.41c1.238.715 2.094 2.078 2.094 3.508v8.781c0 1.43-.715 2.793-2.094 3.508l-7.586 4.41c-1.238.715-2.855.715-4.094 0l-7.586-4.41c-1.238-.715-2.094-2.078-2.094-3.508v-5.52l-6.492 3.73v5.66c0 1.43.715 2.793 2.094 3.508l14.102 8.082c1.238.715 2.855.715 4.094 0L97.59 98.168c1.238-.715 2.094-2.078 2.094-3.508V78.496c0-1.43-.715-2.793-2.094-3.508z" fill="#8247e5"/>
+      </svg>
+    );
+  }
+
+  if (key === "SOL") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <defs>
+          <linearGradient id="sol-grad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stopColor="#9945FF"/>
+            <stop offset="1" stopColor="#14F195"/>
+          </linearGradient>
+        </defs>
+        <circle cx="12" cy="12" r="11" fill="url(#sol-grad)" />
+        <path d="M7 14.5h10l-2-2.5H9l-2 2.5zm0-5h10l-2 2.5H9l-2-2.5z" fill="#fff"/>
+      </svg>
+    );
+  }
+
+  if (key === "STRK") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="11" fill="#fc5b3f" />
+        <text x="12" y="15" textAnchor="middle" fontSize="6" fontWeight="700" fill="#fff">
+          STRK
+        </text>
+      </svg>
+    );
+  }
+
+  if (key === "XLM") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="11" fill="#7d8cff" />
+        <text x="12" y="15" textAnchor="middle" fontSize="6" fontWeight="700" fill="#fff">
+          XLM
+        </text>
       </svg>
     );
   }

@@ -211,6 +211,20 @@
   color: var(--theme-text-strong);
 }
 
+.walletSelect {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 170px;
+  border-radius: 0.8rem;
+  border: 1px solid #190b232b;
+  background: color-mix(in srgb, var(--wc-surface-elevated) 96%, white);
+  padding: 0.35rem;
+  z-index: 40;
+  box-shadow: var(--wc-shadow-soft);
+  animation: walletMenuIn 140ms ease-out;
+}
+
 @keyframes walletMenuIn {
   from {
     opacity: 0;

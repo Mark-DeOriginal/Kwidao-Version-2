@@ -218,7 +218,7 @@
   padding: 0.35rem;
   display: grid;
   gap: 0.2rem;
-  height: 50vh;
+  max-height: 50vh;
   overflow-y: scroll;
 }
 
@@ -771,6 +771,49 @@
   align-items: center;
   gap: 0.35rem;
   white-space: nowrap;
+}
+
+.txCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.txLink {
+  color: var(--wc-brand-primary);
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color 160ms ease;
+}
+
+.txLink:hover {
+  color: color-mix(in srgb, var(--wc-brand-primary) 60%, black);
+  text-decoration: underline;
+}
+
+.copyBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #a8a3ac7d;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--theme-text-soft);
+  cursor: pointer;
+  padding: 2px;
+  transition: background 160ms ease, color 160ms ease;
+  line-height: 1;
+}
+
+.copyBtn:hover {
+  background: color-mix(in srgb, var(--wc-brand-primary) 14%, white);
+  color: var(--wc-brand-primary);
+}
+
+.copyBtn:active {
+  transform: scale(0.92);
 }
 
 .statusChip {

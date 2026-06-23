@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import Link from "next/link";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAccount, useDisconnect } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { shortenAddress } from "../../services/format";
+import { useBridgeWallet } from "../../../usdc-bridge/services/bridgeContext";
+import { hasSolanaWallet } from "../../../usdc-bridge/services/solanaBridge";
+import { hasStarknetWallet } from "../../../usdc-bridge/services/starknetBridge";
+import { hasStellarWallet } from "../../../usdc-bridge/services/stellarBridge";
 import styles from "./WalletConnectButton.module.css";
 
 type Props = {
@@ -23,160 +27,272 @@ export default function WalletConnectButton({
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [walletSelectOpen, setWalletSelectOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
+
   const accountState = useAccount();
-  const { disconnect } = useDisconnect();
+  const { disconnect: evmDisconnect } = useDisconnect();
+  const { openConnectModal } = useConnectModal();
+  const { wallet: nonEvmWallet, connectWallet, disconnectWallet } = useBridgeWallet();
+
+  const isEVMConnected = accountState.status === "connected" && !!accountState.address;
+  const isConnected = isEVMConnected || nonEvmWallet.isConnected;
+
+  const availableWallets = useMemo(() => {
+    const wallets: { type: string; label: string }[] = [];
+    wallets.push({ type: "evm", label: "EVM Wallet" });
+    if (hasSolanaWallet()) wallets.push({ type: "solana", label: "Solana" });
+    if (hasStarknetWallet()) wallets.push({ type: "starknet", label: "Starknet" });
+    if (hasStellarWallet()) wallets.push({ type: "stellar", label: "Stellar" });
+    return wallets;
+  }, []);
 
   useEffect(() => {
     const onDocumentClick = (event: MouseEvent) => {
       if (!rootRef.current) return;
-      if (!rootRef.current.contains(event.target as Node)) setMenuOpen(false);
+      if (!rootRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+        setWalletSelectOpen(false);
+      }
     };
-
     document.addEventListener("mousedown", onDocumentClick);
     return () => document.removeEventListener("mousedown", onDocumentClick);
   }, []);
 
   useEffect(() => {
     const onEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMenuOpen(false);
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        setWalletSelectOpen(false);
+      }
     };
-
     document.addEventListener("keydown", onEscape);
     return () => document.removeEventListener("keydown", onEscape);
   }, []);
 
-  return (
-    <ConnectButton.Custom>
-      {({
-        account,
-        chain,
-        mounted,
-        authenticationStatus,
-        openChainModal,
-        openConnectModal,
-      }) => {
-        const ready = mounted && authenticationStatus !== "loading";
-        const connected =
-          ready &&
-          accountState.status === "connected" &&
-          !!accountState.address &&
-          (!authenticationStatus || authenticationStatus === "authenticated");
-        const displayAddress =
-          account?.displayName ||
-          (accountState.address ? shortenAddress(accountState.address, 6, 4) : "");
-        const displayChain = chain?.name || "Unknown";
+  if (!isConnected) {
+    return (
+      <div ref={rootRef} className={styles.menuRoot}>
+        <button
+          type="button"
+          onClick={() => setWalletSelectOpen((prev) => !prev)}
+          className={classNames(styles.connectButton, className)}
+        >
+          <WalletIcon />
+          <span className="inline max-[435px]:hidden">{label}</span>
+          <span className="hidden max-[435px]:inline">Connect</span>
+        </button>
 
-        if (!connected) {
-          return (
-            <button
-              type="button"
-              onClick={openConnectModal}
-              className={classNames(styles.connectButton, className)}
+        <AnimatePresence>
+          {walletSelectOpen && availableWallets.length > 0 ? (
+            <motion.div
+              className={styles.walletSelect}
+              role="menu"
+              initial={{ opacity: 0, y: 8, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 6, scale: 0.97 }}
+              transition={{ duration: 0.16, ease: "easeOut" }}
             >
-              <WalletIcon />
-              <span className="inline max-[435px]:hidden">{label}</span>
-              <span className="hidden max-[435px]:inline">Connect</span>
-            </button>
-          );
-        }
-
-        if (chain?.unsupported) {
-          return (
-            <button
-              type="button"
-              onClick={openChainModal}
-              className={classNames(styles.warningButton, className)}
-            >
-              <WalletIcon />
-              Switch Network
-            </button>
-          );
-        }
-
-        return (
-          <div ref={rootRef} className={styles.menuRoot}>
-            <button
-              type="button"
-              onClick={() => setMenuOpen((prev) => !prev)}
-              className={classNames(styles.connectedButton, className)}
-              aria-haspopup="menu"
-              aria-expanded={menuOpen}
-              aria-label="Wallet account menu"
-            >
-              <span className={styles.connectedMain}>
-                <WalletIcon />
-                <span className={styles.connectedAddress}>
-                  <span className="inline max-[570px]:hidden">{displayAddress}</span>
-                  <span className="hidden max-[570px]:inline">{displayAddress.slice(0, 4)}</span>
-                </span>
-                <span className={styles.connectedDivider} />
-                <span className={styles.connectedChain}>
-                  <ChainIcon chainName={displayChain} />
-                  <span className={styles.chainName}>{displayChain}</span>
-                </span>
-              </span>
-              <span className={classNames(styles.caret, menuOpen && styles.caretOpen)}>
-                <CaretIcon />
-              </span>
-            </button>
-
-            <AnimatePresence>
-              {menuOpen ? (
-                <motion.div
-                  className={styles.menu}
-                  role="menu"
-                  initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 6, scale: 0.97 }}
-                  transition={{ duration: 0.16, ease: "easeOut" }}
+              {availableWallets.map((w) => (
+                <button
+                  key={w.type}
+                  type="button"
+                  className={styles.menuItem}
+                  role="menuitem"
+                  onClick={async () => {
+                    setWalletSelectOpen(false);
+                    if (w.type === "evm") {
+                      openConnectModal?.();
+                    } else {
+                      await connectWallet(w.type as "solana" | "starknet" | "stellar");
+                    }
+                  }}
                 >
-                  <Link
-                    href="/usdc-bridge"
-                    className={styles.menuItem}
-                    role="menuitem"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <BridgeIcon />
-                    USDC Bridge
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!accountState.address) return;
-                      try {
-                        await navigator.clipboard.writeText(accountState.address);
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 1200);
-                      } catch {
-                        setCopied(false);
-                      }
-                    }}
-                    className={styles.menuItem}
-                    role="menuitem"
-                  >
-                    <CopyIcon />
-                    {copied ? "Copied" : "Copy Address"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      disconnect();
-                      setMenuOpen(false);
-                    }}
-                    className={styles.menuItem}
-                    role="menuitem"
-                  >
-                    <DisconnectIcon />
-                    Disconnect
-                  </button>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
-          </div>
-        );
-      }}
-    </ConnectButton.Custom>
+                  <WalletTypeIcon type={w.type} />
+                  {w.label}
+                </button>
+              ))}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  if (isEVMConnected) {
+    const displayAddress = shortenAddress(accountState.address!, 6, 4);
+    const chain = accountState.chain;
+
+    const chainName = chain?.name || "Unknown";
+
+    return (
+      <div ref={rootRef} className={styles.menuRoot}>
+        <button
+          type="button"
+          onClick={() => setMenuOpen((prev) => !prev)}
+          className={classNames(styles.connectedButton, className)}
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          aria-label="Wallet account menu"
+        >
+          <span className={styles.connectedMain}>
+            <WalletIcon />
+            <span className={styles.connectedAddress}>
+              <span className="inline max-[570px]:hidden">{displayAddress}</span>
+              <span className="hidden max-[570px]:inline">{displayAddress.slice(0, 4)}</span>
+            </span>
+            <span className={styles.connectedDivider} />
+            <span className={styles.connectedChain}>
+              <ChainIcon chainName={chainName} />
+              <span className={styles.chainName}>{chainName}</span>
+            </span>
+          </span>
+          <span className={classNames(styles.caret, menuOpen && styles.caretOpen)}>
+            <CaretIcon />
+          </span>
+        </button>
+
+        <AnimatePresence>
+          {menuOpen ? (
+            <motion.div
+              className={styles.menu}
+              role="menu"
+              initial={{ opacity: 0, y: 8, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 6, scale: 0.97 }}
+              transition={{ duration: 0.16, ease: "easeOut" }}
+            >
+              <Link
+                href="/usdc-bridge"
+                className={styles.menuItem}
+                role="menuitem"
+                onClick={() => setMenuOpen(false)}
+              >
+                <BridgeIcon />
+                USDC Bridge
+              </Link>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!accountState.address) return;
+                  try {
+                    await navigator.clipboard.writeText(accountState.address);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1200);
+                  } catch {
+                    setCopied(false);
+                  }
+                }}
+                className={styles.menuItem}
+                role="menuitem"
+              >
+                <CopyIcon />
+                {copied ? "Copied" : "Copy Address"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  evmDisconnect();
+                  setMenuOpen(false);
+                }}
+                className={styles.menuItem}
+                role="menuitem"
+              >
+                <DisconnectIcon />
+                Disconnect
+              </button>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  const nonEvmAddress = nonEvmWallet.address || "";
+  const displayAddress = shortenAddress(nonEvmAddress, 6, 4);
+  const chainTypeName =
+    nonEvmWallet.chainType === "solana" ? "Solana" :
+    nonEvmWallet.chainType === "starknet" ? "Starknet" : "Stellar";
+
+  return (
+    <div ref={rootRef} className={styles.menuRoot}>
+      <button
+        type="button"
+        onClick={() => setMenuOpen((prev) => !prev)}
+        className={classNames(styles.connectedButton, className)}
+        aria-haspopup="menu"
+        aria-expanded={menuOpen}
+        aria-label="Wallet account menu"
+      >
+        <span className={styles.connectedMain}>
+          <WalletIcon />
+          <span className={styles.connectedAddress}>
+            <span className="inline max-[570px]:hidden">{displayAddress}</span>
+            <span className="hidden max-[570px]:inline">{displayAddress.slice(0, 4)}</span>
+          </span>
+          <span className={styles.connectedDivider} />
+          <span className={styles.connectedChain}>
+            <WalletTypeIcon type={nonEvmWallet.chainType || "solana"} />
+            <span className={styles.chainName}>{chainTypeName}</span>
+          </span>
+        </span>
+        <span className={classNames(styles.caret, menuOpen && styles.caretOpen)}>
+          <CaretIcon />
+        </span>
+      </button>
+
+      <AnimatePresence>
+        {menuOpen ? (
+          <motion.div
+            className={styles.menu}
+            role="menu"
+            initial={{ opacity: 0, y: 8, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.97 }}
+            transition={{ duration: 0.16, ease: "easeOut" }}
+          >
+            <Link
+              href="/usdc-bridge"
+              className={styles.menuItem}
+              role="menuitem"
+              onClick={() => setMenuOpen(false)}
+            >
+              <BridgeIcon />
+              USDC Bridge
+            </Link>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(nonEvmAddress);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1200);
+                } catch {
+                  setCopied(false);
+                }
+              }}
+              className={styles.menuItem}
+              role="menuitem"
+            >
+              <CopyIcon />
+              {copied ? "Copied" : "Copy Address"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                disconnectWallet();
+                setMenuOpen(false);
+              }}
+              className={styles.menuItem}
+              role="menuitem"
+            >
+              <DisconnectIcon />
+              Disconnect
+            </button>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -279,6 +395,27 @@ function ChainIcon({ chainName }: { chainName: string }) {
   );
 }
 
+function WalletTypeIcon({ type }: { type: string }) {
+  if (type === "evm") {
+    return (
+      <span className={styles.chainIcon}>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#8C8C8C" d="M12 2.8 6.2 12l5.8-2.8L17.8 12 12 2.8Z" />
+          <path fill="#3C3C3B" d="M12 9.9 6.2 12 12 15.5 17.8 12 12 9.9Z" />
+          <path fill="#8C8C8C" d="M6.2 13.2 12 21.2V16.8L6.2 13.2Z" />
+          <path fill="#3C3C3B" d="M12 16.8v4.4l5.8-8-5.8 3.6Z" />
+        </svg>
+      </span>
+    );
+  }
+
+  return (
+    <span className={styles.chainIcon}>
+      <img src={`/chains/${type}.svg`} alt="" aria-hidden="true" />
+    </span>
+  );
+}
+
 function getChainIconPath(chainName: string) {
   const name = chainName.toUpperCase();
 
@@ -297,6 +434,9 @@ function getChainIconPath(chainName: string) {
     PLUME: "/chains/plume.svg",
     "PLUME MAINNET": "/chains/plume.svg",
     MORPH: "/chains/morph.svg",
+    SOLANA: "/chains/solana.svg",
+    STARKNET: "/chains/starknet.svg",
+    STELLAR: "/chains/stellar.svg",
   };
 
   return pathMap[name] || "";
@@ -305,7 +445,6 @@ function getChainIconPath(chainName: string) {
 function getChainIcon(chainName: string) {
   const name = chainName.toUpperCase();
 
-  // Map full chain names to short codes
   const shortNameMap: Record<string, string> = {
     ETHEREUM: "ETH",
     "ETHEREUM MAINNET": "ETH",
@@ -421,7 +560,6 @@ function getChainIcon(chainName: string) {
     );
   }
 
-  // Fallback icon
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <circle cx="12" cy="12" r="11" fill="#1C2A3D" />

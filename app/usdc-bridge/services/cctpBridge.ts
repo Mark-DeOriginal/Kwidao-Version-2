@@ -25,6 +25,8 @@ import {
 
 export type BridgeMode = "fast" | "standard";
 
+export type ChainType = "evm" | "solana" | "starknet" | "stellar";
+
 export type BridgeChain = {
   chainId: number;
   domain: number;
@@ -34,9 +36,10 @@ export type BridgeChain = {
   icon?: string;
   supportsFastTransfer: boolean;
   explorer: string;
-  usdc: `0x${string}`;
-  tokenMessenger: `0x${string}`;
-  messageTransmitter: `0x${string}`;
+  type: ChainType;
+  usdc: string;
+  tokenMessenger: string;
+  messageTransmitter: string;
 };
 
 export type BridgeChainOption = {
@@ -47,7 +50,71 @@ export type BridgeChainOption = {
   status: "active" | "planned";
   chainId?: number;
   domain: number;
+  type: ChainType;
 };
+
+function evmChain(
+  id: number,
+  domain: number,
+  name: string,
+  shortName: string,
+  accent: string,
+  icon: string | undefined,
+  fast: boolean,
+  explorer: string,
+  usdc: `0x${string}`,
+  tokenMessenger: `0x${string}`,
+  messageTransmitter: `0x${string}`,
+): BridgeChain {
+  return { chainId: id, domain, name, shortName, accent, icon, supportsFastTransfer: fast, explorer, type: "evm", usdc, tokenMessenger, messageTransmitter };
+}
+
+function solanaChain(
+  chainId: number,
+  domain: number,
+  name: string,
+  shortName: string,
+  accent: string,
+  icon: string | undefined,
+  fast: boolean,
+  explorer: string,
+  usdcMint: string,
+  programId: string,
+): BridgeChain {
+  return { chainId, domain, name, shortName, accent, icon, supportsFastTransfer: fast, explorer, type: "solana", usdc: usdcMint, tokenMessenger: programId, messageTransmitter: programId };
+}
+
+function starknetChain(
+  chainId: number,
+  domain: number,
+  name: string,
+  shortName: string,
+  accent: string,
+  icon: string | undefined,
+  fast: boolean,
+  explorer: string,
+  usdc: string,
+  tokenMessenger: string,
+  messageTransmitter: string,
+): BridgeChain {
+  return { chainId, domain, name, shortName, accent, icon, supportsFastTransfer: fast, explorer, type: "starknet", usdc, tokenMessenger, messageTransmitter };
+}
+
+function stellarChain(
+  chainId: number,
+  domain: number,
+  name: string,
+  shortName: string,
+  accent: string,
+  icon: string | undefined,
+  fast: boolean,
+  explorer: string,
+  usdc: string,
+  tokenMessenger: string,
+  messageTransmitter: string,
+): BridgeChain {
+  return { chainId, domain, name, shortName, accent, icon, supportsFastTransfer: fast, explorer, type: "stellar", usdc, tokenMessenger, messageTransmitter };
+}
 
 export const TOKEN_MESSENGER_V2 = "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d";
 export const MESSAGE_TRANSMITTER_V2 = "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64";
@@ -55,234 +122,44 @@ export const INJECTIVE_EVM_CHAIN_ID = 1776;
 export const ZERO_BYTES_32 =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
 
+export const SOLANA_CCTP_PROGRAM_ID = "CCTPV2vPZJS2u2BBsUoscuikbYjnpFmbFsvVuJdgUMQe";
+export const SOLANA_USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+export const SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com";
+
+export const STARKNET_TOKEN_MESSENGER = "0x07d421B9cA8aA32DF259965cDA8ACb93F7599F69209A41872AE84638B2A20F2a";
+export const STARKNET_MESSAGE_TRANSMITTER = "0x02EBB5777B6dD8B26ea11D68Fdf1D2c85cD2099335328Be845a28c77A8AEf183";
+export const STARKNET_USDC = "0x033068F6539f8e6e6b131e6B2B814e6c34A5224bC66947c47DaB9dFeE93b35fb";
+export const STARKNET_RPC_URL = "https://starknet-mainnet.public.blastapi.io";
+
+export const STELLAR_TOKEN_MESSENGER = "CB75O22HPMZ7H4RE22X6A54B4BBAWUTNDUWVHYLHYLX7LXP7LXP7LX7L";
+export const STELLAR_MESSAGE_TRANSMITTER = "CBB75O22HPMZ7H4RE22X6A54B4BBAWUTNDUWVHYLHYLX7LXP7LXP7LX7L";
+export const STELLAR_USDC_CONTRACT = "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN";
+export const STELLAR_USDC_ASSET_CODE = "USDC";
+export const STELLAR_RPC_URL = "https://soroban.stellar.org";
+export const STELLAR_NETWORK_PASSPHRASE = "Public Global Stellar Network ; September 2015";
+
 export const BRIDGE_CHAINS: BridgeChain[] = [
-  {
-    chainId: mainnet.id,
-    domain: 0,
-    name: "Ethereum",
-    shortName: "ETH",
-    accent: "#627eea",
-    supportsFastTransfer: true,
-    explorer: "https://etherscan.io/tx/",
-    usdc: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-    tokenMessenger: TOKEN_MESSENGER_V2,
-    messageTransmitter: MESSAGE_TRANSMITTER_V2,
-  },
-  {
-    chainId: avalanche.id,
-    domain: 1,
-    name: "Avalanche",
-    shortName: "AVAX",
-    accent: "#e84142",
-    supportsFastTransfer: false,
-    explorer: "https://snowtrace.io/tx/",
-    usdc: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
-    tokenMessenger: TOKEN_MESSENGER_V2,
-    messageTransmitter: MESSAGE_TRANSMITTER_V2,
-  },
-  {
-    chainId: optimism.id,
-    domain: 2,
-    name: "OP Mainnet",
-    shortName: "OP",
-    accent: "#ff0420",
-    supportsFastTransfer: true,
-    explorer: "https://optimistic.etherscan.io/tx/",
-    usdc: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
-    tokenMessenger: TOKEN_MESSENGER_V2,
-    messageTransmitter: MESSAGE_TRANSMITTER_V2,
-  },
-  {
-    chainId: arbitrum.id,
-    domain: 3,
-    name: "Arbitrum",
-    shortName: "ARB",
-    accent: "#28a0f0",
-    supportsFastTransfer: true,
-    explorer: "https://arbiscan.io/tx/",
-    usdc: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
-    tokenMessenger: TOKEN_MESSENGER_V2,
-    messageTransmitter: MESSAGE_TRANSMITTER_V2,
-  },
-  {
-    chainId: base.id,
-    domain: 6,
-    name: "Base",
-    shortName: "BASE",
-    accent: "#0052ff",
-    supportsFastTransfer: true,
-    explorer: "https://basescan.org/tx/",
-    usdc: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-    tokenMessenger: TOKEN_MESSENGER_V2,
-    messageTransmitter: MESSAGE_TRANSMITTER_V2,
-  },
-  {
-    chainId: polygon.id,
-    domain: 7,
-    name: "Polygon",
-    shortName: "POLYGON",
-    accent: "#8247e5",
-    supportsFastTransfer: false,
-    explorer: "https://polygonscan.com/tx/",
-    usdc: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
-    tokenMessenger: TOKEN_MESSENGER_V2,
-    messageTransmitter: MESSAGE_TRANSMITTER_V2,
-  },
-  {
-    chainId: unichain.id,
-    domain: 10,
-    name: "Unichain",
-    shortName: "UNI",
-    accent: "#fc72ff",
-    icon: "/chains/unichain.svg",
-    supportsFastTransfer: true,
-    explorer: "https://uniscan.xyz/tx/",
-    usdc: "0x078D782b760474a361dDA0AF3839290b0EF57AD6",
-    tokenMessenger: TOKEN_MESSENGER_V2,
-    messageTransmitter: MESSAGE_TRANSMITTER_V2,
-  },
-  {
-    chainId: linea.id,
-    domain: 11,
-    name: "Linea",
-    shortName: "LINEA",
-    accent: "#61dfff",
-    icon: "/chains/linea.svg",
-    supportsFastTransfer: true,
-    explorer: "https://lineascan.build/tx/",
-    usdc: "0x176211869cA2b568f2A7D4EE941E073a821EE1ff",
-    tokenMessenger: TOKEN_MESSENGER_V2,
-    messageTransmitter: MESSAGE_TRANSMITTER_V2,
-  },
-  {
-    chainId: sonic.id,
-    domain: 13,
-    name: "Sonic",
-    shortName: "S",
-    accent: "#111111",
-    icon: "/chains/sonic.svg",
-    supportsFastTransfer: false,
-    explorer: "https://sonicscan.org/tx/",
-    usdc: "0x29219dd400f2Bf60E5a23d13Be72B486D4038894",
-    tokenMessenger: TOKEN_MESSENGER_V2,
-    messageTransmitter: MESSAGE_TRANSMITTER_V2,
-  },
-  {
-    chainId: worldchain.id,
-    domain: 14,
-    name: "World Chain",
-    shortName: "WORLD",
-    accent: "#000000",
-    icon: "/chains/world.svg",
-    supportsFastTransfer: true,
-    explorer: "https://worldscan.org/tx/",
-    usdc: "0x79A02482A880bCe3F13E09da970dC34dB4cD24D1",
-    tokenMessenger: TOKEN_MESSENGER_V2,
-    messageTransmitter: MESSAGE_TRANSMITTER_V2,
-  },
-  {
-    chainId: monad.id,
-    domain: 15,
-    name: "Monad",
-    shortName: "MON",
-    accent: "#836ef9",
-    icon: "/chains/monad.svg",
-    supportsFastTransfer: false,
-    explorer: "https://monadvision.com/tx/",
-    usdc: "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
-    tokenMessenger: TOKEN_MESSENGER_V2,
-    messageTransmitter: MESSAGE_TRANSMITTER_V2,
-  },
-  {
-    chainId: sei.id,
-    domain: 16,
-    name: "Sei",
-    shortName: "SEI",
-    accent: "#9b111e",
-    icon: "/chains/sei.svg",
-    supportsFastTransfer: false,
-    explorer: "https://seiscan.io/tx/",
-    usdc: "0xe15fC38F6D8c56aF07bbCBe3BAf5708A2Bf42392",
-    tokenMessenger: TOKEN_MESSENGER_V2,
-    messageTransmitter: MESSAGE_TRANSMITTER_V2,
-  },
-  {
-    chainId: xdc.id,
-    domain: 18,
-    name: "XDC",
-    shortName: "XDC",
-    accent: "#2a5ada",
-    icon: "/chains/xdc.svg",
-    supportsFastTransfer: false,
-    explorer: "https://xdcscan.com/tx/",
-    usdc: "0xfA2958CB79b0491CC627c1557F441eF849Ca8eb1",
-    tokenMessenger: TOKEN_MESSENGER_V2,
-    messageTransmitter: MESSAGE_TRANSMITTER_V2,
-  },
-  {
-    chainId: hyperEvm.id,
-    domain: 19,
-    name: "HyperEVM",
-    shortName: "HYPE",
-    accent: "#00e6b0",
-    icon: "/chains/hyperevm.svg",
-    supportsFastTransfer: false,
-    explorer: "https://hyperscan.com/tx/",
-    usdc: "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
-    tokenMessenger: TOKEN_MESSENGER_V2,
-    messageTransmitter: MESSAGE_TRANSMITTER_V2,
-  },
-  {
-    chainId: ink.id,
-    domain: 21,
-    name: "Ink",
-    shortName: "INK",
-    accent: "#7132f5",
-    icon: "/chains/ink.svg",
-    supportsFastTransfer: true,
-    explorer: "https://explorer.inkonchain.com/tx/",
-    usdc: "0x2D270e6886d130D724215A266106e6832161EAEd",
-    tokenMessenger: TOKEN_MESSENGER_V2,
-    messageTransmitter: MESSAGE_TRANSMITTER_V2,
-  },
-  {
-    chainId: plumeMainnet.id,
-    domain: 22,
-    name: "Plume",
-    shortName: "PLUME",
-    accent: "#ff4f9a",
-    icon: "/chains/plume.svg",
-    supportsFastTransfer: true,
-    explorer: "https://explorer.plume.org/tx/",
-    usdc: "0x222365EF19F7947e5484218551B56bb3965Aa7aF",
-    tokenMessenger: TOKEN_MESSENGER_V2,
-    messageTransmitter: MESSAGE_TRANSMITTER_V2,
-  },
-  {
-    chainId: INJECTIVE_EVM_CHAIN_ID,
-    domain: 29,
-    name: "Injective",
-    shortName: "INJ",
-    accent: "#00D9FF",
-    supportsFastTransfer: false,
-    explorer: "https://blockscout.injective.network/tx/",
-    usdc: "0xa00C59fF5a080D2b954d0c75e46E22a0c371235a",
-    tokenMessenger: TOKEN_MESSENGER_V2,
-    messageTransmitter: MESSAGE_TRANSMITTER_V2,
-  },
-  {
-    chainId: morph.id,
-    domain: 30,
-    name: "Morph",
-    shortName: "MORPH",
-    accent: "#00ff7f",
-    icon: "/chains/morph.svg",
-    supportsFastTransfer: true,
-    explorer: "https://explorer.morph.network/tx/",
-    usdc: "0xCfb1186F4e93D60E60a8bDd997427D1F33bc372B",
-    tokenMessenger: TOKEN_MESSENGER_V2,
-    messageTransmitter: MESSAGE_TRANSMITTER_V2,
-  },
+  evmChain(mainnet.id, 0, "Ethereum", "ETH", "#627eea", undefined, true, "https://etherscan.io/tx/", "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
+  evmChain(avalanche.id, 1, "Avalanche", "AVAX", "#e84142", undefined, false, "https://snowtrace.io/tx/", "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
+  evmChain(optimism.id, 2, "OP Mainnet", "OP", "#ff0420", undefined, true, "https://optimistic.etherscan.io/tx/", "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
+  evmChain(arbitrum.id, 3, "Arbitrum", "ARB", "#28a0f0", undefined, true, "https://arbiscan.io/tx/", "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
+  evmChain(base.id, 6, "Base", "BASE", "#0052ff", undefined, true, "https://basescan.org/tx/", "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
+  evmChain(polygon.id, 7, "Polygon", "POLYGON", "#8247e5", undefined, false, "https://polygonscan.com/tx/", "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
+  evmChain(unichain.id, 10, "Unichain", "UNI", "#fc72ff", "/chains/unichain.svg", true, "https://uniscan.xyz/tx/", "0x078D782b760474a361dDA0AF3839290b0EF57AD6", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
+  evmChain(linea.id, 11, "Linea", "LINEA", "#61dfff", "/chains/linea.svg", true, "https://lineascan.build/tx/", "0x176211869cA2b568f2A7D4EE941E073a821EE1ff", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
+  evmChain(sonic.id, 13, "Sonic", "S", "#111111", "/chains/sonic.svg", false, "https://sonicscan.org/tx/", "0x29219dd400f2Bf60E5a23d13Be72B486D4038894", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
+  evmChain(worldchain.id, 14, "World Chain", "WORLD", "#000000", "/chains/world.svg", true, "https://worldscan.org/tx/", "0x79A02482A880bCe3F13E09da970dC34dB4cD24D1", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
+  evmChain(monad.id, 15, "Monad", "MON", "#836ef9", "/chains/monad.svg", false, "https://monadvision.com/tx/", "0x754704Bc059F8C67012fEd69BC8A327a5aafb603", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
+  evmChain(sei.id, 16, "Sei", "SEI", "#9b111e", "/chains/sei.svg", false, "https://seiscan.io/tx/", "0xe15fC38F6D8c56aF07bbCBe3BAf5708A2Bf42392", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
+  evmChain(xdc.id, 18, "XDC", "XDC", "#2a5ada", "/chains/xdc.svg", false, "https://xdcscan.com/tx/", "0xfA2958CB79b0491CC627c1557F441eF849Ca8eb1", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
+  evmChain(hyperEvm.id, 19, "HyperEVM", "HYPE", "#00e6b0", "/chains/hyperevm.svg", false, "https://hyperscan.com/tx/", "0xb88339CB7199b77E23DB6E890353E22632Ba630f", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
+  evmChain(ink.id, 21, "Ink", "INK", "#7132f5", "/chains/ink.svg", true, "https://explorer.inkonchain.com/tx/", "0x2D270e6886d130D724215A266106e6832161EAEd", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
+  evmChain(plumeMainnet.id, 22, "Plume", "PLUME", "#ff4f9a", "/chains/plume.svg", true, "https://explorer.plume.org/tx/", "0x222365EF19F7947e5484218551B56bb3965Aa7aF", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
+  evmChain(INJECTIVE_EVM_CHAIN_ID, 29, "Injective", "INJ", "#00D9FF", undefined, false, "https://blockscout.injective.network/tx/", "0xa00C59fF5a080D2b954d0c75e46E22a0c371235a", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
+  evmChain(morph.id, 30, "Morph", "MORPH", "#00ff7f", "/chains/morph.svg", true, "https://explorer.morph.network/tx/", "0xCfb1186F4e93D60E60a8bDd997427D1F33bc372B", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
+  solanaChain(5, 5, "Solana", "SOL", "#14f195", "/chains/solana.svg", false, "https://solscan.io/tx/", SOLANA_USDC_MINT, SOLANA_CCTP_PROGRAM_ID),
+  starknetChain(25, 25, "Starknet", "STRK", "#fc5b3f", "/chains/starknet.svg", false, "https://starkscan.co/tx/", STARKNET_USDC, STARKNET_TOKEN_MESSENGER, STARKNET_MESSAGE_TRANSMITTER),
+  stellarChain(27, 27, "Stellar", "XLM", "#7d8cff", "/chains/stellar.svg", false, "https://stellar.expert/explorer/public/tx/", STELLAR_USDC_CONTRACT, STELLAR_TOKEN_MESSENGER, STELLAR_MESSAGE_TRANSMITTER),
 ];
 
 export const BRIDGE_CHAIN_OPTIONS: BridgeChainOption[] = [
@@ -293,63 +170,20 @@ export const BRIDGE_CHAIN_OPTIONS: BridgeChainOption[] = [
     shortName: chain.shortName,
     accent: chain.accent,
     icon: chain.icon,
+    type: chain.type,
     status: "active" as const,
   })),
   {
-    domain: 12,
-    name: "Codex",
-    shortName: "CODEX",
-    accent: "#7c3aed",
-    icon: "/chains/codex.svg",
-    status: "planned",
+    domain: 12, name: "Codex", shortName: "CODEX", accent: "#7c3aed", icon: "/chains/codex.svg", type: "evm" as const, status: "planned",
   },
   {
-    domain: 26,
-    name: "Arc",
-    shortName: "ARC",
-    accent: "#0ea5e9",
-    icon: "/chains/arc.svg",
-    status: "planned",
+    domain: 26, name: "Arc", shortName: "ARC", accent: "#0ea5e9", icon: "/chains/arc.svg", type: "evm" as const, status: "planned",
   },
   {
-    domain: 28,
-    name: "EDGE",
-    shortName: "EDGE",
-    accent: "#111827",
-    icon: "/chains/edge.svg",
-    status: "planned",
+    domain: 28, name: "EDGE", shortName: "EDGE", accent: "#111827", icon: "/chains/edge.svg", type: "evm" as const, status: "planned",
   },
   {
-    domain: 31,
-    name: "Pharos",
-    shortName: "PHAROS",
-    accent: "#14b8a6",
-    icon: "/chains/pharos.svg",
-    status: "planned",
-  },
-  {
-    domain: 5,
-    name: "Solana",
-    shortName: "SOL",
-    accent: "#14f195",
-    icon: "/chains/solana.svg",
-    status: "planned",
-  },
-  {
-    domain: 25,
-    name: "Starknet",
-    shortName: "STRK",
-    accent: "#fc5b3f",
-    icon: "/chains/starknet.svg",
-    status: "planned",
-  },
-  {
-    domain: 27,
-    name: "Stellar",
-    shortName: "XLM",
-    accent: "#7d8cff",
-    icon: "/chains/stellar.svg",
-    status: "planned",
+    domain: 31, name: "Pharos", shortName: "PHAROS", accent: "#14b8a6", icon: "/chains/pharos.svg", type: "evm" as const, status: "planned",
   },
 ];
 
@@ -419,7 +253,24 @@ export function getBridgeChain(chainId: number) {
 }
 
 export function isEvmBridgeChain(chain: BridgeChain) {
-  return BRIDGE_CHAINS.some((candidate) => candidate.chainId === chain.chainId);
+  return chain.type === "evm";
+}
+
+export function getChainType(chain: BridgeChain): ChainType {
+  return chain.type;
+}
+
+export function isValidRecipient(chain: BridgeChain, address: string): boolean {
+  switch (chain.type) {
+    case "evm":
+      return isAddress(address);
+    case "solana":
+      return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
+    case "starknet":
+      return /^0x[0-9a-fA-F]{63,66}$/.test(address);
+    case "stellar":
+      return /^G[0-9A-Z]{55}$/.test(address);
+  }
 }
 
 export function parseUsdcAmount(value: string) {
@@ -434,7 +285,15 @@ export function formatUsdc(value: bigint) {
   return trimmedFraction ? `${withCommas}.${trimmedFraction}` : withCommas;
 }
 
-export function addressToBytes32(address: string) {
+export async function addressToBytes32(address: string, destinationType?: ChainType): Promise<`0x${string}`> {
+  if (destinationType === "solana") {
+    const { PublicKey } = await import("@solana/web3.js");
+    return ("0x" + Buffer.from(new PublicKey(address).toBytes()).toString("hex")) as `0x${string}`;
+  }
+  if (destinationType === "stellar") {
+    const { Keypair } = await import("@stellar/stellar-sdk");
+    return ("0x" + Buffer.from(Keypair.fromPublicKey(address).rawPublicKey()).toString("hex")) as `0x${string}`;
+  }
   return pad(address as `0x${string}`, { size: 32 });
 }
 
@@ -484,7 +343,7 @@ export async function fetchRouteFee(sourceDomain: number, destinationDomain: num
   return minimumFee;
 }
 
-export async function fetchAttestation(sourceDomain: number, burnHash: `0x${string}`) {
+export async function fetchAttestation(sourceDomain: number, burnHash: string) {
   const response = await fetch(
     `${getIrisApiBase()}/v2/messages/${sourceDomain}?transactionHash=${burnHash}`,
     { cache: "no-store" },
@@ -496,8 +355,8 @@ export async function fetchAttestation(sourceDomain: number, burnHash: `0x${stri
   const message = payload?.messages?.[0] ?? payload?.data?.messages?.[0] ?? payload?.data?.[0];
   if (message?.status === "complete" && message?.message && message?.attestation) {
     return {
-      message: message.message as `0x${string}`,
-      attestation: message.attestation as `0x${string}`,
+      message: message.message as string,
+      attestation: message.attestation as string,
     };
   }
   return null;
