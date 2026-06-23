@@ -16,7 +16,6 @@ export type EvmBurnParams = {
 };
 
 export type EvmClaimParams = {
-  config: Config;
   account: Address;
   destination: BridgeChain;
   attestation: { message: string; attestation: string };
