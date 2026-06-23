@@ -84,7 +84,7 @@ export async function depositForBurnStarknet(
   const [amountLow, amountHigh] = splitU256(amount);
   const destDomainHex = `0x${destinationDomain.toString(16)}`;
 
-  const call = contract.populateTransaction("deposit_for_burn", [
+  const call = (contract as any).populateTransaction("deposit_for_burn", [
     { low: amountLow, high: amountHigh },
     destDomainHex,
     recipientBytes32,
@@ -113,7 +113,7 @@ export async function receiveMessageStarknet(
   const abi = await getAbi(chain.messageTransmitter);
   const contract = new Contract(abi, chain.messageTransmitter, provider);
 
-  const call = contract.populateTransaction("receive_message", [
+  const call = (contract as any).populateTransaction("receive_message", [
     attestation.message,
     attestation.attestation,
   ]);

@@ -86,10 +86,10 @@ export async function depositForBurnStellar(
     networkPassphrase: Networks.PUBLIC,
   })
     .addOperation(Operation.invokeContractFunction({
-      contractId: chain.tokenMessenger,
+      contract: chain.tokenMessenger,
       function: "deposit_for_burn",
       args: [
-        xdr.ScVal.scvI128(new xdr.Int128Parts(0, BigInt(amount))),
+        xdr.ScVal.scvI128(new xdr.Int128Parts({ hi: new xdr.Int64(0), lo: new xdr.Uint64(amount) })),
         xdr.ScVal.scvU32(destinationDomain),
         xdr.ScVal.scvBytes(Buffer.from(recipientBytes32.replace("0x", ""), "hex")),
         xdr.ScVal.scvSymbol(chain.usdc),
@@ -123,7 +123,7 @@ export async function receiveMessageStellar(
     networkPassphrase: Networks.PUBLIC,
   })
     .addOperation(Operation.invokeContractFunction({
-      contractId: chain.messageTransmitter,
+      contract: chain.messageTransmitter,
       function: "receive_message",
       args: [
         xdr.ScVal.scvBytes(Buffer.from(attestation.message, "hex")),
