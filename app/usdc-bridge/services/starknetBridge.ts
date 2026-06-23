@@ -66,8 +66,8 @@ export async function getStarknetBalance(chain: BridgeChain, address: string): P
 }
 
 function splitU256(value: bigint): [string, string] {
-  const mask = (1n << 128n) - 1n;
-  return [`0x${(value & mask).toString(16)}`, `0x${(value >> 128n).toString(16)}`];
+  const mask = (BigInt(1) << BigInt(128)) - BigInt(1);
+  return [`0x${(value & mask).toString(16)}`, `0x${(value >> BigInt(128)).toString(16)}`];
 }
 
 export async function depositForBurnStarknet(
