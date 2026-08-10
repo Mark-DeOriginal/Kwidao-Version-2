@@ -5,6 +5,7 @@ import {
   rabbyWallet,
   walletConnectWallet,
 } from "@rainbow-me/rainbowkit/wallets";
+import { robinhoodWallet } from "./robinhoodWallet";
 import { createConfig, http } from "wagmi";
 import {
   arbitrum,
@@ -77,7 +78,7 @@ const connectors = connectorsForWallets(
   [
     {
       groupName: "Recommended",
-      wallets: [metaMaskWallet, rabbyWallet, coreWallet, walletConnectWallet],
+      wallets: [metaMaskWallet, rabbyWallet, coreWallet, robinhoodWallet, walletConnectWallet],
     },
   ],
   {
