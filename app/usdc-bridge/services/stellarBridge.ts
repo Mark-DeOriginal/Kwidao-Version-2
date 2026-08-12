@@ -92,7 +92,7 @@ export async function depositForBurnStellar(
         xdr.ScVal.scvI128(new xdr.Int128Parts({ hi: new xdr.Int64(0), lo: new xdr.Uint64(amount) })),
         xdr.ScVal.scvU32(destinationDomain),
         xdr.ScVal.scvBytes(Buffer.from(recipientBytes32.replace("0x", ""), "hex")),
-        xdr.ScVal.scvSymbol(chain.usdc),
+        xdr.ScVal.scvSymbol(STELLAR_USDC_ASSET_CODE),
       ],
     }))
     .setTimeout(30)

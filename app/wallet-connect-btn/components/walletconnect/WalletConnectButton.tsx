@@ -434,6 +434,8 @@ function getChainIconPath(chainName: string) {
     solana: "/chains/solana.svg",
     starknet: "/chains/starknet.svg",
     stellar: "/chains/stellar.svg",
+    op: "/chains/optimism.svg",
+    polygon: "/chains/polygon.svg",
   };
 
   for (const keyword of Object.keys(pathByKeyword)) {

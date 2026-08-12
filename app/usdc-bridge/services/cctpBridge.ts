@@ -145,10 +145,10 @@ export const STELLAR_NETWORK_PASSPHRASE = "Public Global Stellar Network ; Septe
 export const BRIDGE_CHAINS: BridgeChain[] = [
   evmChain(mainnet.id, 0, "Ethereum", "ETH", "#627eea", undefined, true, "https://etherscan.io/tx/", "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
   evmChain(avalanche.id, 1, "Avalanche", "AVAX", "#e84142", undefined, false, "https://snowtrace.io/tx/", "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
-  evmChain(optimism.id, 2, "OP Mainnet", "OP", "#ff0420", undefined, true, "https://optimistic.etherscan.io/tx/", "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
+  evmChain(optimism.id, 2, "OP Mainnet", "OP", "#ff0420", "/chains/optimism.svg", true, "https://optimistic.etherscan.io/tx/", "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
   evmChain(arbitrum.id, 3, "Arbitrum", "ARB", "#28a0f0", undefined, true, "https://arbiscan.io/tx/", "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
   evmChain(base.id, 6, "Base", "BASE", "#0052ff", undefined, true, "https://basescan.org/tx/", "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
-  evmChain(polygon.id, 7, "Polygon", "POLYGON", "#8247e5", undefined, false, "https://polygonscan.com/tx/", "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
+  evmChain(polygon.id, 7, "Polygon", "POLYGON", "#8247e5", "/chains/polygon.svg", false, "https://polygonscan.com/tx/", "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
   evmChain(unichain.id, 10, "Unichain", "UNI", "#fc72ff", "/chains/unichain.svg", true, "https://uniscan.xyz/tx/", "0x078D782b760474a361dDA0AF3839290b0EF57AD6", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
   evmChain(linea.id, 11, "Linea", "LINEA", "#61dfff", "/chains/linea.svg", true, "https://lineascan.build/tx/", "0x176211869cA2b568f2A7D4EE941E073a821EE1ff", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
   evmChain(sonic.id, 13, "Sonic", "S", "#111111", "/chains/sonic.svg", false, "https://sonicscan.org/tx/", "0x29219dd400f2Bf60E5a23d13Be72B486D4038894", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
@@ -364,4 +364,24 @@ export async function fetchAttestation(sourceDomain: number, burnHash: string) {
     };
   }
   return null;
+}
+
+export type AttestationStatus = "complete" | "pending" | "not_found";
+
+export async function fetchAttestationStatus(
+  sourceDomain: number,
+  burnHash: string,
+): Promise<AttestationStatus> {
+  const response = await fetch(
+    `${getIrisApiBase()}/v2/messages/${sourceDomain}?transactionHash=${burnHash}`,
+    { cache: "no-store" },
+  );
+  if (!response.ok) return "not_found";
+  const payload = await response.json();
+  const message = payload?.messages?.[0] ?? payload?.data?.messages?.[0] ?? payload?.data?.[0];
+  if (!message) return "not_found";
+  if (message?.status === "complete" && message?.message && message?.attestation) {
+    return "complete";
+  }
+  return "pending";
 }

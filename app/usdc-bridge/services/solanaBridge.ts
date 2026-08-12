@@ -158,7 +158,6 @@ export async function depositForBurnSolana(
   )[0];
 
   const recipientBytes = Buffer.from(recipientBytes32.replace("0x", ""), "hex");
-  const mintRecipient = new PublicKey(recipientBytes);
   const destinationCaller = Buffer.alloc(32, 0);
 
   const amountBuf = uInt64ToBufferLE(amount);
@@ -172,7 +171,7 @@ export async function depositForBurnSolana(
     discriminator,
     amountBuf,
     domainBuf,
-    mintRecipient.toBuffer(),
+    recipientBytes,
     destinationCaller,
     maxFeeBuf,
     finalityBuf,

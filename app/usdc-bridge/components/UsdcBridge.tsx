@@ -14,6 +14,7 @@ import {
   ERC20_ABI,
   estimateMaxFee,
   fetchAttestation,
+  fetchAttestationStatus,
   fetchRouteFee,
   formatUsdc,
   getBridgeChain,
@@ -127,16 +128,6 @@ function classNames(...parts: Array<string | false | undefined>) {
   return parts.filter(Boolean).join(" ");
 }
 
-function shortHash(hash?: string) {
-  return hash ? `${hash.slice(0, 8)}...${hash.slice(-6)}` : "";
-}
-
-function formatCooldown(seconds: number) {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}m ${secs.toString().padStart(2, "0")}s`;
-}
-
 function chainNameForType(type: ChainType) {
   return BRIDGE_CHAINS.find((chain) => chain.type === type)?.name ?? type;
 }
@@ -206,6 +197,19 @@ function pruneBridgeHistory(rows: BridgeHistoryItem[], now = Date.now()) {
   return rows.filter((row) => Number.isFinite(row.createdAt) && row.createdAt >= cutoff);
 }
 
+async function waitForChainId(
+  accountRef: { current: { chainId?: number } | undefined },
+  chainId: number,
+  timeoutMs = 15_000,
+) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    if (accountRef.current?.chainId === chainId) return true;
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  return accountRef.current?.chainId === chainId;
+}
+
 async function waitForCircleAttestation(sourceDomain: number, burnHash: string) {
   for (let attempt = 0; attempt < 450; attempt += 1) {
     try {
@@ -222,6 +226,10 @@ async function waitForCircleAttestation(sourceDomain: number, burnHash: string) 
 export default function UsdcBridge() {
   const config = useConfig();
   const account = useAccount();
+  const accountRef = useRef(account);
+  useEffect(() => {
+    accountRef.current = account;
+  });
   const { switchChainAsync } = useSwitchChain();
   const {
     wallet: nonEvmWallet,
@@ -229,6 +237,10 @@ export default function UsdcBridge() {
     disconnectWallet,
     hasWalletForChain,
   } = useBridgeWallet();
+  const nonEvmWalletRef = useRef(nonEvmWallet);
+  useEffect(() => {
+    nonEvmWalletRef.current = nonEvmWallet;
+  });
   const { disconnect: evmDisconnect } = useDisconnect();
   const { openConnectModal } = useConnectModal();
   const [hasMounted, setHasMounted] = useState(false);
@@ -248,7 +260,6 @@ export default function UsdcBridge() {
   const [error, setError] = useState("");
   const [tx, setTx] = useState<BridgeTx>({});
   const [history, setHistory] = useState<BridgeHistoryItem[]>([]);
-  const [reclaimCooldowns, setReclaimCooldowns] = useState<Record<string, number>>({});
   const [manualBurnHash, setManualBurnHash] = useState("");
   const [manualSourceChainId, setManualSourceChainId] = useState(sourceChainId);
   const [manualDestinationChainId, setManualDestinationChainId] = useState(destinationChainId);
@@ -258,6 +269,7 @@ export default function UsdcBridge() {
   const [switchError, setSwitchError] = useState("");
   const [connectPrompt, setConnectPrompt] = useState<number | null>(null);
   const [connectPromptError, setConnectPromptError] = useState("");
+  const [attestationPendingModal, setAttestationPendingModal] = useState(false);
 
   const source = useMemo(() => getBridgeChain(sourceChainId), [sourceChainId]);
   const destination = useMemo(() => getBridgeChain(destinationChainId), [destinationChainId]);
@@ -328,38 +340,11 @@ export default function UsdcBridge() {
     amountRaw && amountRaw > maxFee ? amountRaw - maxFee : amountRaw ?? BigInt(0);
   const busy = !["idle", "success", "claimPending", "failed"].includes(phase);
   const displayAmount = amountFocused ? amount : formatInputAmount(amount);
-  const activeTrailRow = useMemo(
-    () => (tx.burnHash ? history.find((row) => row.burnHash === tx.burnHash) : undefined),
-    [history, tx.burnHash],
-  );
-  const trailSource = activeTrailRow?.source ?? tx.source;
-  const trailDestination = activeTrailRow?.destination ?? tx.destination;
-  const trailBurnHash = activeTrailRow?.burnHash ?? tx.burnHash;
-  const trailClaimHash = activeTrailRow?.claimHash ?? tx.claimHash;
 
   useEffect(() => {
     setManualSourceChainId(sourceChainId);
     setManualDestinationChainId(destinationChainId);
   }, [sourceChainId, destinationChainId]);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setReclaimCooldowns((current) => {
-        const next: Record<string, number> = {};
-        let changed = false;
-        for (const [key, value] of Object.entries(current)) {
-          const reduced = Math.max(0, value - 1);
-          if (reduced > 0) {
-            next[key] = reduced;
-          }
-          if (reduced !== value) changed = true;
-        }
-        return changed ? next : current;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     setHasMounted(true);
@@ -458,7 +443,6 @@ export default function UsdcBridge() {
       } else {
         window.localStorage.removeItem(BRIDGE_STORAGE_KEY);
       }
-      setReclaimCooldowns({});
       setManualBurnHash("");
     } catch {
       window.localStorage.removeItem(BRIDGE_STORAGE_KEY);
@@ -742,6 +726,19 @@ export default function UsdcBridge() {
     setPhase("attesting");
     setMessage("Waiting for Circle Iris to attest the burn.");
     updateHistory(burnHash, { status: "attesting", note: "Waiting for Circle attestation" });
+
+    try {
+      const status = await fetchAttestationStatus(txSource.domain, burnHash);
+      if (status === "pending") {
+        setPhase("claimPending");
+        updateHistory(burnHash, { status: "claimPending", note: "Attestation still pending" });
+        setAttestationPendingModal(true);
+        return;
+      }
+    } catch {
+      // Fall through to the polling loop below.
+    }
+
     const attestation = await waitForCircleAttestation(txSource.domain, burnHash);
     if (!attestation) {
       setPhase("claimPending");
@@ -751,6 +748,7 @@ export default function UsdcBridge() {
           : "Standard transfer attestation is still pending. Retry claim shortly.",
       );
       updateHistory(burnHash, { status: "claimPending", note: "Attestation still pending" });
+      setAttestationPendingModal(true);
       return;
     }
 
@@ -762,23 +760,45 @@ export default function UsdcBridge() {
       let claimHashValue: string;
       switch (txDestination.type) {
         case "evm": {
-          if (account.chainId !== txDestination.chainId) {
-            setMessage(`Switching wallet to ${txDestination.name}.`);
-            await switchChainAsync({ chainId: txDestination.chainId });
+          if (!accountRef.current || accountRef.current.status !== "connected" || !accountRef.current.address) {
+            setMessage(`Connect your EVM wallet to mint on ${txDestination.name}.`);
+            openConnectModal();
+            const started = Date.now();
+            while (Date.now() - started < 120_000) {
+              const latest = accountRef.current;
+              if (latest.status === "connected" && latest.address) break;
+              await new Promise((resolve) => setTimeout(resolve, 500));
+            }
+            if (!accountRef.current?.address) {
+              throw new Error("EVM wallet not connected. Connect your wallet and retry the claim.");
+            }
           }
-          if (!account.address) throw new Error("Wallet not connected.");
-          claimHashValue = await receiveMessageEvm(config, {
-            account: account.address,
-            destination: txDestination,
-            attestation,
-          });
+          if (accountRef.current.chainId !== txDestination.chainId) {
+            setMessage(`Switching wallet to ${txDestination.name}.`);
+            await Promise.race([
+              switchChainAsync({ chainId: txDestination.chainId }),
+              new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error(`Wallet switch to ${txDestination.name} timed out. Check your wallet and retry.`)), 30_000),
+              ),
+            ]);
+          }
+          claimHashValue = await Promise.race([
+            receiveMessageEvm(config, {
+              account: accountRef.current.address as `0x${string}`,
+              destination: txDestination,
+              attestation,
+            }),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error(`Minting on ${txDestination.name} timed out. Check your wallet and retry.`)), 120_000),
+            ),
+          ]);
           break;
         }
         case "solana": {
           if (!hasWalletForChain("solana")) {
             throw new Error("Solana wallet not found. Install Phantom or Backpack to mint.");
           }
-          if (!nonEvmWallet || nonEvmWallet.chainType !== "solana") {
+          if (!nonEvmWalletRef.current.isConnected || nonEvmWalletRef.current.chainType !== "solana") {
             setMessage("Connect your Solana wallet to mint.");
             await connectWallet("solana");
           }
@@ -789,7 +809,7 @@ export default function UsdcBridge() {
           if (!hasWalletForChain("starknet")) {
             throw new Error("Starknet wallet not found. Install Argent X or Braavos to mint.");
           }
-          if (!nonEvmWallet || nonEvmWallet.chainType !== "starknet") {
+          if (!nonEvmWalletRef.current.isConnected || nonEvmWalletRef.current.chainType !== "starknet") {
             setMessage("Connect your Starknet wallet to mint.");
             await connectWallet("starknet");
           }
@@ -799,7 +819,7 @@ export default function UsdcBridge() {
           if (!hasWalletForChain("stellar")) {
             throw new Error("Stellar wallet not found. Install Freighter to mint.");
           }
-          if (!nonEvmWallet || nonEvmWallet.chainType !== "stellar") {
+          if (!nonEvmWalletRef.current.isConnected || nonEvmWalletRef.current.chainType !== "stellar") {
             setMessage("Connect your Stellar wallet to mint.");
             await connectWallet("stellar");
           }
@@ -872,24 +892,28 @@ export default function UsdcBridge() {
 
       switch (source.type) {
         case "evm": {
-          if (!account.address) throw new Error("EVM wallet not connected.");
-          if (account.chainId !== source.chainId) {
+          if (!accountRef.current?.address) throw new Error("EVM wallet not connected.");
+          if (accountRef.current.chainId !== source.chainId) {
             setMessage(`Switching wallet to ${source.name}.`);
             await switchChainAsync({ chainId: source.chainId });
+            const switched = await waitForChainId(accountRef, source.chainId);
+            if (!switched) {
+              throw new Error(`Wallet is still on the wrong network. Switch to ${source.name} in your wallet and retry.`);
+            }
           }
 
-          const allowance = await getEvmAllowance(config, source, account.address);
+          const allowance = await getEvmAllowance(config, source, accountRef.current.address as `0x${string}`);
           if (allowance < amountRaw) {
             setPhase("approving");
             setMessage("Waiting for you to approve the transaction");
-            await approveEvmUsdc(config, source, account.address, amountRaw);
+            await approveEvmUsdc(config, source, accountRef.current.address as `0x${string}`, amountRaw);
           }
 
           setPhase("burning");
           setMessage(`Burning USDC on ${source.name}.`);
           burnHashValue = await depositForBurnEvm(config, {
             config,
-            account: account.address,
+            account: accountRef.current.address as `0x${string}`,
             source,
             destination,
             amount: amountRaw,
@@ -988,9 +1012,6 @@ export default function UsdcBridge() {
   };
 
   const startRowReclaim = async (row: BridgeHistoryItem) => {
-    const cooldown = reclaimCooldowns[row.id] ?? 0;
-    if (cooldown > 0) return;
-    setReclaimCooldowns((current) => ({ ...current, [row.id]: 180 }));
     try {
       setError("");
       setMessage("Reclaim requested. Checking Circle attestation.");
@@ -1260,32 +1281,6 @@ export default function UsdcBridge() {
             })}
           </div>
 
-          <div className={styles.txLinks}>
-            <p>Transaction trail</p>
-            {trailBurnHash && trailSource ? (
-              <a
-                href={`${trailSource.explorer}${trailBurnHash}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Burn: {shortHash(trailBurnHash)}
-              </a>
-            ) : (
-              <span>Burn transaction pending</span>
-            )}
-            {trailClaimHash && trailDestination ? (
-              <a
-                href={`${trailDestination.explorer}${trailClaimHash}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Claim: {shortHash(trailClaimHash)}
-              </a>
-            ) : (
-              <span>Claim transaction pending</span>
-            )}
-          </div>
-
           <div className={styles.historyPanel}>
             <p className={styles.historyTitle}>Bridge history</p>
             {history.length === 0 ? (
@@ -1306,7 +1301,6 @@ export default function UsdcBridge() {
                   </thead>
                   <tbody>
                     {history.map((row) => {
-                      const cooldown = reclaimCooldowns[row.id] ?? 0;
                       return (
                         <tr key={row.id}>
                           <td>
@@ -1358,16 +1352,15 @@ export default function UsdcBridge() {
                             </span>
                           </td>
                           <td>
-                            <button
-                              type="button"
-                              className={styles.reclaimInline}
-                              disabled={cooldown > 0}
-                              onClick={() => void startRowReclaim(row)}
-                            >
-                              {cooldown > 0
-                                ? `Reclaiming ${formatCooldown(cooldown)}`
-                                : "Reclaim"}
-                            </button>
+                            {row.status !== "success" && (
+                              <button
+                                type="button"
+                                className={styles.reclaimInline}
+                                onClick={() => void startRowReclaim(row)}
+                              >
+                                Reclaim
+                              </button>
+                            )}
                           </td>
                         </tr>
                       );
@@ -1539,6 +1532,62 @@ export default function UsdcBridge() {
                           Not now
                         </button>
                       )}
+                    </div>
+                  </motion.div>
+                </motion.div>
+              ) : null}
+
+              {attestationPendingModal ? (
+                <motion.div
+                  className={styles.modalOverlay}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onMouseDown={(event) => {
+                    if (event.target === event.currentTarget) setAttestationPendingModal(false);
+                  }}
+                >
+                  <motion.div
+                    className={styles.modalCard}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="attestation-pending-title"
+                    initial={{ opacity: 0, y: 16, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 12, scale: 0.97 }}
+                    transition={{ duration: 0.18, ease: "easeOut" }}
+                  >
+                    <div className={styles.modalHeader}>
+                      <h3 id="attestation-pending-title">Transaction still confirming</h3>
+                      <button
+                        type="button"
+                        className={styles.modalClose}
+                        onClick={() => setAttestationPendingModal(false)}
+                        aria-label="Close"
+                      >
+                        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                          <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    <div className={styles.modalBody}>
+                      <p>
+                        Your burn transaction is still being confirmed on the blockchain. Circle
+                        needs a few more minutes to attest it before you can mint USDC on the
+                        destination chain.
+                      </p>
+                      <p>Please wait a moment and try again.</p>
+                    </div>
+
+                    <div className={styles.modalActions}>
+                      <button
+                        type="button"
+                        className={styles.primaryButton}
+                        onClick={() => setAttestationPendingModal(false)}
+                      >
+                        Got it
+                      </button>
                     </div>
                   </motion.div>
                 </motion.div>
