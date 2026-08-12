@@ -994,3 +994,94 @@
     gap: 0.2rem;
   }
 }
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(10, 6, 18, 0.55);
+  backdrop-filter: blur(4px);
+  overflow-y: auto;
+}
+
+.modalCard {
+  width: min(430px, 100%);
+  border: 1px solid #190b232b;
+  border-radius: 1.2rem;
+  background: color-mix(in srgb, var(--wc-surface-elevated) 96%, white);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  padding: 1.1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.modalHeader h3 {
+  margin: 0;
+  color: var(--theme-text-strong);
+  font-size: 1.05rem;
+  line-height: 1.25;
+}
+
+.modalClose {
+  margin-left: auto;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--wc-brand-primary) 22%, var(--theme-border-soft));
+  background: color-mix(in srgb, var(--wc-brand-primary) 10%, white);
+  color: var(--theme-text-soft);
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.modalClose:hover {
+  background: color-mix(in srgb, var(--wc-brand-primary) 20%, white);
+}
+
+.modalClose svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.modalBody {
+  display: grid;
+  gap: 0.6rem;
+  color: var(--theme-text-soft);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.modalBody p {
+  margin: 0;
+}
+
+.modalActions {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.modalActions .primaryButton,
+.modalActions .secondaryButton {
+  width: 100%;
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  text-align: center;
+  padding: 0 0.9rem;
+  box-sizing: border-box;
+}

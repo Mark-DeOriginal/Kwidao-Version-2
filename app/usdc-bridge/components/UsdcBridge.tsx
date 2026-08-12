@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { isAddress } from "viem";
 import { readContract, waitForTransactionReceipt, writeContract } from "wagmi/actions";
-import { useAccount, useConfig, useSwitchChain } from "wagmi";
+import { useAccount, useConfig, useDisconnect, useSwitchChain } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 import {
   addressToBytes32,
   BRIDGE_CHAINS,
@@ -40,6 +42,7 @@ import {
   getSolanaBalance,
   depositForBurnSolana,
   receiveMessageSolana,
+  resolveSolanaRecipientTokenAccount,
   hasSolanaWallet,
 } from "../services/solanaBridge";
 import {
@@ -100,6 +103,18 @@ const BRIDGE_STORAGE_KEY = "kwidao-usdc-bridge-state-v1";
 const HISTORY_RETENTION_MS = 3 * 24 * 60 * 60 * 1000;
 const HIDDEN_EVM_SOON_CHAIN_NAMES = new Set(["Codex", "Arc", "EDGE", "Pharos"]);
 
+const WALLET_INSTALL_URL: Record<Exclude<ChainType, "evm">, string> = {
+  solana: "https://phantom.app/",
+  starknet: "https://www.argent.xyz/",
+  stellar: "https://freighter.app/",
+};
+
+const WALLET_HINT: Record<Exclude<ChainType, "evm">, string> = {
+  solana: "Phantom or Backpack",
+  starknet: "Argent or Braavos",
+  stellar: "Freighter",
+};
+
 const STEPS: Array<{ key: BridgePhase; label: string }> = [
   { key: "checking", label: "Review" },
   { key: "approving", label: "Approve" },
@@ -120,6 +135,10 @@ function formatCooldown(seconds: number) {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${mins}m ${secs.toString().padStart(2, "0")}s`;
+}
+
+function chainNameForType(type: ChainType) {
+  return BRIDGE_CHAINS.find((chain) => chain.type === type)?.name ?? type;
 }
 
 function statusChipClass(status: TxStatus) {
@@ -159,15 +178,19 @@ function simplifyBridgeError(error: unknown) {
     return "Wrong network selected in wallet. Please switch to the required chain and try again.";
   }
 
-  if (message.includes("insufficient funds")) {
+  if (message.includes("insufficient funds") || message.includes("insufficient lamports")) {
     return "Insufficient gas balance for this transaction.";
+  }
+
+  if (message.includes("simulation failed") || message.includes("sendrawtransaction")) {
+    return raw;
   }
 
   if (message.includes("nonce")) {
     return "Transaction nonce issue. Please retry in a few seconds.";
   }
 
-  return "Transaction failed. Please try again.";
+  return raw;
 }
 
 function formatInputAmount(value: string) {
@@ -185,8 +208,12 @@ function pruneBridgeHistory(rows: BridgeHistoryItem[], now = Date.now()) {
 
 async function waitForCircleAttestation(sourceDomain: number, burnHash: string) {
   for (let attempt = 0; attempt < 450; attempt += 1) {
-    const attestation = await fetchAttestation(sourceDomain, burnHash);
-    if (attestation) return attestation;
+    try {
+      const attestation = await fetchAttestation(sourceDomain, burnHash);
+      if (attestation) return attestation;
+    } catch {
+      // Transient Iris errors (rate limits, timeouts) — keep polling.
+    }
     await new Promise((resolve) => setTimeout(resolve, 2_000));
   }
   return null;
@@ -196,7 +223,14 @@ export default function UsdcBridge() {
   const config = useConfig();
   const account = useAccount();
   const { switchChainAsync } = useSwitchChain();
-  const { wallet: nonEvmWallet, connectWallet, hasWalletForChain } = useBridgeWallet();
+  const {
+    wallet: nonEvmWallet,
+    connectWallet,
+    disconnectWallet,
+    hasWalletForChain,
+  } = useBridgeWallet();
+  const { disconnect: evmDisconnect } = useDisconnect();
+  const { openConnectModal } = useConnectModal();
   const [hasMounted, setHasMounted] = useState(false);
   const [sourceChainId, setSourceChainId] = useState(8453);
   const [destinationChainId, setDestinationChainId] = useState(42161);
@@ -204,6 +238,7 @@ export default function UsdcBridge() {
   const [amount, setAmount] = useState("");
   const [amountFocused, setAmountFocused] = useState(false);
   const [recipient, setRecipient] = useState("");
+  const [solanaRecipientTokenAccount, setSolanaRecipientTokenAccount] = useState<string | null>(null);
   const [balance, setBalance] = useState<bigint>(BigInt(0));
   const [feeBps, setFeeBps] = useState<number | null>(null);
   const [maxFee, setMaxFee] = useState<bigint>(BigInt(0));
@@ -220,6 +255,9 @@ export default function UsdcBridge() {
   const [manualError, setManualError] = useState("");
   const [manualMessage, setManualMessage] = useState("");
   const [hydrated, setHydrated] = useState(false);
+  const [switchError, setSwitchError] = useState("");
+  const [connectPrompt, setConnectPrompt] = useState<number | null>(null);
+  const [connectPromptError, setConnectPromptError] = useState("");
 
   const source = useMemo(() => getBridgeChain(sourceChainId), [sourceChainId]);
   const destination = useMemo(() => getBridgeChain(destinationChainId), [destinationChainId]);
@@ -246,11 +284,37 @@ export default function UsdcBridge() {
     return null;
   }, [hasMounted, account, nonEvmWallet]);
 
+  const evmWalletConnected =
+    hasMounted && account.status === "connected" && !!account.address;
+  const promptChain = useMemo(
+    () => (connectPrompt ? getBridgeChain(connectPrompt) : null),
+    [connectPrompt],
+  );
+  const promptWalletDetected = promptChain
+    ? promptChain.type === "evm"
+      ? true
+      : hasWalletForChain(promptChain.type)
+    : false;
+  const mismatchedWalletLabel = useMemo(() => {
+    if (!promptChain) return null;
+    if (promptChain.type === "evm") {
+      if (nonEvmWallet.isConnected) {
+        return `${chainNameForType(nonEvmWallet.chainType)} wallet`;
+      }
+      return null;
+    }
+    if (evmWalletConnected) return "EVM wallet";
+    if (nonEvmWallet.isConnected && nonEvmWallet.chainType !== promptChain.type) {
+      return `${chainNameForType(nonEvmWallet.chainType)} wallet`;
+    }
+    return null;
+  }, [promptChain, evmWalletConnected, nonEvmWallet]);
+
   const sourceChainOptions = useMemo(() => {
     return BRIDGE_CHAIN_OPTIONS.filter(
-      (option) => !HIDDEN_EVM_SOON_CHAIN_NAMES.has(option.name) && (!connectedChainType || option.type === connectedChainType),
+      (option) => !HIDDEN_EVM_SOON_CHAIN_NAMES.has(option.name),
     );
-  }, [connectedChainType]);
+  }, []);
 
   const amountRaw = useMemo(() => {
     try {
@@ -316,7 +380,51 @@ export default function UsdcBridge() {
     if (targetChainId !== undefined) {
       setSourceChainId(targetChainId);
     }
-  }, [connectedChainType, sourceType]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connectedChainType]);
+
+  useEffect(() => {
+    if (sourceType === "evm") {
+      if (hasMounted && account.status === "connected" && account.chainId === sourceChainId) {
+        setSwitchError("");
+      }
+      return;
+    }
+    if (nonEvmWallet.isConnected && nonEvmWallet.chainType === sourceType) {
+      setSwitchError("");
+    }
+  }, [hasMounted, sourceType, account.status, account.chainId, sourceChainId, nonEvmWallet]);
+
+  useEffect(() => {
+    if (!connectPrompt || !promptChain) return;
+    if (promptChain.type === "evm") {
+      if (evmWalletConnected) {
+        setConnectPrompt(null);
+        setConnectPromptError("");
+        if (account.chainId && account.chainId !== promptChain.chainId) {
+          void switchChainAsync({ chainId: promptChain.chainId }).catch(() => {
+            setSwitchError(
+              `Your wallet doesn't support ${promptChain.name}. Select ${promptChain.name} in your wallet's network settings to bridge from here.`,
+            );
+          });
+        }
+      }
+      return;
+    }
+    if (nonEvmWallet.isConnected && nonEvmWallet.chainType === promptChain.type) {
+      setConnectPrompt(null);
+      setConnectPromptError("");
+    }
+  }, [connectPrompt, promptChain, evmWalletConnected, account.chainId, nonEvmWallet, switchChainAsync]);
+
+  useEffect(() => {
+    if (!connectPrompt) return;
+    const original = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, [connectPrompt]);
 
   useEffect(() => {
     if (!hasMounted || hydrated) return;
@@ -367,6 +475,24 @@ export default function UsdcBridge() {
     }, 90_000);
     return () => clearTimeout(timer);
   }, [phase]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (destination.type !== "solana" || !isValidRecipient(destination, recipient)) {
+      setSolanaRecipientTokenAccount(null);
+      return;
+    }
+    resolveSolanaRecipientTokenAccount(recipient, destination.usdc)
+      .then((tokenAccount) => {
+        if (!cancelled) setSolanaRecipientTokenAccount(tokenAccount);
+      })
+      .catch(() => {
+        if (!cancelled) setSolanaRecipientTokenAccount(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [destination, recipient]);
 
   useEffect(() => {
     if (!hasMounted || !hydrated) return;
@@ -519,15 +645,77 @@ export default function UsdcBridge() {
     recipientAddress,
   ]);
 
+  const switchSourceChain = async (nextChainId: number) => {
+    if (nextChainId === source.chainId) return;
+    const nextChain = getBridgeChain(nextChainId);
+    setSourceChainId(nextChainId);
+    setSwitchError("");
+    setConnectPrompt(null);
+    setConnectPromptError("");
+
+    if (nextChain.type === "evm") {
+      if (hasMounted && account.status === "connected" && !!account.address) {
+        setMessage(`Switching wallet to ${nextChain.name}.`);
+        try {
+          await switchChainAsync({ chainId: nextChainId });
+          setMessage("");
+        } catch {
+          setMessage("");
+          setSwitchError(
+            `Your wallet doesn't support ${nextChain.name}. Select ${nextChain.name} in your wallet's network settings to bridge from here.`,
+          );
+        }
+        return;
+      }
+      setConnectPrompt(nextChainId);
+      return;
+    }
+
+    if (nonEvmWallet.isConnected && nonEvmWallet.chainType === nextChain.type) {
+      return;
+    }
+
+    setConnectPrompt(nextChain.chainId);
+  };
+
+  const confirmConnectPrompt = async () => {
+    if (!promptChain) return;
+    setConnectPromptError("");
+    if (promptChain.type === "evm") {
+      openConnectModal?.();
+      return;
+    }
+    try {
+      await connectWallet(promptChain.type);
+      setConnectPrompt(null);
+    } catch {
+      setConnectPromptError(
+        `Could not connect your ${promptChain.name} wallet. Please try again.`,
+      );
+    }
+  };
+
+  const dismissConnectPrompt = () => {
+    setConnectPrompt(null);
+    setConnectPromptError("");
+  };
+
+  const disconnectForPrompt = () => {
+    if (account.status === "connected") evmDisconnect();
+    void disconnectWallet();
+    setConnectPromptError("");
+  };
+
   const switchRoute = () => {
-    setSourceChainId(destination.chainId);
     setDestinationChainId(source.chainId);
+    void switchSourceChain(destination.chainId);
   };
 
   const resetBridgeUi = useCallback(() => {
     setPhase("idle");
     setMessage("");
     setError("");
+    setSwitchError("");
     setTx({});
     setAmount("");
   }, []);
@@ -586,9 +774,17 @@ export default function UsdcBridge() {
           });
           break;
         }
-        case "solana":
+        case "solana": {
+          if (!hasWalletForChain("solana")) {
+            throw new Error("Solana wallet not found. Install Phantom or Backpack to mint.");
+          }
+          if (!nonEvmWallet || nonEvmWallet.chainType !== "solana") {
+            setMessage("Connect your Solana wallet to mint.");
+            await connectWallet("solana");
+          }
           claimHashValue = await receiveMessageSolana(txDestination, attestation);
           break;
+        }
         case "starknet":
           claimHashValue = await receiveMessageStarknet(txDestination, attestation);
           break;
@@ -604,6 +800,7 @@ export default function UsdcBridge() {
       setMessage("USDC has been minted on the destination chain.");
       updateHistory(burnHash, { status: "success", note: "USDC minted successfully" });
     } catch (claimError) {
+      console.error("Claim failed:", claimError);
       setPhase("failed");
       setMessage("");
       setError(simplifyBridgeError(claimError));
@@ -614,7 +811,20 @@ export default function UsdcBridge() {
   const startBridge = async () => {
     setError("");
     setMessage("");
+    setSwitchError("");
     let submittedBurnHash: string | undefined;
+
+    if (sourceType === "evm") {
+      if (!evmWalletConnected) {
+        setConnectPrompt(source.chainId);
+        setConnectPromptError("");
+        return;
+      }
+    } else if (!nonEvmWallet.isConnected || nonEvmWallet.chainType !== sourceType) {
+      setConnectPrompt(source.chainId);
+      setConnectPromptError("");
+      return;
+    }
 
     if (validationError) {
       setPhase("failed");
@@ -635,6 +845,11 @@ export default function UsdcBridge() {
       setTx({ source, destination, claimHash: undefined });
 
       let burnHashValue: string;
+
+      const cctpRecipient =
+        destination.type === "solana"
+          ? await resolveSolanaRecipientTokenAccount(recipientAddress, destination.usdc)
+          : recipientAddress;
 
       switch (source.type) {
         case "evm": {
@@ -664,28 +879,35 @@ export default function UsdcBridge() {
             source,
             destination,
             amount: amountRaw,
-            recipient: recipientAddress,
+            recipient: cctpRecipient,
             mode,
             maxFee: routeMaxFee,
           });
           break;
         }
         case "solana": {
+          const routeFeeBps = feeBps ?? (await fetchRouteFee(source.domain, destination.domain, mode));
+          const routeMaxFee = estimateMaxFee(amountRaw, routeFeeBps);
+          setFeeBps(routeFeeBps);
+          setMaxFee(routeMaxFee);
+
           setPhase("burning");
           setMessage(`Burning USDC on ${source.name}.`);
-          const solRecipientBytes = await addressToBytes32(recipientAddress, destination.type);
+          const solRecipientBytes = await addressToBytes32(cctpRecipient, destination.type);
           burnHashValue = await depositForBurnSolana(
             source,
             destination.domain,
             amountRaw,
             solRecipientBytes,
+            routeMaxFee,
+            getFinalityThreshold(mode),
           );
           break;
         }
         case "starknet": {
           setPhase("burning");
           setMessage(`Burning USDC on ${source.name}.`);
-          const strkRecipientBytes = await addressToBytes32(recipientAddress, destination.type);
+          const strkRecipientBytes = await addressToBytes32(cctpRecipient, destination.type);
           burnHashValue = await depositForBurnStarknet(
             source,
             destination.domain,
@@ -697,7 +919,7 @@ export default function UsdcBridge() {
         case "stellar": {
           setPhase("burning");
           setMessage(`Burning USDC on ${source.name}.`);
-          const stelRecipientBytes = await addressToBytes32(recipientAddress, destination.type);
+          const stelRecipientBytes = await addressToBytes32(cctpRecipient, destination.type);
           burnHashValue = await depositForBurnStellar(
             source,
             destination.domain,
@@ -835,7 +1057,7 @@ export default function UsdcBridge() {
             <ChainSelect
               label="From"
               chainId={source.chainId}
-              onChange={setSourceChainId}
+              onChange={(chainId) => void switchSourceChain(chainId)}
               balance={formatUsdc(balance)}
               amountValue={displayAmount}
               amountPlaceholder="0.00"
@@ -917,6 +1139,12 @@ export default function UsdcBridge() {
             />
           </div>
 
+          {destination.type === "solana" && solanaRecipientTokenAccount && (
+            <div className={styles.statusPanel}>
+              USDC will be minted to your token account: {solanaRecipientTokenAccount}
+            </div>
+          )}
+
           <div className={styles.quoteBox}>
             <QuoteRow
               label="Fee"
@@ -938,22 +1166,23 @@ export default function UsdcBridge() {
 
           {(error ||
             validationError ||
+            switchError ||
             phase === "success" ||
             phase === "claimPending") && (
             <div
-              key={`${phase}-${error || validationError || message}`}
+              key={`${phase}-${error || validationError || switchError || message}`}
               className={classNames(
                 styles.statusPanel,
                 phase === "success" && styles.statusSuccess,
                 phase === "claimPending" && styles.statusWarning,
-                (error || validationError) &&
+                (error || validationError || switchError) &&
                   phase !== "success" &&
                   styles.statusError,
               )}
             >
               {phase === "success"
                 ? message
-                : error || validationError || message}
+                : error || switchError || validationError || message}
             </div>
           )}
 
@@ -1185,6 +1414,129 @@ export default function UsdcBridge() {
           </div>
         </aside>
       </div>
+
+      {typeof document !== "undefined"
+        ? createPortal(
+            <AnimatePresence>
+              {connectPrompt && promptChain ? (
+                <motion.div
+                  className={styles.modalOverlay}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onMouseDown={(event) => {
+                    if (event.target === event.currentTarget) dismissConnectPrompt();
+                  }}
+                >
+                  <motion.div
+                    className={styles.modalCard}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="connect-prompt-title"
+                    initial={{ opacity: 0, y: 16, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 12, scale: 0.97 }}
+                    transition={{ duration: 0.18, ease: "easeOut" }}
+                  >
+                    <div className={styles.modalHeader}>
+                      <ChainIcon chain={promptChain} />
+                      <h3 id="connect-prompt-title">
+                        {promptChain.type === "evm"
+                          ? "Connect an EVM wallet"
+                          : `Connect a ${promptChain.name} wallet`}
+                      </h3>
+                      <button
+                        type="button"
+                        className={styles.modalClose}
+                        onClick={dismissConnectPrompt}
+                        aria-label="Close"
+                      >
+                        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                          <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    <div className={styles.modalBody}>
+                      {mismatchedWalletLabel ? (
+                        <p>
+                          Your connected {mismatchedWalletLabel} doesn't support{" "}
+                          {promptChain.name}.
+                        </p>
+                      ) : null}
+                      <p>
+                        {promptChain.type === "evm"
+                          ? `Connect an EVM wallet to bridge USDC from ${promptChain.name}.`
+                          : promptWalletDetected
+                            ? `Connect your ${promptChain.name} wallet to bridge USDC from ${promptChain.name}.`
+                            : `No ${promptChain.name} wallet detected. Install ${WALLET_HINT[promptChain.type as Exclude<ChainType, "evm">]} to bridge USDC from ${promptChain.name}.`}
+                      </p>
+                    </div>
+
+                    {connectPromptError ? (
+                      <div className={classNames(styles.statusPanel, styles.statusError)}>
+                        {connectPromptError}
+                      </div>
+                    ) : null}
+
+                    <div className={styles.modalActions}>
+                      {promptChain.type === "evm" ? (
+                        <button
+                          type="button"
+                          className={styles.primaryButton}
+                          onClick={() => void confirmConnectPrompt()}
+                        >
+                          Connect EVM wallet
+                        </button>
+                      ) : promptWalletDetected ? (
+                        <button
+                          type="button"
+                          className={styles.primaryButton}
+                          disabled={nonEvmWallet.connecting}
+                          onClick={() => void confirmConnectPrompt()}
+                        >
+                          {nonEvmWallet.connecting
+                            ? `Connecting ${promptChain.name} wallet...`
+                            : `Connect ${promptChain.name} wallet`}
+                        </button>
+                      ) : (
+                        <a
+                          href={WALLET_INSTALL_URL[promptChain.type as Exclude<ChainType, "evm">]}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={styles.primaryButton}
+                          onClick={dismissConnectPrompt}
+                        >
+                          Install {WALLET_HINT[promptChain.type as Exclude<ChainType, "evm">]}
+                        </a>
+                      )}
+
+                      {mismatchedWalletLabel ? (
+                        <button
+                          type="button"
+                          className={styles.secondaryButton}
+                          onClick={disconnectForPrompt}
+                        >
+                          Disconnect current wallet
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className={styles.secondaryButton}
+                          onClick={dismissConnectPrompt}
+                        >
+                          Not now
+                        </button>
+                      )}
+                    </div>
+                  </motion.div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>,
+            document.body,
+          )
+        : null}
+
       <footer className="mt-20">
         
         <p className="text-center opacity-50 text-[14px]">© {new Date().getFullYear()} Kwizerana DAO</p>

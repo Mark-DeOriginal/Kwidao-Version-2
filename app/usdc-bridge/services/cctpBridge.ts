@@ -80,8 +80,9 @@ function solanaChain(
   explorer: string,
   usdcMint: string,
   programId: string,
+  messageTransmitterProgramId: string,
 ): BridgeChain {
-  return { chainId, domain, name, shortName, accent, icon, supportsFastTransfer: fast, explorer, type: "solana", usdc: usdcMint, tokenMessenger: programId, messageTransmitter: programId };
+  return { chainId, domain, name, shortName, accent, icon, supportsFastTransfer: fast, explorer, type: "solana", usdc: usdcMint, tokenMessenger: programId, messageTransmitter: messageTransmitterProgramId };
 }
 
 function starknetChain(
@@ -123,6 +124,8 @@ export const ZERO_BYTES_32 =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 export const SOLANA_CCTP_PROGRAM_ID = "CCTPV2vPZJS2u2BBsUoscuikbYjnpFmbFsvVuJdgUMQe";
+export const SOLANA_MESSAGE_TRANSMITTER_PROGRAM_ID =
+  "CCTPV2Sm4AdWt5296sk4P66VBZ7bEhcARwFaaS9YPbeC";
 export const SOLANA_USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 export const SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com";
 
@@ -157,7 +160,7 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
   evmChain(plumeMainnet.id, 22, "Plume", "PLUME", "#ff4f9a", "/chains/plume.svg", true, "https://explorer.plume.org/tx/", "0x222365EF19F7947e5484218551B56bb3965Aa7aF", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
   evmChain(INJECTIVE_EVM_CHAIN_ID, 29, "Injective", "INJ", "#00D9FF", undefined, false, "https://blockscout.injective.network/tx/", "0xa00C59fF5a080D2b954d0c75e46E22a0c371235a", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
   evmChain(morph.id, 30, "Morph", "MORPH", "#00ff7f", "/chains/morph.svg", true, "https://explorer.morph.network/tx/", "0xCfb1186F4e93D60E60a8bDd997427D1F33bc372B", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
-  solanaChain(5, 5, "Solana", "SOL", "#14f195", "/chains/solana.svg", false, "https://solscan.io/tx/", SOLANA_USDC_MINT, SOLANA_CCTP_PROGRAM_ID),
+  solanaChain(5, 5, "Solana", "SOL", "#14f195", "/chains/solana.svg", false, "https://solscan.io/tx/", SOLANA_USDC_MINT, SOLANA_CCTP_PROGRAM_ID, SOLANA_MESSAGE_TRANSMITTER_PROGRAM_ID),
   starknetChain(25, 25, "Starknet", "STRK", "#fc5b3f", "/chains/starknet.svg", false, "https://starkscan.co/tx/", STARKNET_USDC, STARKNET_TOKEN_MESSENGER, STARKNET_MESSAGE_TRANSMITTER),
   stellarChain(27, 27, "Stellar", "XLM", "#7d8cff", "/chains/stellar.svg", false, "https://stellar.expert/explorer/public/tx/", STELLAR_USDC_CONTRACT, STELLAR_TOKEN_MESSENGER, STELLAR_MESSAGE_TRANSMITTER),
 ];

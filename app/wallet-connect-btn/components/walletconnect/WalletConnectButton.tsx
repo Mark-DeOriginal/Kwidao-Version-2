@@ -417,29 +417,30 @@ function WalletTypeIcon({ type }: { type: string }) {
 }
 
 function getChainIconPath(chainName: string) {
-  const name = chainName.toUpperCase();
+  const name = chainName.toLowerCase();
 
-  const pathMap: Record<string, string> = {
-    UNICHAIN: "/chains/unichain.svg",
-    LINEA: "/chains/linea.svg",
-    SONIC: "/chains/sonic.svg",
-    "WORLD CHAIN": "/chains/world.svg",
-    WORLDCHAIN: "/chains/world.svg",
-    MONAD: "/chains/monad.svg",
-    SEI: "/chains/sei.svg",
-    XDC: "/chains/xdc.svg",
-    HYPEREVM: "/chains/hyperevm.svg",
-    "HYPER EVM": "/chains/hyperevm.svg",
-    INK: "/chains/ink.svg",
-    PLUME: "/chains/plume.svg",
-    "PLUME MAINNET": "/chains/plume.svg",
-    MORPH: "/chains/morph.svg",
-    SOLANA: "/chains/solana.svg",
-    STARKNET: "/chains/starknet.svg",
-    STELLAR: "/chains/stellar.svg",
+  const pathByKeyword: Record<string, string> = {
+    unichain: "/chains/unichain.svg",
+    linea: "/chains/linea.svg",
+    sonic: "/chains/sonic.svg",
+    world: "/chains/world.svg",
+    monad: "/chains/monad.svg",
+    sei: "/chains/sei.svg",
+    xdc: "/chains/xdc.svg",
+    hyperevm: "/chains/hyperevm.svg",
+    ink: "/chains/ink.svg",
+    plume: "/chains/plume.svg",
+    morph: "/chains/morph.svg",
+    solana: "/chains/solana.svg",
+    starknet: "/chains/starknet.svg",
+    stellar: "/chains/stellar.svg",
   };
 
-  return pathMap[name] || "";
+  for (const keyword of Object.keys(pathByKeyword)) {
+    if (name.includes(keyword)) return pathByKeyword[keyword];
+  }
+
+  return "";
 }
 
 function getChainIcon(chainName: string) {
