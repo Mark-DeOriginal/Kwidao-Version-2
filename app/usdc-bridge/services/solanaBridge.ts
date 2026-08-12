@@ -102,6 +102,12 @@ export async function resolveSolanaRecipientTokenAccount(
   });
 }
 
+function uInt64ToBufferLE(value: bigint): Buffer {
+  const buf = Buffer.alloc(8);
+  new DataView(buf.buffer, buf.byteOffset, 8).setBigUint64(0, value, true);
+  return buf;
+}
+
 export async function depositForBurnSolana(
   chain: BridgeChain,
   destinationDomain: number,
@@ -155,12 +161,10 @@ export async function depositForBurnSolana(
   const mintRecipient = new PublicKey(recipientBytes);
   const destinationCaller = Buffer.alloc(32, 0);
 
-  const amountBuf = Buffer.alloc(8);
-  amountBuf.writeBigUInt64LE(amount);
+  const amountBuf = uInt64ToBufferLE(amount);
   const domainBuf = Buffer.alloc(4);
   domainBuf.writeUInt32LE(destinationDomain);
-  const maxFeeBuf = Buffer.alloc(8);
-  maxFeeBuf.writeBigUInt64LE(maxFee);
+  const maxFeeBuf = uInt64ToBufferLE(maxFee);
   const finalityBuf = Buffer.alloc(4);
   finalityBuf.writeUInt32LE(minFinalityThreshold);
   const discriminator = Buffer.from("d73c3d2e723780b0", "hex");

@@ -37,6 +37,7 @@ export type BridgeChain = {
   supportsFastTransfer: boolean;
   explorer: string;
   type: ChainType;
+  decimals: number;
   usdc: string;
   tokenMessenger: string;
   messageTransmitter: string;
@@ -66,7 +67,7 @@ function evmChain(
   tokenMessenger: `0x${string}`,
   messageTransmitter: `0x${string}`,
 ): BridgeChain {
-  return { chainId: id, domain, name, shortName, accent, icon, supportsFastTransfer: fast, explorer, type: "evm", usdc, tokenMessenger, messageTransmitter };
+  return { chainId: id, domain, name, shortName, accent, icon, supportsFastTransfer: fast, explorer, type: "evm", decimals: 6, usdc, tokenMessenger, messageTransmitter };
 }
 
 function solanaChain(
@@ -82,7 +83,7 @@ function solanaChain(
   programId: string,
   messageTransmitterProgramId: string,
 ): BridgeChain {
-  return { chainId, domain, name, shortName, accent, icon, supportsFastTransfer: fast, explorer, type: "solana", usdc: usdcMint, tokenMessenger: programId, messageTransmitter: messageTransmitterProgramId };
+  return { chainId, domain, name, shortName, accent, icon, supportsFastTransfer: fast, explorer, type: "solana", decimals: 6, usdc: usdcMint, tokenMessenger: programId, messageTransmitter: messageTransmitterProgramId };
 }
 
 function starknetChain(
@@ -98,7 +99,7 @@ function starknetChain(
   tokenMessenger: string,
   messageTransmitter: string,
 ): BridgeChain {
-  return { chainId, domain, name, shortName, accent, icon, supportsFastTransfer: fast, explorer, type: "starknet", usdc, tokenMessenger, messageTransmitter };
+  return { chainId, domain, name, shortName, accent, icon, supportsFastTransfer: fast, explorer, type: "starknet", decimals: 6, usdc, tokenMessenger, messageTransmitter };
 }
 
 function stellarChain(
@@ -114,7 +115,7 @@ function stellarChain(
   tokenMessenger: string,
   messageTransmitter: string,
 ): BridgeChain {
-  return { chainId, domain, name, shortName, accent, icon, supportsFastTransfer: fast, explorer, type: "stellar", usdc, tokenMessenger, messageTransmitter };
+  return { chainId, domain, name, shortName, accent, icon, supportsFastTransfer: fast, explorer, type: "stellar", decimals: 7, usdc, tokenMessenger, messageTransmitter };
 }
 
 export const TOKEN_MESSENGER_V2 = "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d";
@@ -134,8 +135,8 @@ export const STARKNET_MESSAGE_TRANSMITTER = "0x02EBB5777B6dD8B26ea11D68Fdf1D2c85
 export const STARKNET_USDC = "0x033068F6539f8e6e6b131e6B2B814e6c34A5224bC66947c47DaB9dFeE93b35fb";
 export const STARKNET_RPC_URL = "https://starknet-mainnet.public.blastapi.io";
 
-export const STELLAR_TOKEN_MESSENGER = "CB75O22HPMZ7H4RE22X6A54B4BBAWUTNDUWVHYLHYLX7LXP7LXP7LX7L";
-export const STELLAR_MESSAGE_TRANSMITTER = "CBB75O22HPMZ7H4RE22X6A54B4BBAWUTNDUWVHYLHYLX7LXP7LXP7LX7L";
+export const STELLAR_TOKEN_MESSENGER = "CAE2G5Z77UP7GYPYGFOWFGW7C7J6I4YP2AFGSADRKQY62SYUFLPNFTXL";
+export const STELLAR_MESSAGE_TRANSMITTER = "CACMENFFJPJMSDAJQLX4R7K3SFZIW2LJSE3R2UMLGSWHFHS353FVXAZV";
 export const STELLAR_USDC_CONTRACT = "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN";
 export const STELLAR_USDC_ASSET_CODE = "USDC";
 export const STELLAR_RPC_URL = "https://soroban.stellar.org";
@@ -276,12 +277,12 @@ export function isValidRecipient(chain: BridgeChain, address: string): boolean {
   }
 }
 
-export function parseUsdcAmount(value: string) {
-  return parseUnits(value.trim(), 6);
+export function parseUsdcAmount(value: string, decimals = 6) {
+  return parseUnits(value.trim(), decimals);
 }
 
-export function formatUsdc(value: bigint) {
-  const formatted = formatUnits(value, 6);
+export function formatUsdc(value: bigint, decimals = 6) {
+  const formatted = formatUnits(value, decimals);
   const [whole, fraction = ""] = formatted.split(".");
   const withCommas = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   const trimmedFraction = fraction.slice(0, 6).replace(/0+$/, "");

@@ -46,23 +46,34 @@ export async function disconnectStarknetWallet(): Promise<void> {
 }
 
 export async function getStarknetBalance(chain: BridgeChain, address: string): Promise<bigint> {
-  const call = {
-    contractAddress: chain.usdc,
-    entrypoint: "balanceOf",
-    calldata: [address],
-  };
+  try {
+    const response = await fetch(STARKNET_RPC_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "starknet_call",
+        params: [
+          {
+            contract_address: chain.usdc,
+            entry_point: "balanceOf",
+            calldata: [address],
+          },
+          "latest",
+        ],
+      }),
+    });
 
-  const result = await fetch(`${STARKNET_RPC_URL}/v0_7/call`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(call),
-  });
-
-  if (!result.ok) return BigInt(0);
-  const json = await result.json();
-  if (!json?.result) return BigInt(0);
-  const raw = Array.isArray(json.result) ? json.result[0] : json.result;
-  return BigInt(raw);
+    if (!response.ok) return BigInt(0);
+    const json = await response.json();
+    const result = json?.result;
+    if (!result) return BigInt(0);
+    const raw = Array.isArray(result) ? result[0] : result;
+    return BigInt(raw);
+  } catch {
+    return BigInt(0);
+  }
 }
 
 function splitU256(value: bigint): [string, string] {
@@ -75,6 +86,8 @@ export async function depositForBurnStarknet(
   destinationDomain: number,
   amount: bigint,
   recipientBytes32: string,
+  maxFee: bigint,
+  minFinalityThreshold: number,
 ): Promise<string> {
   if (!window.starknet?.account) throw new Error("Starknet wallet not connected.");
 
@@ -82,7 +95,9 @@ export async function depositForBurnStarknet(
   const contract = new Contract(abi, chain.tokenMessenger, provider);
 
   const [amountLow, amountHigh] = splitU256(amount);
+  const [maxFeeLow, maxFeeHigh] = splitU256(maxFee);
   const destDomainHex = `0x${destinationDomain.toString(16)}`;
+  const minFinalityHex = `0x${minFinalityThreshold.toString(16)}`;
 
   const call = (contract as any).populateTransaction("deposit_for_burn", [
     { low: amountLow, high: amountHigh },
@@ -90,8 +105,8 @@ export async function depositForBurnStarknet(
     recipientBytes32,
     chain.usdc,
     "0x0",
-    { low: "0x0", high: "0x0" },
-    "0x7d0",
+    { low: maxFeeLow, high: maxFeeHigh },
+    minFinalityHex,
   ]);
 
   const result = await window.starknet.request({

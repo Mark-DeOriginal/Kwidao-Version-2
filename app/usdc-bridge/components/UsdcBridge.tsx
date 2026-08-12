@@ -318,11 +318,11 @@ export default function UsdcBridge() {
 
   const amountRaw = useMemo(() => {
     try {
-      return amount.trim() ? parseUsdcAmount(amount) : BigInt(0);
+      return amount.trim() ? parseUsdcAmount(amount, source.decimals) : BigInt(0);
     } catch {
       return null;
     }
-  }, [amount]);
+  }, [amount, source.decimals]);
   const recipientAddress = recipient.trim();
   const expectedAmount =
     amountRaw && amountRaw > maxFee ? amountRaw - maxFee : amountRaw ?? BigInt(0);
@@ -721,7 +721,7 @@ export default function UsdcBridge() {
   }, []);
 
   const selectMax = () => {
-    setAmount(formatUsdc(balance));
+    setAmount(formatUsdc(balance, source.decimals));
   };
 
   const updateHistory = (burnHash: string, patch: Partial<BridgeHistoryItem>) => {
@@ -786,9 +786,23 @@ export default function UsdcBridge() {
           break;
         }
         case "starknet":
+          if (!hasWalletForChain("starknet")) {
+            throw new Error("Starknet wallet not found. Install Argent X or Braavos to mint.");
+          }
+          if (!nonEvmWallet || nonEvmWallet.chainType !== "starknet") {
+            setMessage("Connect your Starknet wallet to mint.");
+            await connectWallet("starknet");
+          }
           claimHashValue = await receiveMessageStarknet(txDestination, attestation);
           break;
         case "stellar":
+          if (!hasWalletForChain("stellar")) {
+            throw new Error("Stellar wallet not found. Install Freighter to mint.");
+          }
+          if (!nonEvmWallet || nonEvmWallet.chainType !== "stellar") {
+            setMessage("Connect your Stellar wallet to mint.");
+            await connectWallet("stellar");
+          }
           claimHashValue = await receiveMessageStellar(txDestination, attestation);
           break;
         default:
@@ -851,6 +865,11 @@ export default function UsdcBridge() {
           ? await resolveSolanaRecipientTokenAccount(recipientAddress, destination.usdc)
           : recipientAddress;
 
+      const routeFeeBps = feeBps ?? (await fetchRouteFee(source.domain, destination.domain, mode));
+      const routeMaxFee = estimateMaxFee(amountRaw, routeFeeBps);
+      setFeeBps(routeFeeBps);
+      setMaxFee(routeMaxFee);
+
       switch (source.type) {
         case "evm": {
           if (!account.address) throw new Error("EVM wallet not connected.");
@@ -865,11 +884,6 @@ export default function UsdcBridge() {
             setMessage("Waiting for you to approve the transaction");
             await approveEvmUsdc(config, source, account.address, amountRaw);
           }
-
-          const routeFeeBps = feeBps ?? (await fetchRouteFee(source.domain, destination.domain, mode));
-          const routeMaxFee = estimateMaxFee(amountRaw, routeFeeBps);
-          setFeeBps(routeFeeBps);
-          setMaxFee(routeMaxFee);
 
           setPhase("burning");
           setMessage(`Burning USDC on ${source.name}.`);
@@ -886,11 +900,6 @@ export default function UsdcBridge() {
           break;
         }
         case "solana": {
-          const routeFeeBps = feeBps ?? (await fetchRouteFee(source.domain, destination.domain, mode));
-          const routeMaxFee = estimateMaxFee(amountRaw, routeFeeBps);
-          setFeeBps(routeFeeBps);
-          setMaxFee(routeMaxFee);
-
           setPhase("burning");
           setMessage(`Burning USDC on ${source.name}.`);
           const solRecipientBytes = await addressToBytes32(cctpRecipient, destination.type);
@@ -913,6 +922,8 @@ export default function UsdcBridge() {
             destination.domain,
             amountRaw,
             strkRecipientBytes,
+            routeMaxFee,
+            getFinalityThreshold(mode),
           );
           break;
         }
@@ -1058,7 +1069,7 @@ export default function UsdcBridge() {
               label="From"
               chainId={source.chainId}
               onChange={(chainId) => void switchSourceChain(chainId)}
-              balance={formatUsdc(balance)}
+              balance={formatUsdc(balance, source.decimals)}
               amountValue={displayAmount}
               amountPlaceholder="0.00"
               onAmountChange={(value) => setAmount(value)}
@@ -1086,7 +1097,7 @@ export default function UsdcBridge() {
               onChange={setDestinationChainId}
               amountValue={
                 amountRaw && amountRaw > BigInt(0)
-                  ? formatUsdc(expectedAmount)
+                  ? formatUsdc(expectedAmount, source.decimals)
                   : ""
               }
               amountPlaceholder="0.00"
@@ -1156,10 +1167,10 @@ export default function UsdcBridge() {
                     : `${feeBps} bps`
               }
             />
-            <QuoteRow label="Max fee" value={`${formatUsdc(maxFee)} USDC`} />
+            <QuoteRow label="Max fee" value={`${formatUsdc(maxFee, source.decimals)} USDC`} />
             <QuoteRow
               label="Expected receive"
-              value={`${formatUsdc(expectedAmount)} USDC`}
+              value={`${formatUsdc(expectedAmount, source.decimals)} USDC`}
               strong
             />
           </div>
@@ -1333,7 +1344,7 @@ export default function UsdcBridge() {
                           </td>
                           <td>
                             {row.amount > BigInt(0)
-                              ? `${formatUsdc(row.amount)} USDC`
+                              ? `${formatUsdc(row.amount, row.source.decimals ?? 6)} USDC`
                               : "-"}
                           </td>
                           <td>

@@ -60,7 +60,7 @@ export async function getStellarBalance(chain: BridgeChain, address: string): Pr
     );
     if (!usdcBalance) return BigInt(0);
     const [whole, fraction = ""] = usdcBalance.balance.split(".");
-    const padded = fraction.padEnd(7, "0").slice(0, 7);
+    const padded = fraction.padEnd(chain.decimals, "0").slice(0, chain.decimals);
     return BigInt(`${whole}${padded}`);
   } catch {
     return BigInt(0);
@@ -126,8 +126,8 @@ export async function receiveMessageStellar(
       contract: chain.messageTransmitter,
       function: "receive_message",
       args: [
-        xdr.ScVal.scvBytes(Buffer.from(attestation.message, "hex")),
-        xdr.ScVal.scvBytes(Buffer.from(attestation.attestation, "hex")),
+        xdr.ScVal.scvBytes(Buffer.from(attestation.message.replace("0x", ""), "hex")),
+        xdr.ScVal.scvBytes(Buffer.from(attestation.attestation.replace("0x", ""), "hex")),
       ],
     }))
     .setTimeout(30)
