@@ -11,6 +11,7 @@ const navLinks = [
 ];
 
 const toolLinks = [
+  { label: "USDC Bridge", href: "/usdc-bridge" },
   { label: "P2P Marketplace", href: "/p2p" },
   { label: "Tools Hub", href: "/tools" },
   { label: "Live Market", href: "/live-market" },
