@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 
 // Simple in-memory cache with TTL
 const priceCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 30 * 1000; // 30 seconds cache
+const CACHE_TTL = 60 * 1000;
+const RESPONSE_HEADERS = {
+  "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+};
 
 async function fetchFromCoinGecko(coinIds: string[]) {
   try {
@@ -14,7 +17,7 @@ async function fetchFromCoinGecko(coinIds: string[]) {
           "User-Agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         },
-        next: { revalidate: 10 }, // ISR: revalidate every 10 seconds
+        next: { revalidate: 60 },
       },
     );
 
@@ -39,7 +42,7 @@ async function fetchCoinImages(coinIds: string[]) {
           "User-Agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         },
-        next: { revalidate: 10 },
+        next: { revalidate: 86_400 },
       },
     );
 
@@ -79,7 +82,7 @@ export async function GET(request: Request) {
         data: cached.data,
         cached: true,
         timestamp: cached.timestamp,
-      });
+      }, { headers: RESPONSE_HEADERS });
     }
 
     // Fetch fresh data
@@ -102,7 +105,7 @@ export async function GET(request: Request) {
       data: combinedData,
       cached: false,
       timestamp: now,
-    });
+    }, { headers: RESPONSE_HEADERS });
   } catch (error) {
     console.error("Market prices API error:", error);
     return NextResponse.json(

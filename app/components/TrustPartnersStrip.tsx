@@ -29,9 +29,6 @@ export default function TrustPartnersStrip() {
           "/api/blockchain-logos?blockchains=avalanche-2,ethereum,solana,sui,matic-network",
           {
             method: "GET",
-            headers: {
-              "Cache-Control": "no-store",
-            },
           },
         );
 

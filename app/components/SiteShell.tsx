@@ -8,7 +8,6 @@ import Header from "./Header";
 const IMMERSIVE_TOOL_PREFIXES = [
   "/tools/grid-bot",
   "/tools/market-analyzer",
-  "/p2p",
   "/usdc-bridge",
 ];
 

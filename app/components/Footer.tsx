@@ -45,7 +45,6 @@ const socialLinks = [
 
 const quickLinks = [
   { label: "Live Market", href: "/live-market" },
-  { label: "Peer to Peer", href: "/p2p" },
   { label: "What is Kwidao", href: "/#what-is-kwidao" },
   { label: "Ecosystem", href: "/#ecosystem" },
   { label: "How It Works", href: "/#how-it-works" },

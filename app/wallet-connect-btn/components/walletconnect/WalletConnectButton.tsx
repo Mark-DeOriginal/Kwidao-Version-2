@@ -420,6 +420,7 @@ function getChainIconPath(chainName: string) {
   const name = chainName.toLowerCase();
 
   const pathByKeyword: Record<string, string> = {
+    arc: "/chains/arc.svg",
     unichain: "/chains/unichain.svg",
     linea: "/chains/linea.svg",
     sonic: "/chains/sonic.svg",

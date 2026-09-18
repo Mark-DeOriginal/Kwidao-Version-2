@@ -9,13 +9,13 @@ import { useAccount, useConfig, useDisconnect, useSwitchChain } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import {
   addressToBytes32,
+  ARC_CHAIN_ID,
   BRIDGE_CHAINS,
   BRIDGE_CHAIN_OPTIONS,
   ERC20_ABI,
   estimateMaxFee,
-  fetchAttestation,
-  fetchAttestationStatus,
-  fetchRouteFee,
+  fetchCctpMessageState,
+  fetchRouteFeeQuote,
   formatUsdc,
   getBridgeChain,
   getFinalityThreshold,
@@ -79,6 +79,8 @@ type BridgeTx = {
   destination?: BridgeChain;
   burnHash?: string;
   claimHash?: `0x${string}`;
+  mode?: BridgeMode;
+  useForwarder?: boolean;
 };
 
 type TxStatus = "pending" | "attesting" | "claiming" | "success" | "claimPending" | "failed";
@@ -91,6 +93,8 @@ type BridgeHistoryItem = {
   amount: bigint;
   burnHash: string;
   claimHash?: string;
+  mode?: BridgeMode;
+  useForwarder?: boolean;
   status: TxStatus;
   note?: string;
 };
@@ -102,7 +106,7 @@ type PersistedBridgeState = {
 
 const BRIDGE_STORAGE_KEY = "kwidao-usdc-bridge-state-v1";
 const HISTORY_RETENTION_MS = 3 * 24 * 60 * 60 * 1000;
-const HIDDEN_EVM_SOON_CHAIN_NAMES = new Set(["Codex", "Arc", "EDGE", "Pharos"]);
+const HIDDEN_EVM_SOON_CHAIN_NAMES = new Set(["Codex", "EDGE", "Pharos"]);
 
 const WALLET_INSTALL_URL: Record<Exclude<ChainType, "evm">, string> = {
   solana: "https://phantom.app/",
@@ -173,12 +177,12 @@ function simplifyBridgeError(error: unknown) {
     return "Insufficient gas balance for this transaction.";
   }
 
-  if (message.includes("simulation failed") || message.includes("sendrawtransaction")) {
-    return raw;
+  if (message.includes("nonce")) {
+    return "Your wallet used an outdated transaction nonce. Wait for any pending wallet transaction to settle, then retry. No bridge burn was submitted by this failed attempt.";
   }
 
-  if (message.includes("nonce")) {
-    return "Transaction nonce issue. Please retry in a few seconds.";
+  if (message.includes("simulation failed") || message.includes("sendrawtransaction")) {
+    return raw;
   }
 
   return raw;
@@ -210,15 +214,43 @@ async function waitForChainId(
   return accountRef.current?.chainId === chainId;
 }
 
+const ATTESTATION_POLL_INTERVAL_MS = 5_000;
+const ATTESTATION_MAX_WAIT_MS = 20 * 60 * 1_000;
+
 async function waitForCircleAttestation(sourceDomain: number, burnHash: string) {
-  for (let attempt = 0; attempt < 450; attempt += 1) {
+  const started = Date.now();
+  while (Date.now() - started < ATTESTATION_MAX_WAIT_MS) {
     try {
-      const attestation = await fetchAttestation(sourceDomain, burnHash);
-      if (attestation) return attestation;
+      const state = await fetchCctpMessageState(sourceDomain, burnHash);
+      if (state.attestation) return state.attestation;
     } catch {
       // Transient Iris errors (rate limits, timeouts) — keep polling.
     }
-    await new Promise((resolve) => setTimeout(resolve, 2_000));
+    await new Promise((resolve) => setTimeout(resolve, ATTESTATION_POLL_INTERVAL_MS));
+  }
+  return null;
+}
+
+async function waitForCircleForwarding(sourceDomain: number, burnHash: string) {
+  const started = Date.now();
+  while (Date.now() - started < ATTESTATION_MAX_WAIT_MS) {
+    try {
+      const state = await fetchCctpMessageState(sourceDomain, burnHash);
+      if (state.forwardTxHash) return state.forwardTxHash;
+      if (state.forwardState === "CONFIRMED" || state.forwardState === "COMPLETE") {
+        // Iris does not always expose the destination transaction hash. An
+        // empty string still signals confirmed forwarding without creating an
+        // incorrect destination-explorer link from the source burn hash.
+        return state.forwardTxHash ?? "";
+      }
+      if (state.forwardState === "FAILED") {
+        throw new Error("Circle could not forward the destination mint. Use manual claim to recover the transfer.");
+      }
+    } catch (pollError) {
+      if (pollError instanceof Error && pollError.message.includes("could not forward")) throw pollError;
+      // Network and rate-limit errors are temporary; continue polling.
+    }
+    await new Promise((resolve) => setTimeout(resolve, ATTESTATION_POLL_INTERVAL_MS));
   }
   return null;
 }
@@ -253,6 +285,7 @@ export default function UsdcBridge() {
   const [solanaRecipientTokenAccount, setSolanaRecipientTokenAccount] = useState<string | null>(null);
   const [balance, setBalance] = useState<bigint>(BigInt(0));
   const [feeBps, setFeeBps] = useState<number | null>(null);
+  const [forwardFee, setForwardFee] = useState<bigint>(BigInt(0));
   const [maxFee, setMaxFee] = useState<bigint>(BigInt(0));
   const [routeFeeError, setRouteFeeError] = useState("");
   const [phase, setPhase] = useState<BridgePhase>("idle");
@@ -270,6 +303,8 @@ export default function UsdcBridge() {
   const [connectPrompt, setConnectPrompt] = useState<number | null>(null);
   const [connectPromptError, setConnectPromptError] = useState("");
   const [attestationPendingModal, setAttestationPendingModal] = useState(false);
+  const autoResumeStartedRef = useRef(false);
+  const submissionLockRef = useRef(false);
 
   const source = useMemo(() => getBridgeChain(sourceChainId), [sourceChainId]);
   const destination = useMemo(() => getBridgeChain(destinationChainId), [destinationChainId]);
@@ -278,6 +313,7 @@ export default function UsdcBridge() {
   const sourceSupported = isEvmBridgeChain(source) || sourceType !== "evm";
   const destinationSupported = isEvmBridgeChain(destination) || destType !== "evm";
   const routeSupported = sourceSupported && destinationSupported;
+  const useForwarder = source.type === "evm" && destination.chainId === ARC_CHAIN_ID;
   const fastModeAvailable = supportsBridgeMode(source, "fast");
   const connected = useMemo(() => {
     if (sourceType === "evm") {
@@ -548,6 +584,7 @@ export default function UsdcBridge() {
         if (!routeSupported || !amountRaw || amountRaw <= BigInt(0) || source.chainId === destination.chainId) {
           setFeeBps(null);
           setMaxFee(BigInt(0));
+          setForwardFee(BigInt(0));
           setRouteFeeError("");
           return;
         }
@@ -555,20 +592,28 @@ export default function UsdcBridge() {
         if (!supportsBridgeMode(source, mode)) {
           setFeeBps(null);
           setMaxFee(BigInt(0));
+          setForwardFee(BigInt(0));
           setRouteFeeError(`Fast transfer is not available from ${source.name}.`);
           return;
         }
 
         try {
           setRouteFeeError("");
-          const nextFeeBps = await fetchRouteFee(source.domain, destination.domain, mode);
+          const quote = await fetchRouteFeeQuote(
+            source.domain,
+            destination.domain,
+            mode,
+            useForwarder,
+          );
           if (!active) return;
-          setFeeBps(nextFeeBps);
-          setMaxFee(estimateMaxFee(amountRaw, nextFeeBps));
+          setFeeBps(quote.minimumFeeBps);
+          setForwardFee(quote.forwardFee);
+          setMaxFee(estimateMaxFee(amountRaw, quote.minimumFeeBps) + quote.forwardFee);
         } catch {
           if (!active) return;
           setFeeBps(null);
           setMaxFee(BigInt(0));
+          setForwardFee(BigInt(0));
           setRouteFeeError("This transfer route is currently unavailable for the selected speed.");
         }
       }
@@ -580,7 +625,7 @@ export default function UsdcBridge() {
       active = false;
       clearTimeout(timer);
     };
-  }, [amountRaw, destination, mode, routeSupported, source]);
+  }, [amountRaw, destination, mode, routeSupported, source, useForwarder]);
 
   useEffect(() => {
     if (phase !== "success") return;
@@ -610,6 +655,9 @@ export default function UsdcBridge() {
       return `Enter a valid ${destination.name} recipient address.`;
     }
     if (routeFeeError) return routeFeeError;
+    if (feeBps !== null && maxFee >= amountRaw) {
+      return "The transfer amount is too small to cover the current bridge and forwarding fees.";
+    }
     if (amountRaw > balance) return "Insufficient USDC balance on the source chain.";
     return "";
   }, [
@@ -626,6 +674,8 @@ export default function UsdcBridge() {
     mode,
     routeSupported,
     routeFeeError,
+    feeBps,
+    maxFee,
     recipientAddress,
   ]);
 
@@ -714,36 +764,65 @@ export default function UsdcBridge() {
     );
   };
 
-  const claimTransfer = async (burnHash: string, txSource: BridgeChain, txDestination: BridgeChain) => {
+  const claimTransfer = async (
+    burnHash: string,
+    txSource: BridgeChain,
+    txDestination: BridgeChain,
+    transferMode: BridgeMode = "standard",
+    forwarded = false,
+  ) => {
     setTx((current) => ({
       ...current,
       source: txSource,
       destination: txDestination,
       burnHash,
       claimHash: undefined,
+      mode: transferMode,
+      useForwarder: forwarded,
     }));
 
     setPhase("attesting");
-    setMessage("Waiting for Circle Iris to attest the burn.");
-    updateHistory(burnHash, { status: "attesting", note: "Waiting for Circle attestation" });
+    setMessage(
+      forwarded
+        ? `Circle is confirming the burn and forwarding USDC to ${txDestination.name}.`
+        : "Waiting for Circle Iris to attest the burn.",
+    );
+    updateHistory(burnHash, {
+      status: "attesting",
+      note: forwarded ? "Circle forwarding in progress" : "Waiting for Circle attestation",
+      mode: transferMode,
+      useForwarder: forwarded,
+    });
 
-    try {
-      const status = await fetchAttestationStatus(txSource.domain, burnHash);
-      if (status === "pending") {
+    if (forwarded) {
+      const forwardedHash = await waitForCircleForwarding(txSource.domain, burnHash);
+      if (forwardedHash === null) {
         setPhase("claimPending");
-        updateHistory(burnHash, { status: "claimPending", note: "Attestation still pending" });
+        setMessage("Circle is still forwarding the mint. You can safely return later and resume from bridge history.");
+        updateHistory(burnHash, { status: "claimPending", note: "Circle forwarding still pending" });
         setAttestationPendingModal(true);
         return;
       }
-    } catch {
-      // Fall through to the polling loop below.
+
+      const normalizedHash = /^0x[0-9a-fA-F]{64}$/.test(forwardedHash)
+        ? (forwardedHash as `0x${string}`)
+        : undefined;
+      setTx((current) => ({ ...current, claimHash: normalizedHash }));
+      setPhase("success");
+      setMessage(`USDC has been forwarded and minted on ${txDestination.name}.`);
+      updateHistory(burnHash, {
+        claimHash: normalizedHash,
+        status: "success",
+        note: "USDC forwarded and minted successfully",
+      });
+      return;
     }
 
     const attestation = await waitForCircleAttestation(txSource.domain, burnHash);
     if (!attestation) {
       setPhase("claimPending");
       setMessage(
-        mode === "fast"
+        transferMode === "fast"
           ? "Fast transfer attestation is still pending. This can still take a few minutes; retry claim shortly."
           : "Standard transfer attestation is still pending. Retry claim shortly.",
       );
@@ -843,6 +922,8 @@ export default function UsdcBridge() {
   };
 
   const startBridge = async () => {
+    if (submissionLockRef.current) return;
+    submissionLockRef.current = true;
     setError("");
     setMessage("");
     setSwitchError("");
@@ -852,23 +933,27 @@ export default function UsdcBridge() {
       if (!evmWalletConnected) {
         setConnectPrompt(source.chainId);
         setConnectPromptError("");
+        submissionLockRef.current = false;
         return;
       }
     } else if (!nonEvmWallet.isConnected || nonEvmWallet.chainType !== sourceType) {
       setConnectPrompt(source.chainId);
       setConnectPromptError("");
+      submissionLockRef.current = false;
       return;
     }
 
     if (validationError) {
       setPhase("failed");
       setError(validationError);
+      submissionLockRef.current = false;
       return;
     }
 
     if (!walletAddress || !amountRaw || !recipientAddress) {
       setPhase("failed");
       setError("Wallet is not ready for signing.");
+      submissionLockRef.current = false;
       return;
     }
     setTx({});
@@ -876,7 +961,7 @@ export default function UsdcBridge() {
     try {
       setPhase("checking");
       setMessage("Checking route details.");
-      setTx({ source, destination, claimHash: undefined });
+      setTx({ source, destination, claimHash: undefined, mode, useForwarder });
 
       let burnHashValue: string;
 
@@ -885,9 +970,13 @@ export default function UsdcBridge() {
           ? await resolveSolanaRecipientTokenAccount(recipientAddress, destination.usdc)
           : recipientAddress;
 
-      const routeFeeBps = feeBps ?? (await fetchRouteFee(source.domain, destination.domain, mode));
-      const routeMaxFee = estimateMaxFee(amountRaw, routeFeeBps);
-      setFeeBps(routeFeeBps);
+      const quote = feeBps === null
+        ? await fetchRouteFeeQuote(source.domain, destination.domain, mode, useForwarder)
+        : { minimumFeeBps: feeBps, forwardFee };
+      const routeFeeBps = quote.minimumFeeBps;
+      const routeMaxFee = estimateMaxFee(amountRaw, routeFeeBps) + quote.forwardFee;
+      setFeeBps(quote.minimumFeeBps);
+      setForwardFee(quote.forwardFee);
       setMaxFee(routeMaxFee);
 
       switch (source.type) {
@@ -920,6 +1009,7 @@ export default function UsdcBridge() {
             recipient: cctpRecipient,
             mode,
             maxFee: routeMaxFee,
+            useForwarder,
           });
           break;
         }
@@ -968,7 +1058,7 @@ export default function UsdcBridge() {
       }
 
       submittedBurnHash = burnHashValue;
-      setTx({ source, destination, burnHash: burnHashValue, claimHash: undefined });
+      setTx({ source, destination, burnHash: burnHashValue, claimHash: undefined, mode, useForwarder });
       setHistory((current) => [
         {
           id: `${burnHashValue}-${Date.now()}`,
@@ -977,6 +1067,8 @@ export default function UsdcBridge() {
           destination: { ...destination },
           amount: amountRaw,
           burnHash: burnHashValue,
+          mode,
+          useForwarder,
           status: "pending",
           note: "Burn transaction submitted",
         },
@@ -985,7 +1077,7 @@ export default function UsdcBridge() {
       if (source.type === "evm") {
         await waitForTransactionReceipt(config, { hash: burnHashValue as `0x${string}`, chainId: source.chainId });
       }
-      await claimTransfer(burnHashValue, source, destination);
+      await claimTransfer(burnHashValue, source, destination, mode, useForwarder);
     } catch (bridgeError) {
       setPhase("failed");
       setError(simplifyBridgeError(bridgeError));
@@ -993,6 +1085,8 @@ export default function UsdcBridge() {
       if (latestBurnHash) {
         updateHistory(latestBurnHash, { status: "failed", note: "Claim failed. Retry available." });
       }
+    } finally {
+      submissionLockRef.current = false;
     }
   };
 
@@ -1001,7 +1095,13 @@ export default function UsdcBridge() {
     try {
       setError("");
       setTx((current) => ({ ...current, claimHash: undefined }));
-      await claimTransfer(tx.burnHash, tx.source, tx.destination);
+      await claimTransfer(
+        tx.burnHash,
+        tx.source,
+        tx.destination,
+        tx.mode ?? "standard",
+        tx.useForwarder ?? false,
+      );
     } catch (claimError) {
       setPhase("failed");
       setError(simplifyBridgeError(claimError));
@@ -1015,7 +1115,13 @@ export default function UsdcBridge() {
     try {
       setError("");
       setMessage("Reclaim requested. Checking Circle attestation.");
-      await claimTransfer(row.burnHash, row.source, row.destination);
+      await claimTransfer(
+        row.burnHash,
+        row.source,
+        row.destination,
+        row.mode ?? "standard",
+        row.useForwarder ?? false,
+      );
     } catch (claimError) {
       updateHistory(row.burnHash, { status: "failed", note: "Reclaim attempt failed." });
       setPhase("failed");
@@ -1041,7 +1147,7 @@ export default function UsdcBridge() {
     }
 
     const burnHash = normalized as `0x${string}`;
-    setTx({ source: sourceChain, destination: destinationChain, burnHash, claimHash: undefined });
+    setTx({ source: sourceChain, destination: destinationChain, burnHash, claimHash: undefined, mode });
     setHistory((current) => {
       if (current.some((row) => row.burnHash === burnHash)) return current;
       return [
@@ -1052,6 +1158,8 @@ export default function UsdcBridge() {
           destination: destinationChain,
           amount: BigInt(0),
           burnHash,
+          mode,
+          useForwarder: false,
           status: "claimPending",
           note: "Manual claim request submitted",
         },
@@ -1061,7 +1169,7 @@ export default function UsdcBridge() {
 
     try {
       setManualMessage("Claim submitted. Checking Circle attestation and mint status.");
-      await claimTransfer(burnHash, sourceChain, destinationChain);
+      await claimTransfer(burnHash, sourceChain, destinationChain, mode, false);
       setManualBurnHash("");
       setManualMessage("Manual claim processed. Check transaction history for latest status.");
     } catch (manualError) {
@@ -1069,6 +1177,25 @@ export default function UsdcBridge() {
       setManualError(simplifyBridgeError(manualError));
     }
   };
+
+  useEffect(() => {
+    if (!hydrated || autoResumeStartedRef.current) return;
+    const pendingForward = history.find(
+      (row) => row.useForwarder && row.status !== "success" && row.status !== "failed",
+    );
+    if (!pendingForward) return;
+    autoResumeStartedRef.current = true;
+    void claimTransfer(
+      pendingForward.burnHash,
+      pendingForward.source,
+      pendingForward.destination,
+      pendingForward.mode ?? "standard",
+      true,
+    );
+    // Resume once after local history hydration. claimTransfer is intentionally
+    // omitted because it is recreated as live wallet state changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated]);
 
   return (
     <section className={classNames(styles.bridgePage, styles.reveal)}>
@@ -1093,7 +1220,10 @@ export default function UsdcBridge() {
               balance={formatUsdc(balance, source.decimals)}
               amountValue={displayAmount}
               amountPlaceholder="0.00"
-              onAmountChange={(value) => setAmount(value)}
+              onAmountChange={(value) => {
+                setAmount(value);
+                if (error) setError("");
+              }}
               onAmountFocus={() => setAmountFocused(true)}
               onAmountBlur={() => setAmountFocused(false)}
               showMaxButton
@@ -1189,6 +1319,12 @@ export default function UsdcBridge() {
               }
             />
             <QuoteRow label="Max fee" value={`${formatUsdc(maxFee, source.decimals)} USDC`} />
+            {useForwarder ? (
+              <QuoteRow
+                label="Arc forwarding"
+                value={`${formatUsdc(forwardFee, source.decimals)} USDC`}
+              />
+            ) : null}
             <QuoteRow
               label="Expected receive"
               value={`${formatUsdc(expectedAmount, source.decimals)} USDC`}
@@ -1197,31 +1333,30 @@ export default function UsdcBridge() {
           </div>
 
           {(error ||
-            validationError ||
             switchError ||
             phase === "success" ||
             phase === "claimPending") && (
             <div
-              key={`${phase}-${error || validationError || switchError || message}`}
+              key={`${phase}-${error || switchError || message}`}
               className={classNames(
                 styles.statusPanel,
                 phase === "success" && styles.statusSuccess,
                 phase === "claimPending" && styles.statusWarning,
-                (error || validationError || switchError) &&
+                (error || switchError) &&
                   phase !== "success" &&
                   styles.statusError,
               )}
             >
               {phase === "success"
                 ? message
-                : error || switchError || validationError || message}
+                : error || switchError || message}
             </div>
           )}
 
           <button
             type="button"
             className={styles.primaryButton}
-            disabled={busy || !!validationError || (sourceType !== "evm" && !connected)}
+            disabled={busy || (sourceType !== "evm" && !connected)}
             onClick={startBridge}
           >
             <span>
@@ -1229,9 +1364,7 @@ export default function UsdcBridge() {
                 ? message || "Working..."
                 : sourceType !== "evm" && !connected
                   ? `Connect ${source.name} wallet`
-                  : validationError
-                    ? "Review bridge details"
-                    : "Bridge USDC"}
+                  : "Bridge USDC"}
             </span>
           </button>
 
@@ -1572,12 +1705,25 @@ export default function UsdcBridge() {
                     </div>
 
                     <div className={styles.modalBody}>
-                      <p>
-                        Your burn transaction is still being confirmed on the blockchain. Circle
-                        needs a few more minutes to attest it before you can mint USDC on the
-                        destination chain.
-                      </p>
-                      <p>Please wait a moment and try again.</p>
+                      {tx.useForwarder ? (
+                        <>
+                          <p>
+                            Your burn is confirmed, but Circle is still forwarding the mint to {tx.destination?.name ?? "the destination chain"}.
+                          </p>
+                          <p>
+                            You can safely close this message. The bridge will resume automatically from your saved history when you return.
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p>
+                            Circle is still waiting for the source-chain confirmations required to attest this burn.
+                          </p>
+                          <p>
+                            The transfer remains recoverable from bridge history; no second burn is needed.
+                          </p>
+                        </>
+                      )}
                     </div>
 
                     <div className={styles.modalActions}>

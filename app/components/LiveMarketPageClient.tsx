@@ -51,7 +51,7 @@ const TRACKED_ASSETS: AssetConfig[] = [
   { id: "aptos", symbol: "APT", name: "Aptos" },
 ];
 
-const REFRESH_INTERVAL = 5000;
+const REFRESH_INTERVAL = 30_000;
 const CAROUSEL_SPEED = 0.55;
 const TIMEFRAME_OPTIONS = [
   { id: "1H", label: "1H", points: 12 },
@@ -309,7 +309,6 @@ export default function LiveMarketPageClient() {
     try {
       const ids = TRACKED_ASSETS.map((asset) => asset.id).join(",");
       const response = await fetch(`/api/market-prices?coins=${ids}`, {
-        headers: { "Cache-Control": "no-store" },
       });
 
       if (!response.ok) {
@@ -363,9 +362,16 @@ export default function LiveMarketPageClient() {
   }, []);
 
   useEffect(() => {
-    loadMarketData();
-    const interval = setInterval(loadMarketData, REFRESH_INTERVAL);
-    return () => clearInterval(interval);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void loadMarketData();
+    };
+    refreshWhenVisible();
+    const interval = window.setInterval(refreshWhenVisible, REFRESH_INTERVAL);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
   }, [loadMarketData]);
 
   const metrics = useMemo(() => {

@@ -26,11 +26,19 @@ Sonic, World Chain, Monad, Sei, XDC, HyperEVM, Ink, Plume, Injective, and Morph.
 
 ## Planned CCTP V2 chains
 
-Codex, EDGE, Pharos, Arc, Solana, Starknet, and Stellar are tracked in
+Codex, EDGE, Pharos, Solana, Starknet, and Stellar are tracked in
 `CCTP_V2_CHAIN_EXPANSION_PLAN.md`.
 
 Codex, EDGE, and Pharos need verified public chain IDs/RPC metadata before they
 are enabled in the Wagmi route picker. Solana, Starknet, and Stellar need
 non-EVM wallet and transaction adapters before users can bridge through them.
-Arc is not enabled because Circle's EVM contract address page currently lists
-Arc testnet but not an Arc mainnet EVM contract set.
+Arc mainnet is enabled with CCTP domain 26. Its wallet network uses native USDC
+with 18 decimals for gas, while CCTP interacts with Arc's 6-decimal ERC-20 USDC
+interface at `0x3600000000000000000000000000000000000000`.
+
+EVM-to-Arc transfers use Circle's CCTP Forwarding Service. The bridge requests
+the live forwarding quote, includes the official `cctp-forward` hook in the
+burn, and lets Circle submit the destination mint so first-time Arc recipients
+do not need an existing Arc gas balance. Attestations and forwarded mints are
+polled every five seconds for up to twenty minutes and remain recoverable from
+persisted bridge history.

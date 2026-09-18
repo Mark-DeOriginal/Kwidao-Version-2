@@ -121,6 +121,9 @@ function stellarChain(
 export const TOKEN_MESSENGER_V2 = "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d";
 export const MESSAGE_TRANSMITTER_V2 = "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64";
 export const INJECTIVE_EVM_CHAIN_ID = 1776;
+export const ARC_CHAIN_ID = 5042;
+export const CCTP_FORWARD_HOOK_DATA =
+  "0x636374702d666f72776172640000000000000000000000000000000000000000" as const;
 export const ZERO_BYTES_32 =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
 
@@ -159,6 +162,9 @@ export const BRIDGE_CHAINS: BridgeChain[] = [
   evmChain(hyperEvm.id, 19, "HyperEVM", "HYPE", "#00e6b0", "/chains/hyperevm.svg", false, "https://hyperscan.com/tx/", "0xb88339CB7199b77E23DB6E890353E22632Ba630f", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
   evmChain(ink.id, 21, "Ink", "INK", "#7132f5", "/chains/ink.svg", true, "https://explorer.inkonchain.com/tx/", "0x2D270e6886d130D724215A266106e6832161EAEd", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
   evmChain(plumeMainnet.id, 22, "Plume", "PLUME", "#ff4f9a", "/chains/plume.svg", true, "https://explorer.plume.org/tx/", "0x222365EF19F7947e5484218551B56bb3965Aa7aF", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
+  // Arc exposes the native USDC balance at 18 decimals, but its ERC-20
+  // interface (used by CCTP for balance, approval, and burn amounts) uses 6.
+  evmChain(ARC_CHAIN_ID, 26, "Arc", "ARC", "#263994", "/chains/arc.svg", true, "https://explorer.arc.io/tx/", "0x3600000000000000000000000000000000000000", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
   evmChain(INJECTIVE_EVM_CHAIN_ID, 29, "Injective", "INJ", "#00D9FF", undefined, false, "https://blockscout.injective.network/tx/", "0xa00C59fF5a080D2b954d0c75e46E22a0c371235a", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
   evmChain(morph.id, 30, "Morph", "MORPH", "#00ff7f", "/chains/morph.svg", true, "https://explorer.morph.network/tx/", "0xCfb1186F4e93D60E60a8bDd997427D1F33bc372B", TOKEN_MESSENGER_V2, MESSAGE_TRANSMITTER_V2),
   solanaChain(5, 5, "Solana", "SOL", "#14f195", "/chains/solana.svg", false, "https://solscan.io/tx/", SOLANA_USDC_MINT, SOLANA_CCTP_PROGRAM_ID, SOLANA_MESSAGE_TRANSMITTER_PROGRAM_ID),
@@ -179,9 +185,6 @@ export const BRIDGE_CHAIN_OPTIONS: BridgeChainOption[] = [
   })),
   {
     domain: 12, name: "Codex", shortName: "CODEX", accent: "#7c3aed", icon: "/chains/codex.svg", type: "evm" as const, status: "planned",
-  },
-  {
-    domain: 26, name: "Arc", shortName: "ARC", accent: "#0ea5e9", icon: "/chains/arc.svg", type: "evm" as const, status: "planned",
   },
   {
     domain: 28, name: "EDGE", shortName: "EDGE", accent: "#111827", icon: "/chains/edge.svg", type: "evm" as const, status: "planned",
@@ -234,6 +237,22 @@ export const TOKEN_MESSENGER_V2_ABI = [
       { name: "destinationCaller", type: "bytes32" },
       { name: "maxFee", type: "uint256" },
       { name: "minFinalityThreshold", type: "uint32" },
+    ],
+    outputs: [],
+  },
+  {
+    type: "function",
+    stateMutability: "nonpayable",
+    name: "depositForBurnWithHook",
+    inputs: [
+      { name: "amount", type: "uint256" },
+      { name: "destinationDomain", type: "uint32" },
+      { name: "mintRecipient", type: "bytes32" },
+      { name: "burnToken", type: "address" },
+      { name: "destinationCaller", type: "bytes32" },
+      { name: "maxFee", type: "uint256" },
+      { name: "minFinalityThreshold", type: "uint32" },
+      { name: "hookData", type: "bytes" },
     ],
     outputs: [],
   },
@@ -323,9 +342,27 @@ export function estimateMaxFee(amount: bigint, feeBps: number) {
   return (fee * BigInt(120)) / BigInt(100) + BigInt(1);
 }
 
-export async function fetchRouteFee(sourceDomain: number, destinationDomain: number, mode: BridgeMode) {
+export type RouteFeeQuote = {
+  minimumFeeBps: number;
+  forwardFee: bigint;
+};
+
+const ROUTE_FEE_CACHE_TTL_MS = 30_000;
+const routeFeeCache = new Map<string, { quote: RouteFeeQuote; expiresAt: number }>();
+
+export async function fetchRouteFeeQuote(
+  sourceDomain: number,
+  destinationDomain: number,
+  mode: BridgeMode,
+  forward = false,
+): Promise<RouteFeeQuote> {
+  const cacheKey = `${sourceDomain}:${destinationDomain}:${mode}:${forward ? "forward" : "direct"}`;
+  const cached = routeFeeCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.quote;
+
+  const query = forward ? "?forward=true" : "";
   const response = await fetch(
-    `${getIrisApiBase()}/v2/burn/USDC/fees/${sourceDomain}/${destinationDomain}`,
+    `${getIrisApiBase()}/v2/burn/USDC/fees/${sourceDomain}/${destinationDomain}${query}`,
     { cache: "no-store" },
   );
   if (!response.ok) {
@@ -335,16 +372,76 @@ export async function fetchRouteFee(sourceDomain: number, destinationDomain: num
   const rows = Array.isArray(payload) ? payload : payload?.data;
   const finalityThreshold = getFinalityThreshold(mode);
   const row = rows?.find(
-    (candidate: { finalityThreshold?: number }) =>
+    (candidate: { finalityThreshold?: number; forwardFee?: { med?: number } }) =>
       candidate.finalityThreshold === finalityThreshold,
-  );
+  ) as { finalityThreshold?: number; forwardFee?: { med?: number }; minimumFee?: number } | undefined;
   const minimumFee = Number(row?.minimumFee);
 
   if (!row || !Number.isFinite(minimumFee)) {
     throw new Error("Selected transfer speed is unavailable for this route.");
   }
 
-  return minimumFee;
+  const rawForwardFee = forward ? Number(row.forwardFee?.med) : 0;
+  const forwardFee = BigInt(Number.isSafeInteger(rawForwardFee) && rawForwardFee >= 0 ? rawForwardFee : 0);
+
+  if (forward && forwardFee <= BigInt(0)) {
+    throw new Error("Circle Forwarding Service is unavailable for this route.");
+  }
+
+  const quote = { minimumFeeBps: minimumFee, forwardFee };
+  routeFeeCache.set(cacheKey, {
+    quote,
+    expiresAt: Date.now() + ROUTE_FEE_CACHE_TTL_MS,
+  });
+  return quote;
+}
+
+export async function fetchRouteFee(sourceDomain: number, destinationDomain: number, mode: BridgeMode) {
+  return (await fetchRouteFeeQuote(sourceDomain, destinationDomain, mode)).minimumFeeBps;
+}
+
+export type CctpMessageState = {
+  status: AttestationStatus;
+  attestation: { message: string; attestation: string } | null;
+  forwardState: string | null;
+  forwardTxHash: string | null;
+};
+
+export async function fetchCctpMessageState(
+  sourceDomain: number,
+  burnHash: string,
+): Promise<CctpMessageState> {
+  const response = await fetch(
+    `${getIrisApiBase()}/v2/messages/${sourceDomain}?transactionHash=${burnHash}`,
+    { cache: "no-store" },
+  );
+  if (response.status === 404) {
+    return { status: "not_found", attestation: null, forwardState: null, forwardTxHash: null };
+  }
+  if (!response.ok) throw new Error("Unable to fetch Circle transfer status.");
+
+  const payload = await response.json();
+  const message = payload?.messages?.[0] ?? payload?.data?.messages?.[0] ?? payload?.data?.[0];
+  if (!message) {
+    return { status: "not_found", attestation: null, forwardState: null, forwardTxHash: null };
+  }
+
+  const complete = message.status === "complete" && message.message && message.attestation;
+  return {
+    status: complete ? "complete" : "pending",
+    attestation: complete
+      ? { message: message.message as string, attestation: message.attestation as string }
+      : null,
+    forwardState: typeof (message.forwardState ?? message.forwarding?.state) === "string"
+      ? String(message.forwardState ?? message.forwarding?.state).toUpperCase()
+      : null,
+    forwardTxHash:
+      (message.forwardTxHash ??
+        message.forwardTransactionHash ??
+        message.forwardTx?.hash ??
+        message.forwarding?.transactionHash ??
+        null) as string | null,
+  };
 }
 
 export async function fetchAttestation(sourceDomain: number, burnHash: string) {

@@ -3,6 +3,9 @@ import { NextResponse } from "next/server";
 // Simple in-memory cache with TTL
 const logoCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour cache
+const RESPONSE_HEADERS = {
+  "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+};
 
 async function fetchBlockchainLogosFromCoinGecko(blockchainIds: string[]) {
   try {
@@ -48,7 +51,7 @@ export async function GET(request: Request) {
         data: cached.data,
         cached: true,
         timestamp: cached.timestamp,
-      });
+      }, { headers: RESPONSE_HEADERS });
     }
 
     // Fetch fresh data
@@ -80,7 +83,7 @@ export async function GET(request: Request) {
       data: logos,
       cached: false,
       timestamp: now,
-    });
+    }, { headers: RESPONSE_HEADERS });
   } catch (error) {
     console.error("Blockchain logos API error:", error);
     return NextResponse.json(

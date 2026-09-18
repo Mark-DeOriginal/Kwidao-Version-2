@@ -49,6 +49,31 @@ const hyperEvmRpcUrl = process.env.NEXT_PUBLIC_HYPEREVM_RPC_URL?.trim();
 const inkRpcUrl = process.env.NEXT_PUBLIC_INK_RPC_URL?.trim();
 const plumeRpcUrl = process.env.NEXT_PUBLIC_PLUME_RPC_URL?.trim();
 const morphRpcUrl = process.env.NEXT_PUBLIC_MORPH_RPC_URL?.trim();
+const arcRpcUrl = process.env.NEXT_PUBLIC_ARC_RPC_URL?.trim();
+
+const arc: Chain = {
+  id: 5042,
+  name: "Arc",
+  nativeCurrency: {
+    name: "USDC",
+    symbol: "USDC",
+    decimals: 18,
+  },
+  rpcUrls: {
+    default: {
+      http: [arcRpcUrl || "https://rpc.mainnet.arc.io"],
+    },
+    public: {
+      http: [arcRpcUrl || "https://rpc.mainnet.arc.io"],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: "Arc Explorer",
+      url: "https://explorer.arc.io",
+    },
+  },
+};
 
 const injective: Chain = {
   id: 1776,
@@ -104,6 +129,7 @@ export const walletConnectChains = [
   hyperEvm,
   ink,
   plumeMainnet,
+  arc,
   injective,
   morph,
 ] as const;
@@ -128,6 +154,7 @@ export const walletConnectWagmiConfig = createConfig({
     [hyperEvm.id]: hyperEvmRpcUrl ? http(hyperEvmRpcUrl) : http(),
     [ink.id]: inkRpcUrl ? http(inkRpcUrl) : http(),
     [plumeMainnet.id]: plumeRpcUrl ? http(plumeRpcUrl) : http(),
+    [arc.id]: arcRpcUrl ? http(arcRpcUrl) : http("https://rpc.mainnet.arc.io"),
     [injective.id]: injectiveRpcUrl ? http(injectiveRpcUrl) : http("https://sentry.evm-rpc.injective.network/"),
     [morph.id]: morphRpcUrl ? http(morphRpcUrl) : http(),
   },

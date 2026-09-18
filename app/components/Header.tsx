@@ -5,14 +5,12 @@ import { useEffect, useRef, useState } from "react";
 const navLinks = [
   { label: "Ecosystem", href: "/#ecosystem" },
   { label: "How It Works", href: "/#how-it-works" },
-  { label: "Peer to Peer", href: "/p2p" },
   { label: "Security", href: "/#security-safety" },
   { label: "Community", href: "/#community" },
 ];
 
 const toolLinks = [
   { label: "USDC Bridge", href: "/usdc-bridge" },
-  { label: "P2P Marketplace", href: "/p2p" },
   { label: "Tools Hub", href: "/tools" },
   { label: "Live Market", href: "/live-market" },
   { label: "DeFi Intelligence", href: "/tools/defi-intelligence" },

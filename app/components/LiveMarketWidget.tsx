@@ -15,7 +15,7 @@ interface PriceData {
 
 const COINS_TO_TRACK = ["bitcoin", "ethereum", "avalanche-2", "solana", "sui"];
 const STORAGE_KEY = "kwidao_market_prices";
-const REFRESH_INTERVAL = 3000; // 3 seconds
+const REFRESH_INTERVAL = 30_000;
 
 // Helper to generate realistic sparkline data
 const generateSparkline = (
@@ -183,9 +183,6 @@ export default function LiveMarketWidget() {
         const coins = COINS_TO_TRACK.join(",");
         const response = await fetch(`/api/market-prices?coins=${coins}`, {
           method: "GET",
-          headers: {
-            "Cache-Control": "no-store",
-          },
         });
 
         if (!response.ok) {
@@ -238,9 +235,16 @@ export default function LiveMarketWidget() {
   );
 
   useEffect(() => {
-    fetchPrices();
-    const interval = setInterval(() => fetchPrices(), REFRESH_INTERVAL);
-    return () => clearInterval(interval);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void fetchPrices();
+    };
+    refreshWhenVisible();
+    const interval = window.setInterval(refreshWhenVisible, REFRESH_INTERVAL);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
   }, [fetchPrices]);
 
   if (isLoading && prices.length === 0) {

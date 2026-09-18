@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 
 import {
   TABS,
@@ -8,12 +9,13 @@ import {
   type TickerResponse,
 } from "@/lib/defiIntelligence";
 
-import ComparePanel from "./ComparePanel";
-import HeatmapPanel from "./HeatmapPanel";
 import IntelligencePanel from "./IntelligencePanel";
-import PerpsPanel from "./PerpsPanel";
-import SignalsPanel from "./SignalsPanel";
 import TickerStrip from "./TickerStrip";
+
+const ComparePanel = dynamic(() => import("./ComparePanel"));
+const HeatmapPanel = dynamic(() => import("./HeatmapPanel"));
+const SignalsPanel = dynamic(() => import("./SignalsPanel"));
+const PerpsPanel = dynamic(() => import("./PerpsPanel"));
 
 export default function DefiIntelligenceClient() {
   const [tab, setTab] = useState<DefiTabId>("intelligence");
@@ -33,11 +35,16 @@ export default function DefiIntelligenceClient() {
       }
     };
 
-    loadTicker();
-    const timer = window.setInterval(loadTicker, 5_000);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void loadTicker();
+    };
+    refreshWhenVisible();
+    const timer = window.setInterval(refreshWhenVisible, 30_000);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
     return () => {
       mounted = false;
       window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, []);
 
@@ -60,23 +67,15 @@ export default function DefiIntelligenceClient() {
           </div>
         </section>
 
-        <div className={tab === "intelligence" ? "block" : "hidden"}>
+        {tab === "intelligence" ? (
           <IntelligencePanel
             globalMarketCap={ticker?.globalMarketCap ?? null}
           />
-        </div>
-        <div className={tab === "compare" ? "block" : "hidden"}>
-          <ComparePanel active={tab === "compare"} />
-        </div>
-        <div className={tab === "heatmap" ? "block" : "hidden"}>
-          <HeatmapPanel active={tab === "heatmap"} />
-        </div>
-        <div className={tab === "signals" ? "block" : "hidden"}>
-          <SignalsPanel active={tab === "signals"} />
-        </div>
-        <div className={tab === "perps" ? "block" : "hidden"}>
-          <PerpsPanel active={tab === "perps"} />
-        </div>
+        ) : null}
+        {tab === "compare" ? <ComparePanel active /> : null}
+        {tab === "heatmap" ? <HeatmapPanel active /> : null}
+        {tab === "signals" ? <SignalsPanel active /> : null}
+        {tab === "perps" ? <PerpsPanel active /> : null}
       </div>
     </>
   );
