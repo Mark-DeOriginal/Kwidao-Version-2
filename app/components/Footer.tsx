@@ -43,67 +43,87 @@ const socialLinks = [
   },
 ];
 
-const quickLinks = [
-  { label: "Live Market", href: "/live-market" },
-  { label: "What is Kwidao", href: "/#what-is-kwidao" },
-  { label: "Ecosystem", href: "/#ecosystem" },
-  { label: "How It Works", href: "/#how-it-works" },
-  { label: "Security", href: "/#security-safety" },
-  { label: "Join Waitlist", href: "/waitlist" },
+const footerGroups = [
+  {
+    title: "Platform",
+    links: [
+      { label: "USDC Bridge", href: "/usdc-bridge" },
+      { label: "Live Market", href: "/live-market" },
+      { label: "Tools Hub", href: "/tools" },
+    ],
+  },
+  {
+    title: "Explore",
+    links: [
+      { label: "What is Kwidao", href: "/#what-is-kwidao" },
+      { label: "Ecosystem", href: "/#ecosystem" },
+      { label: "How It Works", href: "/#how-it-works" },
+      { label: "Security", href: "/#security-safety" },
+    ],
+  },
+  {
+    title: "Connect",
+    links: [
+      { label: "Community", href: "/#community" },
+      { label: "Join Waitlist", href: "/waitlist" },
+    ],
+  },
 ];
 
 export default function Footer() {
   return (
-    <footer className="border-t border-[color:var(--theme-border-subtle)] bg-[color:var(--theme-surface-contrast-strong)]">
-      <div className="mx-auto max-w-7xl px-6 py-14 md:px-10">
-        <div className="grid gap-10 md:grid-cols-[1.3fr_1fr]">
-          <div>
-            <Link href="/" className="inline-block">
-              <img src="/logo.svg" alt="Kwidao" className="h-8 w-auto" />
+    <footer className="bg-white text-[#30283B]">
+      <div className="mx-auto max-w-[1600px] px-6 pb-8 pt-16 sm:px-10 lg:px-12 lg:pt-20 xl:px-16">
+        <div className="grid gap-12 border-b border-[#E8E4ED] pb-16 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_0.8fr] lg:gap-10">
+          <div className="sm:col-span-2 lg:col-span-1">
+            <Link href="/" className="inline-block" aria-label="Kwidao home">
+              <img src="/logo.svg" alt="Kwidao" className="h-9 w-auto" />
             </Link>
-            <p className="mt-4 max-w-xl text-sm leading-relaxed text-[var(--theme-text-soft)]">
-              Kwidao is building a safer and more intelligent way to navigate DeFi, with live
-              market intelligence and strategy-focused products.
+            <p className="mt-7 max-w-sm text-base leading-7 text-[#565268]">
+              Bridge USDC across supported chains, explore live markets, and
+              navigate DeFi with more clarity.
             </p>
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              {socialLinks.map((social) => (
-                <Link
-                  key={social.label}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={social.label}
-                  className={`theme-button-secondary h-10 w-10 p-0 text-[var(--theme-text-strong)] ${social.hoverClass}`}
-                >
-                  {social.icon}
-                </Link>
-              ))}
-            </div>
           </div>
 
-          <div>
-            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--theme-primary)]">
-              Explore
-            </h3>
-            <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
-              {quickLinks.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-[var(--theme-text-soft)] transition-colors hover:text-[var(--theme-primary)]"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {footerGroups.map((group) => (
+            <nav key={group.title} aria-label={`${group.title} links`}>
+              <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-[#662E91]">
+                {group.title}
+              </h2>
+              <ul className="mt-6 space-y-4">
+                {group.links.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-sm font-medium text-[#30283B] transition-colors hover:text-[#662E91] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#662E91]"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
         </div>
 
-        <div className="mt-10 border-t border-[color:var(--theme-border-subtle)] pt-5">
-          <p className="text-xs text-[var(--theme-text-soft)]">
-            (c) {new Date().getFullYear()} Kwidao. All rights reserved.
+        <div className="flex flex-col gap-6 pt-7 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-[#746D80]">
+            © {new Date().getFullYear()} Kwidao. All rights reserved.
           </p>
+          <div className="flex items-center gap-3" aria-label="Social links">
+            {socialLinks.filter((social) => social.href !== "#").map((social) => (
+              <Link
+                key={social.label}
+                href={social.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={social.label}
+                className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#E8E4ED] text-[#565268] transition-colors hover:border-[#CAC3E7] hover:bg-[#F5F0FA] ${social.hoverClass}`}
+              >
+                {social.icon}
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </footer>

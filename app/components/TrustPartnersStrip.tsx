@@ -66,7 +66,7 @@ export default function TrustPartnersStrip() {
   ];
 
   return (
-    <section className="border-y border-[color:var(--theme-border-subtle)] bg-[color:var(--theme-primary-faint)] py-12">
+    <section className="border-b border-[color:var(--theme-border-subtle)] bg-[color:var(--theme-primary-faint)] py-12">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="theme-panel px-6 py-8 md:px-8">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">

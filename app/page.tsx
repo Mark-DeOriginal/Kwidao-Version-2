@@ -10,10 +10,6 @@ const LiveMarketWidget = dynamic(() => import("./components/LiveMarketWidget"), 
   loading: () => <SectionFallback className="min-h-[180px]" />,
 });
 
-const TrustPartnersStrip = dynamic(() => import("./components/TrustPartnersStrip"), {
-  loading: () => <SectionFallback className="min-h-[280px]" />,
-});
-
 const WhatIsKwidaoSection = dynamic(() => import("./components/WhatIsKwidaoSection"), {
   loading: () => <SectionFallback className="min-h-[520px]" />,
 });
@@ -56,26 +52,17 @@ export default function Home() {
   return (
     <main id="top" className="bg-[var(--theme-surface)] text-[var(--theme-text-muted)] scroll-smooth">
       {/* Hero Section */}
-      <section className="border-b border-[color:var(--theme-border-subtle)]">
-        <div className="px-4 md:px-8">
-          <HeroSection />
-        </div>
+      <section>
+        <HeroSection />
       </section>
 
       {/* Live Market Widget - Full Width */}
-      <section className="border-b border-[color:var(--theme-border-subtle)] py-8 px-4 md:px-8 bg-[color:var(--theme-primary-faint)]">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-4">
-            <h3 className="text-sm uppercase tracking-widest text-[color:var(--theme-primary-weak)] font-bold mb-4">
-              Live Market Prices
-            </h3>
-          </div>
-          <LiveMarketWidget />
-        </div>
+      <section
+        className="overflow-hidden py-8"
+        style={{ backgroundColor: "#f2edff" }}
+      >
+        <LiveMarketWidget />
       </section>
-
-      {/* Trust & Partners */}
-      <TrustPartnersStrip />
 
       {/* What is Kwidao */}
       <section id="what-is-kwidao" className="border-b border-[color:var(--theme-border-subtle)]">

@@ -1,238 +1,141 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { motion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface PriceData {
   id: string;
   symbol: string;
   name: string;
-  current_price: number;
-  price_change_percentage_24h: number;
-  sparkline: number[];
+  currentPrice: number;
+  change24h: number;
   image?: string;
 }
 
-const COINS_TO_TRACK = ["bitcoin", "ethereum", "avalanche-2", "solana", "sui"];
-const STORAGE_KEY = "kwidao_market_prices";
-const REFRESH_INTERVAL = 30_000;
+interface AssetDefinition {
+  id: string;
+  symbol: string;
+  name: string;
+  fallbackPrice: number;
+  fallbackChange: number;
+}
 
-// Helper to generate realistic sparkline data
-const generateSparkline = (
-  current: number,
-  changePercent: number,
-): number[] => {
-  const sparkline: number[] = [];
-  const change = (changePercent / 100) * current;
-  const low = current - Math.abs(change) * 1.5;
-  const high = current + Math.abs(change) * 1.5;
+const ASSETS: AssetDefinition[] = [
+  { id: "bitcoin", symbol: "BTC", name: "Bitcoin", fallbackPrice: 42500, fallbackChange: 2.5 },
+  { id: "ethereum", symbol: "ETH", name: "Ethereum", fallbackPrice: 2850, fallbackChange: 1.8 },
+  { id: "pax-gold", symbol: "PAXG", name: "Gold", fallbackPrice: 2650, fallbackChange: 0.4 },
+  { id: "ripple", symbol: "XRP", name: "XRP", fallbackPrice: 2.18, fallbackChange: 1.2 },
+  { id: "zcash", symbol: "ZEC", name: "Zcash", fallbackPrice: 48.2, fallbackChange: -0.8 },
+  { id: "solana", symbol: "SOL", name: "Solana", fallbackPrice: 168.75, fallbackChange: 4.1 },
+  { id: "avalanche-2", symbol: "AVAX", name: "Avalanche", fallbackPrice: 38.5, fallbackChange: 3.2 },
+  { id: "sui", symbol: "SUI", name: "Sui", fallbackPrice: 3.45, fallbackChange: 2.9 },
+  { id: "chainlink", symbol: "LINK", name: "Chainlink", fallbackPrice: 18.4, fallbackChange: 1.6 },
+  { id: "cardano", symbol: "ADA", name: "Cardano", fallbackPrice: 0.72, fallbackChange: -0.3 },
+  { id: "dogecoin", symbol: "DOGE", name: "Dogecoin", fallbackPrice: 0.21, fallbackChange: 0.9 },
+  { id: "polkadot", symbol: "DOT", name: "Polkadot", fallbackPrice: 7.1, fallbackChange: -1.1 },
+  { id: "litecoin", symbol: "LTC", name: "Litecoin", fallbackPrice: 96.4, fallbackChange: 0.7 },
+];
 
-  for (let i = 0; i < 24; i++) {
-    // Create a more realistic chart with some trend
-    const trend = (i / 24) * (change / 2);
-    const noise = (Math.random() - 0.5) * Math.abs(change);
-    const basePrice = low + (high - low) / 2 + trend + noise;
-    sparkline.push(Math.max(low, Math.min(high, basePrice)));
-  }
+const STORAGE_KEY = "kwidao_market_prices_v2";
+const REFRESH_INTERVAL = 60_000;
 
-  return sparkline;
-};
+function formatPrice(value: number) {
+  return value.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: value < 1 ? 2 : 0,
+    maximumFractionDigits: value < 1 ? 4 : value < 100 ? 2 : 0,
+  });
+}
 
-// Fallback data in case API fails completely
-const FALLBACK_PRICES: Record<string, any> = {
-  bitcoin: {
-    usd: 42500,
-    usd_24h_change: 2.5,
-    usd_sparkline_7d: generateSparkline(42500, 2.5),
-  },
-  ethereum: {
-    usd: 2850,
-    usd_24h_change: 1.8,
-    usd_sparkline_7d: generateSparkline(2850, 1.8),
-  },
-  "avalanche-2": {
-    usd: 38.5,
-    usd_24h_change: 3.2,
-    usd_sparkline_7d: generateSparkline(38.5, 3.2),
-  },
-  solana: {
-    usd: 168.75,
-    usd_24h_change: 4.1,
-    usd_sparkline_7d: generateSparkline(168.75, 4.1),
-  },
-  sui: {
-    usd: 3.45,
-    usd_24h_change: 2.9,
-    usd_sparkline_7d: generateSparkline(3.45, 2.9),
-  },
-};
+function MarketCard({ asset }: { asset: PriceData }) {
+  const isPositive = asset.change24h >= 0;
+
+  return (
+    <article
+      className="group relative z-0 -ml-px flex w-[248px] shrink-0 items-center gap-3 border border-[color:var(--theme-border-soft)] bg-[color:var(--theme-surface)] px-6 py-5 outline-none first:ml-0 transition-[box-shadow,border-color] duration-300 ease-out hover:z-10 hover:border-transparent hover:shadow-[0_16px_38px_rgba(72,42,92,0.13)] focus-visible:z-10 focus-visible:border-transparent focus-visible:shadow-[0_16px_38px_rgba(72,42,92,0.13)] md:w-[270px]"
+      tabIndex={0}
+      aria-label={`${asset.name}, ${formatPrice(asset.currentPrice)}, ${isPositive ? "up" : "down"} ${Math.abs(asset.change24h).toFixed(2)} percent in 24 hours`}
+    >
+      <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full border border-[color:var(--theme-border-soft)] bg-white shadow-[0_6px_20px_rgba(64,38,84,0.08)]">
+        {asset.image ? (
+          <img src={asset.image} alt="" className="h-7 w-7 object-contain" loading="lazy" decoding="async" />
+        ) : (
+          <span className="text-xs font-bold text-[color:var(--theme-primary)]">{asset.symbol.slice(0, 2)}</span>
+        )}
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-2">
+          <h3 className="text-base font-semibold text-[color:var(--theme-text-strong)]">{asset.symbol}</h3>
+          <span className="truncate text-xs text-[color:var(--theme-text-soft)]">{asset.name}</span>
+        </div>
+        <div className="mt-1.5 flex items-center gap-2.5">
+          <span className="font-mono text-[15px] font-semibold tabular-nums text-[color:var(--theme-text-strong)]">{formatPrice(asset.currentPrice)}</span>
+          <span className={`font-mono text-xs font-semibold tabular-nums ${isPositive ? "text-emerald-600" : "text-rose-600"}`}>
+            {isPositive ? "+" : ""}{asset.change24h.toFixed(2)}%
+          </span>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function MarketSkeleton() {
+  return (
+    <div className="flex overflow-hidden" aria-label="Loading live market prices">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div key={index} className="flex w-[248px] shrink-0 animate-pulse items-center gap-3 px-6 py-5 md:w-[270px]">
+          <div className="h-11 w-11 rounded-full bg-[color:var(--theme-border-soft)]" />
+          <div className="flex-1 space-y-2">
+            <div className="h-3 w-20 rounded bg-[color:var(--theme-border-soft)]" />
+            <div className="h-4 w-28 rounded bg-[color:var(--theme-border-soft)]" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function LiveMarketWidget() {
   const [prices, setPrices] = useState<PriceData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isCached, setIsCached] = useState(false);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const offsetRef = useRef(0);
+  const pointerXRef = useRef(0);
+  const pointerTimeRef = useRef(0);
+  const isDraggingRef = useRef(false);
+  const isHoveredRef = useRef(false);
+  const directionRef = useRef(-1);
+  const velocityRef = useRef(-42);
 
-  // Format raw data into PriceData
-  const formatPriceData = useCallback(
-    (
-      data: Record<string, any>,
-      images: Record<string, string> = {},
-    ): PriceData[] => {
-      return [
-        {
-          id: "bitcoin",
-          symbol: "BTC",
-          name: "Bitcoin",
-          current_price: data.bitcoin?.usd || FALLBACK_PRICES.bitcoin.usd,
-          price_change_percentage_24h:
-            data.bitcoin?.usd_24h_change ||
-            FALLBACK_PRICES.bitcoin.usd_24h_change,
-          sparkline: (
-            data.bitcoin?.usd_sparkline_7d ||
-            FALLBACK_PRICES.bitcoin.usd_sparkline_7d
-          ).slice(-24),
-          image: images["bitcoin"],
-        },
-        {
-          id: "ethereum",
-          symbol: "ETH",
-          name: "Ethereum",
-          current_price: data.ethereum?.usd || FALLBACK_PRICES.ethereum.usd,
-          price_change_percentage_24h:
-            data.ethereum?.usd_24h_change ||
-            FALLBACK_PRICES.ethereum.usd_24h_change,
-          sparkline: (
-            data.ethereum?.usd_sparkline_7d ||
-            FALLBACK_PRICES.ethereum.usd_sparkline_7d
-          ).slice(-24),
-          image: images["ethereum"],
-        },
-        {
-          id: "avalanche-2",
-          symbol: "AVAX",
-          name: "Avalanche",
-          current_price:
-            data["avalanche-2"]?.usd || FALLBACK_PRICES["avalanche-2"].usd,
-          price_change_percentage_24h:
-            data["avalanche-2"]?.usd_24h_change ||
-            FALLBACK_PRICES["avalanche-2"].usd_24h_change,
-          sparkline: (
-            data["avalanche-2"]?.usd_sparkline_7d ||
-            FALLBACK_PRICES["avalanche-2"].usd_sparkline_7d
-          ).slice(-24),
-          image: images["avalanche-2"],
-        },
-        {
-          id: "solana",
-          symbol: "SOL",
-          name: "Solana",
-          current_price: data.solana?.usd || FALLBACK_PRICES.solana.usd,
-          price_change_percentage_24h:
-            data.solana?.usd_24h_change ||
-            FALLBACK_PRICES.solana.usd_24h_change,
-          sparkline: (
-            data.solana?.usd_sparkline_7d ||
-            FALLBACK_PRICES.solana.usd_sparkline_7d
-          ).slice(-24),
-          image: images["solana"],
-        },
-        {
-          id: "sui",
-          symbol: "SUI",
-          name: "Sui",
-          current_price: data.sui?.usd || FALLBACK_PRICES.sui.usd,
-          price_change_percentage_24h:
-            data.sui?.usd_24h_change || FALLBACK_PRICES.sui.usd_24h_change,
-          sparkline: (
-            data.sui?.usd_sparkline_7d || FALLBACK_PRICES.sui.usd_sparkline_7d
-          ).slice(-24),
-          image: images["sui"],
-        },
-      ];
-    },
-    [],
-  );
+  const formatPriceData = useCallback((data: Record<string, any>, images: Record<string, string> = {}) => (
+    ASSETS.map((asset) => ({
+      id: asset.id,
+      symbol: asset.symbol,
+      name: asset.name,
+      currentPrice: Number(data[asset.id]?.usd ?? asset.fallbackPrice),
+      change24h: Number(data[asset.id]?.usd_24h_change ?? asset.fallbackChange),
+      image: images[asset.id],
+    }))
+  ), []);
 
-  // Load from localStorage
-  const loadFromCache = useCallback(() => {
+  const fetchPrices = useCallback(async () => {
     try {
-      if (typeof window === "undefined") return null;
+      const response = await fetch(`/api/market-prices?coins=${ASSETS.map(({ id }) => id).join(",")}`);
+      if (!response.ok) throw new Error(`Market API returned ${response.status}`);
+      const result = await response.json();
+      if (!result.success) throw new Error(result.message || "Unable to load market prices");
+
+      const formatted = formatPriceData(result.data, result.data.images ?? {});
+      setPrices(formatted);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(formatted));
+    } catch {
       const cached = localStorage.getItem(STORAGE_KEY);
-      return cached ? JSON.parse(cached) : null;
-    } catch (err) {
-      return null;
+      setPrices(cached ? JSON.parse(cached) : formatPriceData({}));
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
-
-  // Save to localStorage
-  const saveToCache = useCallback((data: PriceData[]) => {
-    try {
-      if (typeof window !== "undefined") {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      }
-    } catch (err) {
-      // Silently fail
-    }
-  }, []);
-
-  // Fetch prices with retry logic
-  const fetchPrices = useCallback(
-    async (retries = 0) => {
-      try {
-        const coins = COINS_TO_TRACK.join(",");
-        const response = await fetch(`/api/market-prices?coins=${coins}`, {
-          method: "GET",
-        });
-
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        if (!result.success) {
-          throw new Error(result.message || "Failed to fetch prices");
-        }
-
-        const images = result.data.images || {};
-        const priceData = { ...result.data };
-        delete priceData.images;
-
-        const formattedData = formatPriceData(priceData, images);
-        setPrices(formattedData);
-        saveToCache(formattedData);
-        setError(null);
-        setIsCached(result.cached || false);
-        setIsLoading(false);
-      } catch (err) {
-        // Try to load from cache
-        const cachedData = loadFromCache();
-        if (cachedData && cachedData.length > 0) {
-          setPrices(cachedData);
-          setIsCached(true);
-          setIsLoading(false);
-          setError(null);
-          return;
-        }
-
-        // Retry with exponential backoff
-        if (retries < 3) {
-          const delay = Math.pow(2, retries) * 1000; // 1s, 2s, 4s exponential backoff
-          setTimeout(() => {
-            fetchPrices(retries + 1);
-          }, delay);
-        } else {
-          // Use fallback data after all retries fail
-          const fallbackData = formatPriceData(FALLBACK_PRICES);
-          setPrices(fallbackData);
-          setIsLoading(false);
-          setError(null); // Don't show error, just use fallback
-        }
-      }
-    },
-    [formatPriceData, saveToCache, loadFromCache],
-  );
+  }, [formatPriceData]);
 
   useEffect(() => {
     const refreshWhenVisible = () => {
@@ -247,128 +150,100 @@ export default function LiveMarketWidget() {
     };
   }, [fetchPrices]);
 
-  if (isLoading && prices.length === 0) {
-    return (
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className="theme-card animate-pulse rounded-2xl p-4">
-            <div className="h-4 bg-[color:var(--theme-border-soft)] rounded w-12 mb-2"></div>
-            <div className="h-6 bg-[color:var(--theme-border-soft)] rounded w-24 mb-2"></div>
-            <div className="h-3 bg-[color:var(--theme-border-soft)] rounded w-16"></div>
-          </div>
-        ))}
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (prices.length === 0) return;
 
-  const getMiniChart = (
-    sparkline: number[],
-    isPositive: boolean,
-    chartId: string,
-  ) => {
-    if (!sparkline || sparkline.length < 2) return null;
+    let animationFrame = 0;
+    let previousTime = performance.now();
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    const max = Math.max(...sparkline);
-    const min = Math.min(...sparkline);
-    const range = max - min || 1;
+    const animate = (time: number) => {
+      const track = trackRef.current;
+      if (track) {
+        const setWidth = track.scrollWidth / 2;
+        const elapsed = Math.min((time - previousTime) / 1000, 0.05);
+        if (!reduceMotion && !isDraggingRef.current) {
+          const targetVelocity = isHoveredRef.current
+            ? directionRef.current * 14
+            : -42;
+          const easing = 1 - Math.exp(-elapsed * 3.2);
+          velocityRef.current += (targetVelocity - velocityRef.current) * easing;
+          offsetRef.current += velocityRef.current * elapsed;
+        }
+        if (setWidth > 0) {
+          while (offsetRef.current <= -setWidth) offsetRef.current += setWidth;
+          while (offsetRef.current > 0) offsetRef.current -= setWidth;
+        }
+        track.style.transform = `translate3d(${offsetRef.current}px, 0, 0)`;
+      }
+      previousTime = time;
+      animationFrame = requestAnimationFrame(animate);
+    };
 
-    const points = sparkline.map((price, i) => {
-      const x = (i / (sparkline.length - 1)) * 40;
-      const y = 16 - ((price - min) / range) * 14 - 1;
-      return { x, y, price };
-    });
+    animationFrame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [prices]);
 
-    const pathPoints = points.map((p) => `${p.x},${p.y}`).join(" ");
-    const fillPath = `M ${pathPoints} L ${points[points.length - 1].x},16 L ${points[0].x},16 Z`;
-
-    const strokeColor = isPositive ? "#10b981" : "#ef4444";
-    return (
-      <svg
-        viewBox="0 0 40 16"
-        className="w-full h-6 mt-2"
-        preserveAspectRatio="none"
-      >
-        <defs>
-          <linearGradient
-            id={`gradient-${chartId}`}
-            x1="0%"
-            y1="0%"
-            x2="0%"
-            y2="100%"
-          >
-            <stop offset="0%" stopColor={strokeColor} stopOpacity="0.3" />
-            <stop offset="100%" stopColor={strokeColor} stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path
-          d={fillPath}
-          fill={`url(#gradient-${chartId})`}
-          opacity="0.5"
-        />
-        <polyline
-          fill="none"
-          stroke={strokeColor}
-          strokeWidth="1.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          points={pathPoints}
-        />
-      </svg>
-    );
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    isDraggingRef.current = true;
+    pointerXRef.current = event.clientX;
+    pointerTimeRef.current = performance.now();
+    event.currentTarget.setPointerCapture(event.pointerId);
   };
 
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    const now = performance.now();
+    const delta = event.clientX - pointerXRef.current;
+    const elapsed = Math.max((now - pointerTimeRef.current) / 1000, 0.008);
+    offsetRef.current += delta;
+    velocityRef.current = Math.max(-1600, Math.min(1600, delta / elapsed));
+    if (Math.abs(delta) > 0.5) directionRef.current = delta > 0 ? 1 : -1;
+    pointerXRef.current = event.clientX;
+    pointerTimeRef.current = now;
+  };
+
+  const handlePointerEnd = (event: React.PointerEvent<HTMLDivElement>) => {
+    isDraggingRef.current = false;
+    isHoveredRef.current = event.currentTarget.matches(":hover") || event.currentTarget.contains(document.activeElement);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  if (isLoading && prices.length === 0) return <MarketSkeleton />;
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-      {prices.map((coin, i) => {
-        const isPositive = coin.price_change_percentage_24h > 0;
-        return (
-          <motion.div
-            key={coin.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className="theme-card rounded-2xl p-4"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                {coin.image && (
-                  <img
-                    src={coin.image}
-                    alt={coin.name}
-                    className="w-5 h-5 rounded-full"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                )}
-                <div>
-                  <span className="text-xs font-mono font-semibold text-[var(--theme-text-strong)]">
-                    {coin.symbol}
-                  </span>
-                  <p className="text-[11px] text-[var(--theme-text-soft)]">
-                    {coin.name}
-                  </p>
-                </div>
-              </div>
-              <span
-                className={isPositive ? "theme-pill-positive" : "theme-pill-negative"}
-              >
-                {isPositive ? "+" : ""}
-                {coin.price_change_percentage_24h.toFixed(2)}%
-              </span>
-            </div>
-            <div className="text-lg font-bold text-[var(--theme-text-strong)] font-mono">
-              $
-              {coin.current_price.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </div>
-            {coin.sparkline.length > 1 &&
-              getMiniChart(coin.sparkline, isPositive, coin.id)}
-          </motion.div>
-        );
-      })}
+    <div
+      className="market-ticker-mask group/ticker cursor-grab touch-pan-y select-none overflow-hidden bg-[color:var(--theme-surface)] active:cursor-grabbing"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerEnd}
+      onPointerCancel={handlePointerEnd}
+      onPointerEnter={() => { isHoveredRef.current = true; }}
+      onPointerLeave={() => {
+        if (!isDraggingRef.current) {
+          isHoveredRef.current = false;
+          directionRef.current = -1;
+        }
+      }}
+      onFocusCapture={() => { isHoveredRef.current = true; }}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          isHoveredRef.current = false;
+          directionRef.current = -1;
+        }
+      }}
+      aria-label="Draggable live market price carousel"
+    >
+      <div ref={trackRef} className="market-ticker-track flex w-max">
+        <div className="flex shrink-0" role="list" aria-label="Live market prices">
+          {prices.map((asset) => <MarketCard key={asset.id} asset={asset} />)}
+        </div>
+        <div className="flex shrink-0" aria-hidden="true">
+          {prices.map((asset) => <MarketCard key={`duplicate-${asset.id}`} asset={asset} />)}
+        </div>
+      </div>
     </div>
   );
 }
