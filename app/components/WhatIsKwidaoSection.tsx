@@ -4,104 +4,63 @@ import { motion } from "framer-motion";
 
 const pillars = [
   {
-    title: "Discover Yields",
-    description: "Surface higher-quality opportunities across chains without manually piecing together every signal.",
-    tone: "cool" as const,
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-5 w-5">
-        <circle cx="11" cy="11" r="5.5" />
-        <path d="m15.5 15.5 4 4" strokeLinecap="round" />
-      </svg>
-    ),
+    title: "Bridge Across Networks",
+    description: "Move USDC between supported chains through one guided flow, without juggling separate bridge interfaces.",
+    icon: "/icons/bridge-duotone.svg",
   },
   {
-    title: "Optimize Strategies",
-    description: "Bring planning, sizing, and research into one flow so each decision has more context behind it.",
-    tone: "warm" as const,
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-5 w-5">
-        <path d="M12 4v5M12 15v5M4 12h5M15 12h5" strokeLinecap="round" />
-        <circle cx="12" cy="12" r="3.5" />
-      </svg>
-    ),
+    title: "Read Markets Clearly",
+    description: "Follow live prices, scan onchain opportunities, and use focused research to see where markets are moving.",
+    icon: "/icons/chart-line-up-duotone.svg",
   },
   {
-    title: "Earn Rewards",
-    description: "Stay aligned with points, governance, and launch opportunities while keeping the interface clear.",
-    tone: "cool" as const,
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-5 w-5">
-        <path d="m12 4 2.3 4.6 5.1.7-3.7 3.6.9 5.1L12 15.6 7.4 18l.9-5.1-3.7-3.6 5.1-.7L12 4Z" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
+    title: "Act With Better Context",
+    description: "Size positions, compare yield scenarios, and test strategies with practical tools built into the same workspace.",
+    icon: "/icons/sliders-horizontal-duotone.svg",
   },
 ];
 
 export default function WhatIsKwidaoSection() {
   return (
-    <section className="px-4 py-20 md:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid items-center gap-12 md:grid-cols-2">
-          <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="relative"
-          >
-            <div className="theme-panel overflow-hidden p-4 md:p-6">
-              <div className="aspect-square overflow-hidden rounded-[1.4rem]">
-                <img
-                  src="/yield-image.webp"
-                  alt="People engaging with decentralized finance tools"
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                />
-              </div>
-            </div>
-          </motion.div>
+    <section className="relative overflow-hidden bg-white px-5 py-24 sm:px-8 md:py-32">
+      <div className="mx-auto max-w-7xl">
+        <motion.div
+          initial={{ opacity: 0, y: 22 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          viewport={{ once: true, amount: 0.3 }}
+          className="mx-auto max-w-4xl text-center"
+        >
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#662E91]">Why Kwidao</p>
+          <h2 className="mx-auto mt-5 max-w-4xl text-[clamp(2.5rem,5vw,4.5rem)] font-bold leading-[1.02] tracking-[-0.055em] text-[#190B23]">
+            Move, understand, and put your capital to work.
+          </h2>
+          <p className="mx-auto mt-6 max-w-3xl text-base leading-7 text-[#625A6A] md:text-lg md:leading-8">
+            Kwidao brings cross-chain USDC transfers, live market data, DeFi research, and
+            practical strategy tools into one workspace—so you can spend less time switching
+            between platforms and make your next move with better context.
+          </p>
+        </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="space-y-6"
-          >
-            <div>
-              <div className="theme-kicker w-fit">Why Kwidao</div>
-              <h2 className="mb-4 mt-4 text-4xl md:text-5xl font-bold text-[var(--theme-primary)]">
-                Research, tools, and execution in one place.
-              </h2>
-              <p className="text-lg leading-relaxed text-[var(--theme-text-soft)]">
-                Kwidao is a DeFi workspace built to help you discover, analyze, and act with more
-                structure. The visual system stays light and professional while the most important
-                actions keep a cooler brand emphasis.
-              </p>
-            </div>
-
-            <div className="space-y-4 pt-2">
+        <div className="mt-16 grid gap-12 md:mt-20 md:grid-cols-3 md:gap-8 lg:gap-14">
               {pillars.map((pillar, i) => (
                 <motion.div
                   key={pillar.title}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  className="theme-card p-4"
+                  transition={{ duration: 0.55, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                  viewport={{ once: true, amount: 0.35 }}
+                  className="group flex flex-col items-center px-4 text-center md:px-7 lg:px-10"
                 >
-                  <div className="flex gap-4">
-                    <div className={pillar.tone === "warm" ? "theme-icon-badge-warm" : "theme-icon-badge"}>
-                      {pillar.icon}
-                    </div>
-                    <div>
-                      <h4 className="mb-1 font-bold text-[var(--theme-text-strong)]">{pillar.title}</h4>
-                      <p className="text-sm leading-6 text-[var(--theme-text-soft)]">
-                        {pillar.description}
-                      </p>
-                    </div>
+                  <img src={pillar.icon} alt="" aria-hidden="true" className="h-14 w-14" />
+                  <div className="mt-6">
+                    <h3 className="text-xl font-semibold tracking-[-0.025em] text-[#30283B]">{pillar.title}</h3>
+                    <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-[#6A6272] md:text-[15px]">
+                      {pillar.description}
+                    </p>
                   </div>
                 </motion.div>
               ))}
-            </div>
-          </motion.div>
         </div>
       </div>
     </section>

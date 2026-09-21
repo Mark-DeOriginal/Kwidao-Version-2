@@ -10,7 +10,7 @@ export default function HeroSection() {
         <div className="relative z-10 order-2 max-w-[790px] lg:order-1 lg:w-[112%] lg:pt-12">
           <h1
             id="home-hero-title"
-            className="text-[clamp(2.65rem,11vw,5.75rem)] font-bold leading-[0.98] tracking-[-0.06em] text-[#190B23]"
+            className="text-[clamp(2.45rem,10vw,5.25rem)] font-bold leading-[0.98] tracking-[-0.06em] text-[#190B23]"
           >
             Earn Better Yields
             <br className="hidden sm:block" />
@@ -28,10 +28,11 @@ export default function HeroSection() {
               Join Waitlist
             </Link>
             <Link
-              href="/tools"
-              className="inline-flex min-h-14 items-center justify-center rounded-lg border border-[#662E91] bg-white px-8 text-base font-semibold text-[#662E91] transition-colors hover:bg-[#F5F0FA] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#662E91]"
+              href="/usdc-bridge"
+              className="group inline-flex min-h-14 items-center justify-center gap-2 rounded-lg border border-[#662E91] bg-white px-8 text-base font-semibold text-[#662E91] transition-colors hover:bg-[#F5F0FA] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#662E91]"
             >
-              Explore Tools
+              USDC Bridge
+              <span aria-hidden="true" className="text-lg transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5">&#8599;</span>
             </Link>
           </div>
         </div>

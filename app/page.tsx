@@ -66,9 +66,7 @@ export default function Home() {
 
       {/* What is Kwidao */}
       <section id="what-is-kwidao" className="border-b border-[color:var(--theme-border-subtle)]">
-        <div className="px-4 md:px-8">
-          <WhatIsKwidaoSection />
-        </div>
+        <WhatIsKwidaoSection />
       </section>
 
       {/* Ecosystem Section */}
