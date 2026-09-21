@@ -115,6 +115,10 @@ export function GridBotApp() {
                   className="h-8 w-auto md:h-9"
                 />
               </a>
+              <div className="grid-tool-title">
+                <strong>Grid Strategy Studio</strong>
+                <span>Plan, test and monitor automated ranges</span>
+              </div>
             </div>
             <div className="hd hidden"></div>
           </div>

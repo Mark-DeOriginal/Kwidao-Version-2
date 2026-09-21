@@ -412,6 +412,7 @@
           text-align: left;
         }
       }
+
       @media (max-width: 480px) {
         .hdr-top {
           align-items: center;
@@ -1738,4 +1739,71 @@
         .wallet-notice-button {
           width: 100%;
         }
+      }
+
+      /* Final control normalization: kept last so legacy tool rules cannot override it. */
+      .fld input,
+      .fld select,
+      .fp-input {
+        min-height: 44px;
+        border-radius: 8px;
+      }
+      .run-btn,
+      .fp-confirm,
+      .fp-cancel,
+      .wallet-notice-button,
+      .wp-action {
+        min-height: 44px;
+        border-radius: 8px;
+        font-weight: 600;
+      }
+
+      /* Editorial workspace refinement */
+      .grid-tool-title {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding-left: 14px;
+        border-left: 1px solid var(--border);
+      }
+      .grid-tool-title strong {
+        font-size: 13px;
+        color: #30283b;
+      }
+      .grid-tool-title span {
+        font-size: 10px;
+        color: #92889a;
+      }
+      .grid-bot-shell #hdr,
+      .grid-bot-shell #tabs {
+        box-shadow: none;
+      }
+      .grid-bot-shell #page {
+        max-width: 1600px;
+        padding: 28px clamp(20px, 4vw, 64px) 64px;
+      }
+      .grid-bot-shell .scard,
+      .grid-bot-shell .vcell,
+      .grid-bot-shell .bot-card,
+      .grid-bot-shell .panel,
+      .grid-bot-shell .vcard {
+        border-radius: 8px;
+        box-shadow: none;
+      }
+      .grid-bot-shell .scard:hover,
+      .grid-bot-shell .vcell:hover,
+      .grid-bot-shell .bot-card:hover {
+        border-color: #bba9c7;
+      }
+      .grid-bot-shell .tab {
+        padding: 14px 18px;
+        color: #766d7e;
+      }
+      .grid-bot-shell .tab.active {
+        color: #662e91;
+        border-bottom-color: #662e91;
+      }
+      @media (max-width: 640px) {
+        .grid-tool-title span { display: none; }
+        .grid-tool-title strong { font-size: 11px; }
       }

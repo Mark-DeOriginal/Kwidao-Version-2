@@ -645,6 +645,10 @@ export function KwizeranaApp() {
               className="h-8 w-auto md:h-9"
             />
           </a>
+          <div className="analyzer-brand-copy">
+            <strong>Market Analyzer</strong>
+            <span>Cross-chain discovery</span>
+          </div>
         </div>
         <div className="sb-label">Networks</div>
         <div id="chain-list">

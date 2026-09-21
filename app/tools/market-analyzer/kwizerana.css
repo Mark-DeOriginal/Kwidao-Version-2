@@ -681,3 +681,68 @@
           font-size: 11px;
         }
       }
+
+      /* Kwidao cross-page control consistency */
+      .nav-tab,
+      .filter-btn,
+      .search-box,
+      .search-box input,
+      .back-btn {
+        border-radius: 8px;
+      }
+      .search-box,
+      .search-box input {
+        min-height: 40px;
+      }
+
+      /* Editorial workspace refinement */
+      .analyzer-brand-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .analyzer-brand-copy strong {
+        color: #30283b;
+        font-size: 12px;
+      }
+      .analyzer-brand-copy span {
+        color: #92889a;
+        font-size: 9px;
+      }
+      .market-analyzer-shell #sidebar {
+        width: 220px;
+        min-width: 220px;
+        background: #faf8fb;
+      }
+      .market-analyzer-shell #topnav {
+        min-height: 64px;
+        height: 64px;
+        padding: 0 20px;
+      }
+      .market-analyzer-shell .nav-tab {
+        min-height: 38px;
+        display: inline-flex;
+        align-items: center;
+        padding-inline: 14px;
+        border: 1px solid transparent;
+      }
+      .market-analyzer-shell .nav-tab.active {
+        border-color: #d4cadb;
+        background: #f8f5fa;
+        color: #662e91;
+      }
+      .market-analyzer-shell .stat-card {
+        min-width: 150px;
+        border-radius: 8px;
+        padding: 14px 16px;
+        box-shadow: none;
+      }
+      .market-analyzer-shell .stats-bar {
+        gap: 10px;
+        padding: 16px 20px;
+        background: #faf8fb;
+      }
+      .market-analyzer-shell td {
+        padding-top: 11px;
+        padding-bottom: 11px;
+      }

@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { ArrowUpRightIcon } from "./icons/ArrowIcons";
 
 export default function HeroSection() {
   return (
@@ -40,7 +41,7 @@ export default function HeroSection() {
               className="group inline-flex min-h-14 items-center justify-center gap-2 rounded-lg border border-[#662E91] bg-white px-8 text-base font-semibold text-[#662E91] transition-colors hover:bg-[#F5F0FA] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#662E91]"
             >
               USDC Bridge
-              <span aria-hidden="true" className="text-lg transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5">&#8599;</span>
+              <ArrowUpRightIcon className="h-5 w-5 shrink-0 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </Link>
           </div>
         </motion.div>

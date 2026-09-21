@@ -1,5 +1,6 @@
 import Link from "next/link";
 import SocialIcons from "./Icons";
+import { ArrowRightIcon } from "./icons/ArrowIcons";
 
 export default function ComingSoon() {
   return (
@@ -30,21 +31,7 @@ export default function ComingSoon() {
           </p>
           <Link href="#" className="theme-button-primary w-fit px-4 py-2.5">
             <span>Join Waitlist</span>
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="animate-pulse"
-            >
-              <path
-                d="M9 5l7 7-7 7"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              ></path>
-            </svg>
+            <ArrowRightIcon className="h-5 w-5 shrink-0 animate-pulse" />
           </Link>
         </div>
       </section>

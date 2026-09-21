@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { ArrowRightIcon } from "@/app/components/icons/ArrowIcons";
 import {
   Area,
   AreaChart,
@@ -625,7 +626,7 @@ export default function LiveMarketPageClient() {
 
             <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
               <div>
-                <h1 className="text-4xl md:text-6xl font-bold leading-[0.95] tracking-tight text-[var(--theme-primary)]">
+                <h1 className="max-w-3xl text-[clamp(2.35rem,4vw,3.7rem)] font-bold leading-[1.04] tracking-[-0.045em] text-[#190B23]">
                   Track Crypto Markets
                   <br />
                   in Real Time
@@ -961,7 +962,7 @@ export default function LiveMarketPageClient() {
               className="theme-button-primary mt-6 px-5 py-2.5 text-sm"
             >
               Follow @kwidao on X
-              <span aria-hidden="true">-&gt;</span>
+              <ArrowRightIcon className="h-4 w-4 shrink-0" />
             </Link>
           </div>
         </div>

@@ -96,7 +96,7 @@ export function StrategyPanel() {
             Levels: 23.6%, 38.2%, 50%, 61.8%, 78.6% retracement from ATH.
             <br />
             <br />
-            AERO ATH $2.32 -&gt; Fib levels: $1.77, $1.43, $1.16, $0.89, $0.50
+              AERO ATH $2.32. Fib levels: $1.77, $1.43, $1.16, $0.89, $0.50
             <br />
             Current price $0.34 is already below 78.6% fib - deep value zone.
             <br />
@@ -208,13 +208,13 @@ export function StrategyPanel() {
             volatility in real time.
             <br />
             <br />
-            <strong>Low volatility (&lt;3% ATR):</strong> Tighten grids -&gt;
+                <strong>Low volatility (&lt;3% ATR):</strong> Tighten grids to
             more fills, smaller profit per trade.
             <br />
             <strong>Moderate (3-7% ATR):</strong> Default medium spacing -
             balanced approach.
             <br />
-            <strong>High volatility (&gt;7% ATR):</strong> Widen grids -&gt;
+                <strong>High volatility (&gt;7% ATR):</strong> Widen grids to
             fewer fills, larger profit per trade.
             <br />
             <br />
@@ -300,8 +300,8 @@ export function StrategyPanel() {
             that fill are sold - the rest stays accumulated.
             <br />
             <br />
-            Example: buy 10 PHAR @ $150 -&gt; when price hits $154.50 (+3%),
-            sell 5 PHAR -&gt; lock in ~$22.50 profit while keeping 5 PHAR.
+              Example: buy 10 PHAR @ $150. When price hits $154.50 (+3%),
+              sell 5 PHAR to lock in ~$22.50 profit while keeping 5 PHAR.
             <br />
             <br />
             <strong>Click Scalp % / qty</strong> on each bot card to cycle

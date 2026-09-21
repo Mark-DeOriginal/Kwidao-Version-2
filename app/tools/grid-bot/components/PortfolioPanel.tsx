@@ -141,14 +141,14 @@ export function PortfolioPanel({
           <div className="sc-body">
             <strong>Target at conservative exit:</strong>
             <br />
-            PHAR: $1,500 -&gt; ~$2,010 (+34%)
+              PHAR: $1,500 to ~$2,010 (+34%)
             <br />
-            AERO: $2,000 -&gt; ~$4,118 (+106% at $0.70)
+              AERO: $2,000 to ~$4,118 (+106% at $0.70)
             <br />
-            <strong>Combined: $3,500 -&gt; ~$6,128 (+75%)</strong>
+              <strong>Combined: $3,500 to ~$6,128 (+75%)</strong>
             <br />
             <br />
-            Bull case: PHAR $500 + AERO $2.00 -&gt; portfolio ~$22,000 (+529%)
+              Bull case: PHAR $500 + AERO $2.00 could produce a ~$22,000 portfolio (+529%)
           </div>
         </div>
       </div>

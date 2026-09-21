@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowRightIcon } from "@/app/components/icons/ArrowIcons";
 import {
   Bar,
   BarChart,
@@ -309,7 +310,7 @@ export default function ComparePanel({ active }: { active: boolean }) {
             </select>
           </label>
           <button type="button" onClick={() => fetchCompare(ids)} className="theme-button-primary h-12 px-5 text-sm">
-            Compare -&gt;
+            Compare <ArrowRightIcon className="h-4 w-4 shrink-0" />
           </button>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">

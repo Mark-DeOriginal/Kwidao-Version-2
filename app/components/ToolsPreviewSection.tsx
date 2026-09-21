@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { ArrowUpRightIcon } from "./icons/ArrowIcons";
 
 const tools = [
   { title: "USDC Bridge", description: "Move native USDC between supported networks through a guided cross-chain transfer flow.", link: "/usdc-bridge" },
@@ -31,7 +32,7 @@ export default function ToolsPreviewSection() {
                   <h3 className="mt-4 text-2xl font-semibold tracking-[-0.03em] text-[#30283B] transition-colors group-hover:text-[#662E91]">{tool.title}</h3>
                   <p className="mt-3 max-w-lg text-sm leading-6 text-[#6A6272] md:text-[15px]">{tool.description}</p>
                 </div>
-                <span aria-hidden="true" className="mt-7 text-2xl text-[#662E91] transition-transform duration-200 group-hover:-translate-y-1 group-hover:translate-x-1">&#8599;</span>
+                <ArrowUpRightIcon className="mt-7 h-6 w-6 shrink-0 text-[#662E91] transition-transform duration-200 group-hover:-translate-y-1 group-hover:translate-x-1" />
               </Link>
             </motion.div>
           ))}

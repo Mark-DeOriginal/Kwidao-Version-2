@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { ArrowUpRightIcon } from "./icons/ArrowIcons";
 
 export default function CommunitySection() {
   return (
@@ -15,7 +16,7 @@ export default function CommunitySection() {
           <a href="https://x.com/kwidao" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[3.25rem] items-center justify-center gap-3 rounded-lg bg-[#190B23] px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#30283B]">
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M14.234 10.162 22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299-.929-1.329L3.076 1.56h3.182l5.965 8.532.929 1.329 7.754 11.09h-3.182z" /></svg>
             Follow on X
-            <span aria-hidden="true" className="text-base">&#8599;</span>
+            <ArrowUpRightIcon className="h-4 w-4 shrink-0" />
           </a>
           <Link href="/waitlist" className="inline-flex min-h-[3.25rem] items-center justify-center rounded-lg border border-[#662E91] px-7 py-3.5 text-sm font-semibold text-[#662E91] transition-colors hover:bg-white/60">Join the waitlist</Link>
         </div>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { ArrowLeftIcon } from "@/app/components/icons/ArrowIcons";
 
 type Direction = "long" | "short";
 
@@ -297,27 +298,28 @@ export default function PositionSizerPage() {
   };
 
   return (
-    <div className="kwidao-standard-tool min-h-screen bg-white text-[var(--theme-text-muted)] px-4 md:px-8 py-12 md:py-16">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="kwidao-standard-tool position-sizer-page min-h-screen bg-white py-12 text-[#30283B] md:py-16">
+      <div className="mx-auto w-full max-w-[1600px] space-y-8 px-6 sm:px-10 lg:px-12 xl:px-16">
         <Link
-          href="/#"
-          className="text-sm text-[var(--theme-primary)] hover:underline inline-block"
+          href="/tools"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[#662E91] no-underline hover:text-[#542477]"
         >
-          Back to home
+          <ArrowLeftIcon className="h-4 w-4 shrink-0" /> All tools
         </Link>
 
-        <div className="bg-gradient-to-br from-[var(--theme-surface)] to-[var(--theme-surface-contrast)] border border-[color:var(--theme-border-subtle)] rounded-2xl p-6 md:p-8">
-          <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-[var(--theme-primary)] mb-2">
-                Position Sizer Pro
+        <div className="position-workspace">
+          <div className="position-heading">
+            <div className="max-w-3xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#662E91]">Risk planning</p>
+              <h1 className="mt-4 text-[clamp(2.35rem,4vw,3.7rem)] font-bold leading-[1.04] tracking-[-0.045em] text-[#190B23]">
+                Size the trade before you take the risk.
               </h1>
-              <p className="text-[var(--theme-text-muted)]">
-                Asset-aware risk sizing with direction logic, leverage, and
-                liquidation estimates.
+              <p className="mt-5 max-w-2xl text-base leading-7 text-[#6A6272] md:text-lg">
+                Set your account risk, entry, stop and leverage to calculate a position with clear margin and liquidation context.
               </p>
             </div>
-            <div className="text-sm text-[var(--theme-text-muted)]">
+            <div className="position-live-price">
+              <span className={loadingPrice ? "bg-[#F2B35F]" : "bg-[#2F9E72]"} />
               {loadingPrice
                 ? "Fetching market price..."
                 : livePrice > 0
@@ -326,7 +328,7 @@ export default function PositionSizerPage() {
             </div>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-4">
+          <div className="position-form grid gap-x-5 gap-y-6 md:grid-cols-2">
             <label className="space-y-2">
               <span className="text-sm text-[var(--theme-primary)]">Asset</span>
               <select
@@ -405,7 +407,7 @@ export default function PositionSizerPage() {
               <button
                 type="button"
                 onClick={applyLivePrice}
-                className="w-full rounded-lg border border-[color:var(--theme-border-strong)] bg-[color:var(--theme-primary-soft)] px-3 py-2 text-[var(--theme-primary)] hover:bg-[color:var(--theme-primary-fill)] transition-colors"
+                className="theme-button-secondary w-full px-4 text-sm"
               >
                 Use current {selectedAsset.symbol} price
               </button>
@@ -451,20 +453,20 @@ export default function PositionSizerPage() {
           </div>
 
           {result.errors.length > 0 && (
-            <div className="mt-6 rounded-xl border border-red-400/40 bg-red-400/10 p-4 space-y-1">
+            <div className="position-errors space-y-1 border border-[#E6B9B9] bg-[#FFF5F5] p-4">
               {result.errors.map((error) => (
-                <p key={error} className="text-sm text-red-200">
+                <p key={error} className="text-sm text-[#A53A3A]">
                   {error}
                 </p>
               ))}
             </div>
           )}
 
-          <div className="mt-8 grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="position-results grid sm:grid-cols-2">
             <MetricCard
               label="Max Risk"
               value={money(result.riskAmount)}
-              valueClass="text-red-400"
+              valueClass="text-[#B34A4A]"
             />
             <MetricCard
               label={`Position Size (${selectedAsset.symbol})`}
@@ -503,33 +505,33 @@ export default function PositionSizerPage() {
               }
               valueClass={
                 result.rewardRiskRatio >= 1
-                  ? "text-green-400"
+                  ? "text-[#287A5C]"
                   : "text-[var(--theme-primary)]"
               }
             />
           </div>
 
-          <div className="mt-6 grid md:grid-cols-2 gap-4">
-            <div className="rounded-xl bg-[var(--theme-surface-contrast)] border border-[color:var(--theme-border-subtle)] p-4">
+          <div className="position-pnl grid grid-cols-2 border-t border-white/15">
+            <div className="p-5 sm:p-6">
               <p className="text-xs uppercase tracking-wider text-[color:var(--theme-text-soft)]">
                 Expected Loss At Stop
               </p>
-              <p className="text-2xl font-bold text-red-400 mt-1">
+              <p className="mt-2 text-xl font-semibold text-[#F09A9A]">
                 {money(result.expectedLossAtStop)}
               </p>
             </div>
-            <div className="rounded-xl bg-[var(--theme-surface-contrast)] border border-[color:var(--theme-border-subtle)] p-4">
+            <div className="border-l border-white/15 p-5 sm:p-6">
               <p className="text-xs uppercase tracking-wider text-[color:var(--theme-text-soft)]">
                 Pnl At Take Profit
               </p>
-              <p className="text-2xl font-bold text-green-400 mt-1">
+              <p className="mt-2 text-xl font-semibold text-[#8BD4B9]">
                 {money(result.expectedPnlAtTakeProfit)}
               </p>
             </div>
           </div>
 
-          <div className="mt-6 rounded-xl border border-[color:var(--theme-border-subtle)] bg-[var(--theme-surface-contrast)] p-4 text-sm text-[var(--theme-text-muted)]">
-            <p className="mb-2 text-[var(--theme-primary)] font-semibold">Risk note</p>
+          <div className="position-note text-sm text-[#6A6272]">
+            <p className="mb-2 font-semibold text-[#30283B]">How to read this estimate</p>
             <p>
               Liquidation uses an isolated-margin estimate with maintenance
               margin rate of {num(selectedAsset.maintenanceMarginRate * 100, 2)}
@@ -537,7 +539,7 @@ export default function PositionSizerPage() {
             </p>
             <p className="mt-2">
               Distance to liquidation:{" "}
-              <span className="text-[var(--theme-primary)]">
+              <span className="font-semibold text-[#662E91]">
                 {num(result.liquidationDistancePercent, 2)}%
               </span>
             </p>
@@ -558,12 +560,12 @@ function MetricCard({
   valueClass?: string;
 }) {
   return (
-    <div className="rounded-xl bg-[var(--theme-surface-contrast)] border border-[color:var(--theme-border-subtle)] p-4">
-      <p className="text-xs uppercase tracking-wider text-[color:var(--theme-text-soft)]">
+    <div className="border-b border-white/15 p-5 sm:p-6">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/50">
         {label}
       </p>
       <p
-        className={`text-2xl font-bold mt-1 ${valueClass ?? "text-[var(--theme-primary)]"}`}
+        className={`mt-2 break-words text-xl font-semibold tracking-[-0.025em] ${valueClass ?? "text-white"}`}
       >
         {value}
       </p>

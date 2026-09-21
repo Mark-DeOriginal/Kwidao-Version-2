@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { ArrowLeftIcon, ArrowRightIcon } from "@/app/components/icons/ArrowIcons";
 
 const waitlistFeatures = [
   {
@@ -105,44 +106,31 @@ export default function WaitlistPage() {
   };
 
   return (
-    <main className="kwidao-waitlist-page min-h-screen bg-[#F2EDFF] px-5 py-12 sm:px-8 md:py-16 lg:px-12">
+    <main className="kwidao-waitlist-page min-h-screen bg-[#F2EDFF] py-12 md:py-16">
+      <div className="mx-auto w-full max-w-[1600px] px-6 sm:px-10 lg:px-12 xl:px-16">
       <div className="mb-12">
         <Link
           href="/"
           className="text-[color:var(--theme-primary-weak)] hover:text-[var(--theme-primary)] transition-colors text-sm flex items-center gap-2 w-fit"
         >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            className="rotate-180"
-          >
-            <path
-              d="M9 5l7 7-7 7"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <ArrowLeftIcon className="h-4 w-4 shrink-0" />
           <span>Back to Home</span>
         </Link>
       </div>
 
-      <div className="mx-auto max-w-2xl">
-        <div className="mb-12 text-center">
-          <div className="theme-kicker mb-8">Join Our Community</div>
-          <h1 className="mb-6 text-4xl font-bold leading-[1.1] tracking-tight text-[var(--theme-primary)] sm:text-5xl md:text-6xl">
-            Be the First to Experience the Future
+      <div className="waitlist-layout mx-auto max-w-6xl">
+        <div className="waitlist-intro">
+          <div className="theme-kicker mb-6">Early access</div>
+          <h1 className="text-[clamp(2.35rem,4vw,3.7rem)] font-bold leading-[1.04] tracking-[-0.045em] text-[#190B23]">
+            Join Kwidao from the beginning.
           </h1>
-          <p className="mx-auto max-w-lg text-base leading-relaxed text-[var(--theme-text-soft)] sm:text-lg">
-            Get early access to Kwizerana DAO when we launch.
+          <p className="mt-5 max-w-lg text-base leading-7 text-[#6A6272] sm:text-lg">
+            Get product updates, early access to new DeFi tools, and a direct line to the community shaping Kwidao.
           </p>
         </div>
 
         {submitted ? (
-          <div className="theme-card border-[color:var(--theme-positive)]/40 bg-gradient-to-br from-[color:var(--theme-primary-faint)] to-[color:var(--theme-positive-soft)] p-8 text-center sm:p-12">
+          <div className="waitlist-form-card theme-card border-[color:var(--theme-positive)]/40 bg-white p-8 text-center sm:p-12">
             <div className="mb-6 flex justify-center">
               <div className="theme-icon-badge h-16 w-16 rounded-full">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-7 w-7">
@@ -169,13 +157,15 @@ export default function WaitlistPage() {
               className="theme-button-secondary mt-8 px-6 py-3"
             >
               <span>Add Another Email</span>
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <path d="M5 12h14M13 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <ArrowRightIcon className="h-4 w-4 shrink-0" />
             </button>
           </div>
         ) : (
-          <div className="theme-card bg-gradient-to-br from-[color:var(--theme-primary-faint)] to-transparent p-8 sm:p-12">
+          <div className="waitlist-form-card theme-card bg-white p-7 sm:p-10">
+            <div className="mb-8 border-b border-[#E6DFEA] pb-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8B739D]">Your details</p>
+              <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-[#30283B]">Reserve your place</h2>
+            </div>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
                 <div>
@@ -251,9 +241,7 @@ export default function WaitlistPage() {
               >
                 <span>{isLoading ? "Joining..." : "Join the Waitlist"}</span>
                 {!isLoading && (
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <path d="M5 12h14M13 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <ArrowRightIcon className="h-4 w-4 shrink-0" />
                 )}
               </button>
 
@@ -264,17 +252,18 @@ export default function WaitlistPage() {
           </div>
         )}
 
-        <div className="mt-16 grid gap-6 sm:grid-cols-3 sm:gap-8">
-          {waitlistFeatures.map((feature) => (
-            <div key={feature.title} className="text-center">
-              <div className={feature.tone === "warm" ? "theme-icon-badge-warm mx-auto mb-3" : "theme-icon-badge mx-auto mb-3"}>
-                {feature.icon}
+        <div className="waitlist-benefits mt-10 border-t border-[#D4CADB]">
+          {waitlistFeatures.map((feature, index) => (
+            <div key={feature.title} className="grid grid-cols-[30px_1fr] gap-3 border-b border-[#D4CADB] py-5">
+              <span className="pt-0.5 text-xs font-semibold text-[#A993BC]">0{index + 1}</span>
+              <div>
+                <h3 className="font-semibold text-[#30283B]">{feature.title}</h3>
+                <p className="mt-1 text-sm leading-6 text-[#766D7E]">{feature.description}</p>
               </div>
-              <h3 className="mb-2 font-semibold text-[var(--theme-text-strong)]">{feature.title}</h3>
-              <p className="text-sm text-[var(--theme-text-soft)]">{feature.description}</p>
             </div>
           ))}
         </div>
+      </div>
       </div>
     </main>
   );
