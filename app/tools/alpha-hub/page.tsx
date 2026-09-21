@@ -104,7 +104,7 @@ export default function AlphaHubPage() {
   }, [topic]);
 
   return (
-    <div className="min-h-screen bg-[var(--theme-surface)] text-[var(--theme-text-muted)] px-4 md:px-8 py-10">
+    <div className="alpha-hub-page min-h-screen bg-white text-[var(--theme-text-muted)] px-5 sm:px-8 py-12 md:py-20">
       <div className="max-w-6xl mx-auto space-y-6">
         <Link href="/#" className="text-sm text-[var(--theme-primary)] hover:underline inline-block">
           Back to home

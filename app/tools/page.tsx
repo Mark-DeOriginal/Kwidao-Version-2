@@ -1,101 +1,41 @@
+"use client";
+
+import { motion } from "framer-motion";
 import Link from "next/link";
 
 const featuredTools = [
-  {
-    href: "/tools/defi-intelligence",
-    eyebrow: "Imported Tool",
-    title: "DeFi Intelligence",
-    description:
-      "All-in-one intelligence workspace with compare, heatmap, signals, and perp DEX rankings.",
-    accent: "from-[color:var(--theme-primary-soft-strong)] to-transparent",
-  },
-  {
-    href: "/tools/market-analyzer",
-    eyebrow: "Imported Tool",
-    title: "Kwizerana Market Analyzer",
-    description:
-      "A multi-chain scanner with KWI scoring, trending views, and chart drilldowns.",
-    accent: "from-[color:var(--theme-primary-soft-strong)] to-transparent",
-  },
-  {
-    href: "/tools/grid-bot",
-    eyebrow: "Imported Tool",
-    title: "Grid Bot Dashboard",
-    description:
-      "Adaptive grid automation with backtesting, wallet sync, and live price feeds.",
-    accent: "from-[color:var(--theme-accent-soft)] to-transparent",
-  },
-  {
-    href: "/tools/position-sizer",
-    eyebrow: "Core Tool",
-    title: "Position Sizer",
-    description:
-      "Plan risk, leverage, and liquidation distance before you enter a trade.",
-    accent: "from-[color:var(--theme-soft-fill)] to-transparent",
-  },
-  {
-    href: "/tools/yield-calculator",
-    eyebrow: "Core Tool",
-    title: "Yield Calculator",
-    description:
-      "Estimate returns, compare scenarios, and model yield outcomes quickly.",
-    accent: "from-[color:var(--theme-accent-soft)] to-transparent",
-  },
-  {
-    href: "/tools/alpha-hub",
-    eyebrow: "Research",
-    title: "Alpha Hub",
-    description:
-      "Research articles, strategy explainers, and DeFi market context in one place.",
-    accent: "from-[color:var(--theme-primary-soft-strong)] to-transparent",
-  },
+  { href: "/usdc-bridge", category: "Cross-chain", title: "USDC Bridge", description: "Move native USDC between supported networks through a clear, guided transfer flow." },
+  { href: "/tools/defi-intelligence", category: "Intelligence", title: "DeFi Intelligence", description: "Compare markets, read heatmaps, track signals, and examine perpetual DEX activity." },
+  { href: "/tools/market-analyzer", category: "Markets", title: "Market Analyzer", description: "Scan multiple chains with ranking signals, trending views, and focused chart drilldowns." },
+  { href: "/tools/grid-bot", category: "Automation", title: "Grid Bot", description: "Model adaptive grid strategies with backtesting, wallet sync, and live price feeds." },
+  { href: "/tools/position-sizer", category: "Risk", title: "Position Sizer", description: "Plan risk, leverage, liquidation distance, and trade size before entering a position." },
+  { href: "/tools/yield-calculator", category: "Yield", title: "Yield Calculator", description: "Estimate compounded returns and compare potential yield outcomes over time." },
+  { href: "/tools/alpha-hub", category: "Research", title: "Alpha Hub", description: "Read practical explainers, strategy research, and risk-aware DeFi market context." },
 ];
 
 export default function ToolsPage() {
   return (
-    <main className="bg-[var(--theme-surface)] text-[var(--theme-text-muted)] px-4 py-12 md:px-8">
+    <main className="bg-white px-5 py-16 sm:px-8 md:py-24">
       <div className="mx-auto max-w-7xl">
-        <div className="rounded-[2rem] border border-[color:var(--theme-border-subtle)] bg-gradient-to-br from-[var(--theme-surface-contrast)] via-[var(--theme-surface-strong)] to-[var(--theme-surface-contrast-strong)] p-8 md:p-10">
-          <div className="max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[color:var(--theme-primary-weak)]">
-              Kwidao Tools
-            </p>
-            <h1 className="mt-4 text-4xl font-bold text-[var(--theme-primary)] md:text-5xl">
-              Trading, research, and market workflows in one place.
-            </h1>
-            <p className="mt-4 text-base text-[var(--theme-text-soft)] md:text-lg">
-              The imported Kwizerana toolset now lives alongside the rest of the
-              project under a single tools directory and shared navigation.
-            </p>
-          </div>
+        <motion.header initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }} className="max-w-5xl">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#662E91]">Kwidao Tools</p>
+          <h1 className="mt-5 text-[clamp(3rem,7vw,6.5rem)] font-bold leading-[0.95] tracking-[-0.065em] text-[#190B23]">A clearer workspace for every DeFi decision.</h1>
+          <p className="mt-7 max-w-3xl text-base leading-7 text-[#625A6A] md:text-lg md:leading-8">Bridge assets, study market activity, test strategies, manage risk, and build knowledge from one connected toolkit.</p>
+        </motion.header>
 
-          <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {featuredTools.map((tool) => (
-              <Link
-                key={tool.href}
-                href={tool.href}
-                className="theme-card group relative overflow-hidden rounded-3xl p-6"
-              >
-                <div
-                  className={`absolute inset-0 bg-gradient-to-br ${tool.accent} opacity-70 transition group-hover:opacity-100`}
-                />
-                <div className="relative">
-                  <p className="text-xs uppercase tracking-[0.25em] text-[color:var(--theme-primary-weak)]">
-                    {tool.eyebrow}
-                  </p>
-                  <h2 className="mt-3 text-2xl font-semibold text-[var(--theme-text-strong)]">
-                    {tool.title}
-                  </h2>
-                  <p className="mt-3 text-sm leading-6 text-[var(--theme-text-soft)]">
-                    {tool.description}
-                  </p>
-                  <span className="mt-6 inline-flex items-center text-sm font-medium text-[var(--theme-primary)]">
-                    Open tool
-                  </span>
+        <div className="mt-16 grid md:mt-24 md:grid-cols-2 md:gap-x-16">
+          {featuredTools.map((tool, index) => (
+            <motion.div key={tool.href} initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: (index % 2) * 0.06 }}>
+              <Link href={tool.href} className="group flex min-h-[210px] items-start justify-between gap-8 border-t border-[#DCD3E2] py-8 transition-colors hover:border-[#662E91]">
+                <div>
+                  <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.15em]"><span className="text-[#A993BC]">{String(index + 1).padStart(2, "0")}</span><span className="text-[#662E91]">{tool.category}</span></div>
+                  <h2 className="mt-5 text-2xl font-semibold tracking-[-0.035em] text-[#30283B] transition-colors group-hover:text-[#662E91] md:text-3xl">{tool.title}</h2>
+                  <p className="mt-3 max-w-xl text-sm leading-6 text-[#6A6272] md:text-[15px]">{tool.description}</p>
                 </div>
+                <span aria-hidden="true" className="mt-10 text-2xl text-[#662E91] transition-transform group-hover:-translate-y-1 group-hover:translate-x-1">&#8599;</span>
               </Link>
-            ))}
-          </div>
+            </motion.div>
+          ))}
         </div>
       </div>
     </main>

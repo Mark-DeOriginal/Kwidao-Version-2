@@ -32,6 +32,30 @@
         font-family: var(--font);
         font-size: 13px;
       }
+
+      /* Kwidao editorial light-mode refinement */
+      .grid-bot-shell {
+        --bg: #ffffff;
+        --surf: #ffffff;
+        --surf2: #f2edff;
+        --surf3: #f8f5fa;
+        background: #ffffff;
+      }
+      .grid-bot-shell #hdr {
+        min-height: 68px;
+        background: rgba(255,255,255,.96);
+        box-shadow: 0 8px 28px rgba(58,33,72,.05);
+      }
+      .grid-bot-shell #tabs {
+        background: #f2edff;
+      }
+      .grid-bot-shell .scard,
+      .grid-bot-shell .vcard,
+      .grid-bot-shell .bot-card,
+      .grid-bot-shell .panel {
+        border-radius: 4px;
+        box-shadow: 0 10px 30px rgba(58,33,72,.06);
+      }
       .grid-bot-shell button {
         cursor: pointer;
         border: none;

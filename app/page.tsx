@@ -58,7 +58,7 @@ export default function Home() {
 
       {/* Live Market Widget - Full Width */}
       <section
-        className="overflow-hidden py-8"
+        className="home-market-strip overflow-hidden"
         style={{ backgroundColor: "#f2edff" }}
       >
         <LiveMarketWidget />

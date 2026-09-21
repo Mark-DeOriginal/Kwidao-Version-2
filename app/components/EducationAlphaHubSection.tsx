@@ -51,8 +51,8 @@ export default function EducationAlphaHubSection() {
   };
 
   return (
-    <section className="bg-[#F2EDFF] px-5 py-24 sm:px-8 md:py-32">
-      <div className="mx-auto grid max-w-7xl gap-16 lg:grid-cols-[0.9fr_1.1fr] lg:gap-24">
+    <section className="home-content-section bg-[#F2EDFF]">
+      <div className="mx-auto grid w-full max-w-[1600px] gap-16 px-6 sm:px-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-24 lg:px-12 xl:px-16">
         <motion.div initial={{ opacity: 0, y: 22 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#662E91]">Education & Alpha</p>
           <h2 className="mt-5 text-[clamp(2.5rem,5vw,4.5rem)] font-bold leading-[1.02] tracking-[-0.055em] text-[#190B23]">Research you can put to work.</h2>

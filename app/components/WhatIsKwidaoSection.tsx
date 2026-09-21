@@ -22,8 +22,8 @@ const pillars = [
 
 export default function WhatIsKwidaoSection() {
   return (
-    <section className="relative overflow-hidden bg-white px-5 py-24 sm:px-8 md:py-32">
-      <div className="mx-auto max-w-7xl">
+    <section className="home-content-section relative overflow-hidden bg-white">
+      <div className="mx-auto w-full max-w-[1600px] px-6 sm:px-10 lg:px-12 xl:px-16">
         <motion.div
           initial={{ opacity: 0, y: 22 }}
           whileInView={{ opacity: 1, y: 0 }}

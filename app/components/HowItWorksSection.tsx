@@ -11,8 +11,8 @@ const steps = [
 
 export default function HowItWorksSection() {
   return (
-    <section className="bg-[#F2EDFF] px-5 py-24 sm:px-8 md:py-32">
-      <div className="mx-auto max-w-7xl">
+    <section className="home-content-section bg-[#F2EDFF]">
+      <div className="mx-auto w-full max-w-[1600px] px-6 sm:px-10 lg:px-12 xl:px-16">
         <motion.div initial={{ opacity: 0, y: 22 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.3 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }} className="mx-auto max-w-4xl text-center">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#662E91]">How It Works</p>
           <h2 className="mt-5 text-[clamp(2.5rem,5vw,4.5rem)] font-bold leading-[1.02] tracking-[-0.055em] text-[#190B23]">From insight to action, without the usual friction.</h2>

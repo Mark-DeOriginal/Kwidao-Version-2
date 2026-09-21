@@ -607,7 +607,7 @@ export default function LiveMarketPageClient() {
   };
 
   return (
-    <div className="min-h-full bg-[var(--theme-surface)] text-[var(--theme-text-muted)]">
+    <div className="kwidao-market-page min-h-full bg-white text-[var(--theme-text-muted)]">
       <section className="border-b border-[color:var(--theme-border-subtle)] px-4 md:px-8 py-14 md:py-16 bg-[radial-gradient(circle_at_top_right,var(--theme-spotlight),transparent_45%)]">
         <div className="max-w-7xl mx-auto">
           <motion.div

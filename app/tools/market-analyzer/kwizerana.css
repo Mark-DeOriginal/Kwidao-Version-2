@@ -30,6 +30,32 @@
         font-size: 13px;
         overflow: hidden;
       }
+
+      /* Kwidao editorial light-mode refinement */
+      .market-analyzer-shell {
+        --bg: #ffffff;
+        --surf: #ffffff;
+        --surf2: #f2edff;
+        --surf3: #f8f5fa;
+        background: #ffffff;
+      }
+      .market-analyzer-shell #sidebar {
+        background: #f2edff;
+      }
+      .market-analyzer-shell #topnav {
+        min-height: 58px;
+        height: 58px;
+        background: rgba(255,255,255,.96);
+      }
+      .market-analyzer-shell .stat-card,
+      .market-analyzer-shell .search-box,
+      .market-analyzer-shell .nav-tab,
+      .market-analyzer-shell .filter-btn {
+        border-radius: 4px;
+      }
+      .market-analyzer-shell .stat-card {
+        box-shadow: 0 10px 30px rgba(58,33,72,.06);
+      }
       .market-analyzer-shell button {
         cursor: pointer;
         border: none;

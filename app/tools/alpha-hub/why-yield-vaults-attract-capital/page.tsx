@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function WhyYieldVaultsAttractCapitalPage() {
   return (
-    <div className="min-h-screen bg-[var(--theme-surface)] text-[var(--theme-text-muted)] px-4 md:px-8 py-10">
+    <div className="alpha-article-page min-h-screen bg-white text-[var(--theme-text-muted)] px-5 sm:px-8 py-12 md:py-16">
       <article className="max-w-4xl mx-auto">
         <Link href="/tools/alpha-hub" className="text-sm text-[var(--theme-primary)] hover:underline inline-block mb-6">
           Back to Alpha Hub

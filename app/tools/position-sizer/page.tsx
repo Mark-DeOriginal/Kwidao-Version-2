@@ -297,7 +297,7 @@ export default function PositionSizerPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--theme-surface)] text-[var(--theme-text-muted)] px-4 md:px-8 py-10">
+    <div className="kwidao-standard-tool min-h-screen bg-white text-[var(--theme-text-muted)] px-4 md:px-8 py-12 md:py-16">
       <div className="max-w-6xl mx-auto space-y-6">
         <Link
           href="/#"

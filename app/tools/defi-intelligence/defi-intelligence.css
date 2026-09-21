@@ -28,8 +28,9 @@
 }
 
 .di-page {
-  --di-card-radius: 14px;
-  --di-panel-radius: 18px;
+  --di-card-radius: 4px;
+  --di-panel-radius: 4px;
+  background: #fff;
 }
 
 .di-shell {
@@ -39,7 +40,7 @@
 .di-tabsbar {
   border: 1px solid var(--theme-border-subtle);
   background: color-mix(in srgb, var(--theme-surface-strong) 76%, white);
-  border-radius: 12px;
+  border-radius: 4px;
   padding: 8px;
 }
 
@@ -72,7 +73,7 @@
 }
 
 .di-panel {
-  background: linear-gradient(145deg, var(--theme-surface) 0%, var(--theme-surface-contrast) 100%);
+  background: linear-gradient(145deg, #fff 0%, #f8f5fa 100%);
   border: 1px solid var(--theme-border-subtle);
   border-radius: var(--di-panel-radius);
   padding: 36px;

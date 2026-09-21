@@ -354,3 +354,205 @@
   -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
   mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
 }
+
+.home-content-section {
+  padding-block: 6rem;
+  padding-inline: 0;
+}
+
+.home-market-strip {
+  padding-block: 2rem;
+}
+
+@media (min-width: 768px) {
+  .home-content-section {
+    padding-block: 8rem;
+  }
+}
+
+
+/* Shared interior-page design system */
+.alpha-article-page article {
+  max-width: 780px;
+  animation: kwidao-page-enter 700ms cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.alpha-article-page article > a,
+.kwidao-standard-tool a[href="/#"] {
+  display: inline-flex;
+  margin-bottom: 2.5rem;
+  color: #662e91;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.alpha-article-page article header {
+  margin-bottom: 3rem;
+}
+
+.alpha-article-page article header h1 {
+  max-width: 760px;
+  color: #190b23;
+  font-size: clamp(2.75rem, 6vw, 5.25rem);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+}
+
+.alpha-article-page article header p:first-child {
+  color: #662e91;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+}
+
+.alpha-article-page article > div:has(> img) {
+  border: 0;
+  border-radius: 0;
+}
+
+.alpha-article-page article section {
+  margin-top: 3.5rem;
+}
+
+.alpha-article-page article section h2 {
+  color: #30283b;
+  font-size: clamp(1.65rem, 3vw, 2.2rem);
+  letter-spacing: -0.03em;
+}
+
+.alpha-article-page article section p,
+.alpha-article-page article section li {
+  color: #625a6a;
+  font-size: 1.05rem;
+  line-height: 1.9;
+}
+
+.alpha-hub-page > div > div:last-child {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.alpha-hub-page h1 {
+  color: #190b23 !important;
+  font-size: clamp(3rem, 7vw, 6rem) !important;
+  line-height: 0.96;
+  letter-spacing: -0.06em;
+}
+
+.alpha-hub-page > div,
+.kwidao-standard-tool > div,
+.kwidao-waitlist-page > div,
+.kwidao-market-page > section:first-child > div {
+  animation: kwidao-page-enter 700ms cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.alpha-hub-page a.group {
+  border-color: #ddd4e3;
+  border-radius: 4px;
+  background: white;
+}
+
+.alpha-hub-page a.group:hover {
+  border-color: #662e91;
+  box-shadow: 0 18px 45px rgba(59, 34, 72, 0.1);
+}
+
+.kwidao-standard-tool > div > div {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.kwidao-standard-tool h1 {
+  color: #190b23 !important;
+  font-size: clamp(2.75rem, 6vw, 4.75rem) !important;
+  line-height: 1 !important;
+  letter-spacing: -0.05em;
+}
+
+.kwidao-standard-tool input,
+.kwidao-standard-tool select,
+.kwidao-standard-tool .theme-field {
+  border-color: #d4cadb !important;
+  border-radius: 4px !important;
+  background: #f8f5fa !important;
+  color: #30283b !important;
+}
+
+.kwidao-standard-tool .rounded-xl,
+.kwidao-standard-tool .rounded-2xl {
+  border-radius: 6px !important;
+}
+
+.kwidao-waitlist-page .theme-card {
+  border-color: transparent;
+  border-radius: 6px;
+  background: white;
+  box-shadow: 0 24px 70px rgba(59, 34, 72, 0.1);
+}
+
+.kwidao-waitlist-page h1 {
+  color: #190b23;
+  font-size: clamp(2.75rem, 6vw, 5.25rem);
+  letter-spacing: -0.055em;
+}
+
+.kwidao-waitlist-page .theme-field {
+  border-radius: 4px;
+  background: #f8f5fa;
+}
+
+.kwidao-waitlist-page .theme-kicker {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #662e91;
+  letter-spacing: .2em;
+}
+
+.kwidao-waitlist-page .theme-icon-badge,
+.kwidao-waitlist-page .theme-icon-badge-warm {
+  border: 0;
+  background: transparent;
+}
+
+.kwidao-market-page > section {
+  border-bottom: 0;
+}
+
+.kwidao-market-page > section:nth-of-type(even) {
+  background: #f2edff;
+}
+
+.kwidao-market-page h1 {
+  color: #190b23;
+  letter-spacing: -0.055em;
+}
+
+.kwidao-market-page .rounded-2xl,
+.kwidao-market-page .rounded-xl {
+  border-radius: 6px;
+}
+
+@keyframes kwidao-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alpha-article-page article,
+  .alpha-hub-page > div,
+  .kwidao-standard-tool > div,
+  .kwidao-waitlist-page > div,
+  .kwidao-market-page > section:first-child > div {
+    animation: none;
+  }
+}

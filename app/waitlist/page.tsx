@@ -105,7 +105,7 @@ export default function WaitlistPage() {
   };
 
   return (
-    <main className="min-h-screen px-8 py-12 lg:px-12">
+    <main className="kwidao-waitlist-page min-h-screen bg-[#F2EDFF] px-5 py-12 sm:px-8 md:py-16 lg:px-12">
       <div className="mb-12">
         <Link
           href="/"
