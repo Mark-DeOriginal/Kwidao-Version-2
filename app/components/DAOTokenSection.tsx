@@ -3,298 +3,90 @@
 import { motion } from "framer-motion";
 import { useMemo, useState } from "react";
 
-type Allocation = {
-  label: string;
-  percent: number;
-  color: string;
-  description: string;
-};
-
-type Benefit = {
-  title: string;
-  description: string;
-  tone: "cool" | "warm";
-};
-
-const allocations: Allocation[] = [
-  {
-    label: "Community",
-    percent: 40,
-    color: "var(--theme-primary)",
-    description: "Airdrops, ecosystem grants, and long-term community rewards.",
-  },
-  {
-    label: "Liquidity",
-    percent: 20,
-    color: "var(--theme-info)",
-    description: "Liquidity support to keep trading depth healthy and resilient.",
-  },
-  {
-    label: "Treasury",
-    percent: 18,
-    color: "var(--theme-accent)",
-    description: "Protocol runway, research, and strategic growth initiatives.",
-  },
-  {
-    label: "Team",
-    percent: 12,
-    color: "var(--theme-soft-accent)",
-    description: "Core contributors with long-term vesting alignment.",
-  },
-  {
-    label: "Advisors",
-    percent: 10,
-    color: "var(--theme-primary-strong)",
-    description: "Strategic advisors, partnerships, and ecosystem support.",
-  },
+const allocations = [
+  { label: "Community", percent: 40, color: "#662E91", description: "Airdrops, ecosystem grants, and long-term community rewards." },
+  { label: "Liquidity", percent: 20, color: "#4F6FD8", description: "Liquidity support designed to strengthen market depth." },
+  { label: "Treasury", percent: 18, color: "#DD9B73", description: "Protocol runway, research, and strategic growth initiatives." },
+  { label: "Team", percent: 12, color: "#CAC3E7", description: "Core contributors aligned through long-term vesting." },
+  { label: "Advisors", percent: 10, color: "#3E1C58", description: "Strategic partnerships and ecosystem support." },
 ];
 
-const benefits: Benefit[] = [
-  {
-    title: "Governance voting",
-    description: "Help shape roadmap priorities, incentives, and treasury direction.",
-    tone: "cool",
-  },
-  {
-    title: "Liquidity incentives",
-    description: "Access reward programs tied to productive participation onchain.",
-    tone: "warm",
-  },
-  {
-    title: "Premium access",
-    description: "Unlock early tools, deeper analytics, and advanced features.",
-    tone: "cool",
-  },
-  {
-    title: "Treasury alignment",
-    description: "Stay connected to protocol growth rather than short-lived hype.",
-    tone: "warm",
-  },
+const benefits = [
+  { title: "Governance voting", description: "Help shape roadmap priorities, incentives, and treasury direction." },
+  { title: "Liquidity incentives", description: "Participate in reward programs connected to useful onchain activity." },
+  { title: "Premium access", description: "Access early tools, deeper analytics, and advanced product features." },
+  { title: "Ecosystem alignment", description: "Take part in the long-term growth of the Kwidao ecosystem." },
 ];
 
-const polarToCartesian = (cx: number, cy: number, r: number, angle: number) => {
-  const rad = ((angle - 90) * Math.PI) / 180;
-  return {
-    x: cx + r * Math.cos(rad),
-    y: cy + r * Math.sin(rad),
-  };
+const polarToCartesian = (cx: number, cy: number, radius: number, angle: number) => {
+  const radians = ((angle - 90) * Math.PI) / 180;
+  return { x: cx + radius * Math.cos(radians), y: cy + radius * Math.sin(radians) };
 };
 
-const describeArc = (
-  cx: number,
-  cy: number,
-  r: number,
-  startAngle: number,
-  endAngle: number,
-) => {
-  const start = polarToCartesian(cx, cy, r, endAngle);
-  const end = polarToCartesian(cx, cy, r, startAngle);
-  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-  return [
-    "M",
-    cx,
-    cy,
-    "L",
-    start.x,
-    start.y,
-    "A",
-    r,
-    r,
-    0,
-    largeArcFlag,
-    0,
-    end.x,
-    end.y,
-    "Z",
-  ].join(" ");
+const describeArc = (startAngle: number, endAngle: number) => {
+  const start = polarToCartesian(140, 140, 126, endAngle);
+  const end = polarToCartesian(140, 140, 126, startAngle);
+  return ["M", 140, 140, "L", start.x, start.y, "A", 126, 126, 0, endAngle - startAngle <= 180 ? 0 : 1, 0, end.x, end.y, "Z"].join(" ");
 };
-
-function BenefitIcon({ tone }: { tone: Benefit["tone"] }) {
-  const className = tone === "warm" ? "theme-icon-badge-warm" : "theme-icon-badge";
-
-  return (
-    <div className={`${className} h-12 w-12 rounded-xl`}>
-      {tone === "warm" ? (
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
-          <path
-            d="M12 4.5v15m-5-5 5 5 5-5M7.5 8.5 12 4l4.5 4.5"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      ) : (
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
-          <path
-            d="M6.5 12.5 10 16l7.5-8"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      )}
-    </div>
-  );
-}
 
 export default function DAOTokenSection() {
   const [activeIndex, setActiveIndex] = useState(0);
-
   const arcs = useMemo(() => {
-    let currentAngle = 0;
-    return allocations.map((item) => {
-      const startAngle = currentAngle;
-      const endAngle = currentAngle + item.percent * 3.6;
-      currentAngle = endAngle;
-      return { startAngle, endAngle };
+    let current = 0;
+    return allocations.map((allocation) => {
+      const arc = { start: current, end: current + allocation.percent * 3.6 };
+      current = arc.end;
+      return arc;
     });
   }, []);
-
   const active = allocations[activeIndex];
 
   return (
-    <section className="py-20">
+    <section className="bg-white px-5 py-24 sm:px-8 md:py-32">
       <div className="mx-auto max-w-7xl">
-        <div className="grid items-start gap-10 lg:grid-cols-[1.08fr_0.92fr]">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="theme-panel p-8 md:p-10"
-          >
-            <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-              <div className="space-y-4">
-                <span className="theme-kicker">Tokenomics</span>
-                <h2 className="text-3xl font-bold tracking-tight text-[var(--theme-primary)] md:text-4xl">
-                  $KWI allocation
-                </h2>
-              </div>
-              <div className="rounded-full border border-[color:var(--theme-border-soft)] bg-[color:var(--theme-surface-soft)] px-4 py-2 text-sm text-[var(--theme-text-muted)]">
-                Total supply: 1,000,000,000
-              </div>
-            </div>
+        <motion.div initial={{ opacity: 0, y: 22 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mx-auto max-w-4xl text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#662E91]">Kwidao DAO</p>
+          <h2 className="mt-5 text-[clamp(2.5rem,5vw,4.5rem)] font-bold leading-[1.02] tracking-[-0.055em] text-[#190B23]">Designed for long-term participation.</h2>
+          <p className="mx-auto mt-6 max-w-3xl text-base leading-7 text-[#625A6A] md:text-lg md:leading-8">The proposed $KWI model aligns community participation, ecosystem liquidity, product development, and sustainable protocol growth.</p>
+        </motion.div>
 
-            <div className="grid items-center gap-8 md:grid-cols-[300px_1fr]">
-              <div className="relative flex items-center justify-center">
-                <svg width="280" height="280" viewBox="0 0 280 280" aria-label="$KWI allocation">
-                  {allocations.map((item, index) => {
-                    const { startAngle, endAngle } = arcs[index];
-                    const isActive = index === activeIndex;
-
-                    return (
-                      <path
-                        key={item.label}
-                        d={describeArc(140, 140, 126, startAngle, endAngle)}
-                        fill={item.color}
-                        opacity={isActive ? 0.98 : 0.68}
-                        stroke="var(--theme-canvas)"
-                        strokeWidth={3}
-                        className="cursor-pointer transition-opacity duration-200"
-                        onMouseEnter={() => setActiveIndex(index)}
-                        onFocus={() => setActiveIndex(index)}
-                      />
-                    );
-                  })}
-                </svg>
-
-                <div className="absolute flex h-32 w-32 flex-col items-center justify-center rounded-full border border-[color:var(--theme-border-soft)] bg-[color:var(--theme-surface)] shadow-[var(--theme-shadow-soft)]">
-                  <span className="text-3xl font-semibold text-[var(--theme-text-strong)]">
-                    {active.percent}%
-                  </span>
-                  <span className="mt-1 text-xs uppercase tracking-[0.18em] text-[var(--theme-text-soft)]">
-                    {active.label}
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <p className="text-sm leading-relaxed text-[var(--theme-text-muted)]">
-                  The chart carries more color, while the supporting text stays
-                  grounded in dark neutrals. That keeps the token section visual
-                  without making every word compete with the graphic.
-                </p>
-
-                <div className="grid gap-3">
-                  {allocations.map((item, index) => {
-                    const isActive = index === activeIndex;
-
-                    return (
-                      <button
-                        key={item.label}
-                        type="button"
-                        onMouseEnter={() => setActiveIndex(index)}
-                        onFocus={() => setActiveIndex(index)}
-                        className={`rounded-2xl border px-4 py-4 text-left transition-all ${
-                          isActive
-                            ? "border-[color:var(--theme-border-strong)] bg-[color:var(--theme-primary-soft)] shadow-[var(--theme-shadow-soft)]"
-                            : "border-[color:var(--theme-border-subtle)] bg-[color:var(--theme-surface-contrast)] hover:border-[color:var(--theme-border-strong)]"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex items-start gap-3">
-                            <span
-                              className="mt-1 h-3.5 w-3.5 rounded-full border border-white/60"
-                              style={{ backgroundColor: item.color }}
-                            />
-                            <div>
-                              <p className="text-sm font-semibold text-[var(--theme-text-strong)]">
-                                {item.label}
-                              </p>
-                              <p className="mt-1 text-xs leading-relaxed text-[var(--theme-text-muted)]">
-                                {item.description}
-                              </p>
-                            </div>
-                          </div>
-                          <span className="text-sm font-semibold text-[var(--theme-primary-strong)]">
-                            {item.percent}%
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+        <div className="mt-16 grid items-center gap-14 md:mt-20 lg:grid-cols-[0.9fr_1.1fr] lg:gap-24">
+          <motion.div initial={{ opacity: 0, scale: 0.94 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} className="relative mx-auto flex w-full max-w-[420px] items-center justify-center">
+            <svg className="h-auto w-full" viewBox="0 0 280 280" aria-label="$KWI proposed token allocation">
+              {allocations.map((allocation, index) => (
+                <path key={allocation.label} d={describeArc(arcs[index].start, arcs[index].end)} fill={allocation.color} opacity={index === activeIndex ? 1 : 0.62} stroke="white" strokeWidth="3" tabIndex={0} onMouseEnter={() => setActiveIndex(index)} onFocus={() => setActiveIndex(index)} className="cursor-pointer transition-opacity" />
+              ))}
+            </svg>
+            <div className="absolute flex h-36 w-36 flex-col items-center justify-center rounded-full bg-white shadow-[0_14px_45px_rgba(56,31,70,0.13)]">
+              <span className="text-4xl font-semibold tracking-[-0.04em] text-[#662E91]">{active.percent}%</span>
+              <span className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#796E81]">{active.label}</span>
             </div>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="space-y-6"
-          >
-            <div className="space-y-4">
-              <span className="theme-kicker">Holder Benefits</span>
-              <h3 className="text-3xl font-bold tracking-tight text-[var(--theme-primary)] md:text-4xl">
-                Why hold $KWI
-              </h3>
-              <p className="leading-relaxed text-[var(--theme-text-muted)]">
-                $KWI is framed as long-term participation, not just decoration.
-                The benefit cards use darker copy and clearer icon contrast so
-                the section feels elevated and easy to read.
-              </p>
+          <motion.div initial={{ opacity: 0, x: 24 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}>
+            <div className="flex items-end justify-between gap-6">
+              <div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#662E91]">Proposed allocation</p><h3 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-[#190B23]">1,000,000,000 $KWI</h3></div>
             </div>
-
-            <div className="grid gap-4">
-              {benefits.map((benefit) => (
-                <div key={benefit.title} className="theme-card p-5">
-                  <div className="flex items-start gap-4">
-                    <BenefitIcon tone={benefit.tone} />
-                    <div>
-                      <h4 className="text-lg font-semibold text-[var(--theme-text-strong)]">
-                        {benefit.title}
-                      </h4>
-                      <p className="mt-2 text-sm leading-relaxed text-[var(--theme-text-muted)]">
-                        {benefit.description}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+            <div className="mt-7">
+              {allocations.map((allocation, index) => (
+                <motion.button key={allocation.label} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.045 }} type="button" onMouseEnter={() => setActiveIndex(index)} onFocus={() => setActiveIndex(index)} onClick={() => setActiveIndex(index)} className={`flex w-full items-start gap-4 border-t py-5 text-left transition-colors last:border-b ${index === activeIndex ? "border-[#662E91]" : "border-[#E4DDE9] hover:border-[#A993BC]"}`}>
+                  <span className="mt-1.5 h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: allocation.color }} />
+                  <span className="flex-1"><span className="font-semibold text-[#30283B]">{allocation.label}</span><span className="mt-1 block text-sm leading-6 text-[#6A6272]">{allocation.description}</span></span>
+                  <span className="font-mono font-semibold text-[#662E91]">{allocation.percent}%</span>
+                </motion.button>
               ))}
             </div>
           </motion.div>
+        </div>
+
+        <div className="mt-20 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          {benefits.map((benefit, index) => (
+            <motion.div key={benefit.title} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.06 }}>
+              <p className="text-xs font-semibold text-[#A993BC]">0{index + 1}</p>
+              <h3 className="mt-4 text-xl font-semibold tracking-[-0.025em] text-[#30283B]">{benefit.title}</h3>
+              <p className="mt-3 text-sm leading-6 text-[#6A6272]">{benefit.description}</p>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>

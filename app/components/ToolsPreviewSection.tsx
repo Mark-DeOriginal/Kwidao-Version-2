@@ -3,205 +3,37 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 
-interface ToolCardProps {
-  icon: JSX.Element;
-  title: string;
-  description: string;
-  status: "coming-soon" | "active";
-  link: string;
-}
-
-function ToolCard({ icon, title, description, status, link }: ToolCardProps) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="relative"
-    >
-      <Link href={link}>
-        <div className="theme-card h-full cursor-pointer p-8">
-          <div className="mb-4 flex h-12 w-12 items-center justify-center theme-icon-badge">
-            {icon}
-          </div>
-          <h3 className="mb-2 text-lg font-bold text-[var(--theme-text-strong)]">{title}</h3>
-          <p className="mb-5 flex-grow text-sm leading-6 text-[var(--theme-text-soft)]">{description}</p>
-          <div className="flex items-center justify-between">
-            <span
-              className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${
-                status === "coming-soon" ? "theme-chip-accent" : "theme-chip"
-              }`}
-            >
-              {status === "coming-soon" ? "Coming Soon" : "Open"}
-            </span>
-            {status === "active" && (
-              <svg
-                className="h-4 w-4 text-[var(--theme-primary)]"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            )}
-          </div>
-        </div>
-      </Link>
-    </motion.div>
-  );
-}
+const tools = [
+  { title: "USDC Bridge", description: "Move native USDC between supported networks through a guided cross-chain transfer flow.", link: "/usdc-bridge" },
+  { title: "Market Analyzer", description: "Scan multiple chains, rank market signals, and inspect trending pairs with focused chart views.", link: "/tools/market-analyzer" },
+  { title: "Grid Bot", description: "Model adaptive accumulation strategies with live prices, backtests, and wallet-aware monitoring.", link: "/tools/grid-bot" },
+  { title: "Position Sizer", description: "Calculate position sizes around your available capital, entry, invalidation point, and risk tolerance.", link: "/tools/position-sizer" },
+  { title: "Yield Calculator", description: "Estimate returns and compare yield scenarios before allocating funds to a strategy.", link: "/tools/yield-calculator" },
+  { title: "Alpha Hub", description: "Read practical explainers, market research, and strategy notes built for clearer decisions.", link: "/tools/alpha-hub" },
+];
 
 export default function ToolsPreviewSection() {
-  const tools = [
-    {
-      icon: (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-6 w-6"
-        >
-          <path d="M4 8h12" />
-          <path d="M14 5l4 3-4 3" />
-          <path d="M20 16H8" />
-          <path d="M10 13l-4 3 4 3" />
-        </svg>
-      ),
-      title: "Market Analyzer",
-      description:
-        "Multi-chain scanner with ranking signals, trending pairs, and chart drilldowns.",
-      status: "active" as const,
-      link: "/tools/market-analyzer",
-    },
-    {
-      icon: (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-6 w-6"
-        >
-          <path d="M12 3v18" />
-          <path d="M6 7h12" />
-          <path d="M6 17h12" />
-          <path d="M8 7l-2 2 2 2" />
-          <path d="M16 17l2-2-2-2" />
-        </svg>
-      ),
-      title: "Grid Bot",
-      description:
-        "Adaptive accumulation dashboard with live prices, backtests, and wallet sync.",
-      status: "active" as const,
-      link: "/tools/grid-bot",
-    },
-    {
-      icon: (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-6 w-6"
-        >
-          <path d="M4 5h12a3 3 0 0 1 3 3v11H7a3 3 0 0 0-3 3V5z" />
-          <path d="M7 5v14" />
-          <path d="M10 9h6" />
-          <path d="M10 13h6" />
-        </svg>
-      ),
-      title: "Position Sizer",
-      description:
-        "Determine optimal position sizes based on risk tolerance and capital.",
-      status: "active" as const,
-      link: "/tools/position-sizer",
-    },
-    {
-      icon: (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-6 w-6"
-        >
-          <path d="M4 19h16" />
-          <path d="M6 16V9" />
-          <path d="M10 16V5" />
-          <path d="M14 16v-4" />
-          <path d="M18 16V7" />
-        </svg>
-      ),
-      title: "Yield Calculator",
-      description:
-        "Estimate outcomes across yield strategies and compare return scenarios.",
-      status: "active" as const,
-      link: "/tools/yield-calculator",
-    },
-    {
-      icon: (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-6 w-6"
-        >
-          <path d="M4 5h12a3 3 0 0 1 3 3v11H7a3 3 0 0 0-3 3V5z" />
-          <path d="M7 5v14" />
-          <path d="M10 9h6" />
-          <path d="M10 13h6" />
-        </svg>
-      ),
-      title: "Alpha Hub",
-      description:
-        "Latest opportunities, research insights, and strategy guides.",
-      status: "active" as const,
-      link: "/tools/alpha-hub",
-    },
-  ];
-
   return (
-    <section className="py-20 px-4 md:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <div className="theme-kicker mx-auto w-fit">Tool Stack</div>
-          <motion.h2
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            className="mt-4 text-4xl md:text-5xl font-bold text-[var(--theme-primary)] mb-4"
-          >
-            Powerful Tools & Features
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            className="text-[var(--theme-text-soft)] text-lg max-w-2xl mx-auto"
-          >
-            A professional toolkit for planning, monitoring, and acting with more confidence.
-          </motion.p>
-        </div>
+    <section className="bg-white px-5 py-24 sm:px-8 md:py-32">
+      <div className="mx-auto max-w-7xl">
+        <motion.div initial={{ opacity: 0, y: 22 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.3 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }} className="mx-auto max-w-4xl text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#662E91]">Kwidao Tools</p>
+          <h2 className="mt-5 text-[clamp(2.5rem,5vw,4.5rem)] font-bold leading-[1.02] tracking-[-0.055em] text-[#190B23]">Practical tools for better-informed decisions.</h2>
+          <p className="mx-auto mt-6 max-w-3xl text-base leading-7 text-[#625A6A] md:text-lg md:leading-8">Move from market discovery to position planning with tools designed to reduce guesswork and keep essential context close.</p>
+        </motion.div>
 
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-5">
-          {tools.map((tool, i) => (
-            <ToolCard key={i} {...tool} />
+        <div className="mt-16 grid md:mt-20 md:grid-cols-2 md:gap-x-14">
+          {tools.map((tool, index) => (
+            <motion.div key={tool.title} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.06 }}>
+              <Link href={tool.link} className="group flex min-h-[176px] items-start justify-between gap-8 border-t border-[#DCD3E2] py-7 transition-colors hover:border-[#662E91]">
+                <div>
+                  <p className="text-xs font-semibold tabular-nums text-[#A993BC]">0{index + 1}</p>
+                  <h3 className="mt-4 text-2xl font-semibold tracking-[-0.03em] text-[#30283B] transition-colors group-hover:text-[#662E91]">{tool.title}</h3>
+                  <p className="mt-3 max-w-lg text-sm leading-6 text-[#6A6272] md:text-[15px]">{tool.description}</p>
+                </div>
+                <span aria-hidden="true" className="mt-7 text-2xl text-[#662E91] transition-transform duration-200 group-hover:-translate-y-1 group-hover:translate-x-1">&#8599;</span>
+              </Link>
+            </motion.div>
           ))}
         </div>
       </div>

@@ -65,47 +65,37 @@ export default function Home() {
       </section>
 
       {/* What is Kwidao */}
-      <section id="what-is-kwidao" className="border-b border-[color:var(--theme-border-subtle)]">
+      <div id="what-is-kwidao">
         <WhatIsKwidaoSection />
-      </section>
+      </div>
 
       {/* Ecosystem Section */}
-      <section id="ecosystem">
+      <div id="ecosystem">
         <EcosystemSection />
-      </section>
+      </div>
 
       {/* Live Market Analytics */}
       <LiveMarketAnalyticsSection />
 
       {/* How it Works */}
-      <section id="how-it-works">
+      <div id="how-it-works">
         <HowItWorksSection />
-      </section>
+      </div>
 
       {/* Tools Preview */}
-      <section className="border-b border-[color:var(--theme-border-subtle)]">
-        <div className="px-4 md:px-8">
-          <ToolsPreviewSection />
-        </div>
-      </section>
+      <ToolsPreviewSection />
 
       {/* Education & Alpha Hub */}
       <EducationAlphaHubSection />
 
       {/* DAO & Token */}
-      <section className="border-b border-[color:var(--theme-border-subtle)]">
-        <div className="px-4 md:px-8">
-          <DAOTokenSection />
-        </div>
-      </section>
+      <DAOTokenSection />
 
 
       {/* Community */}
-      <section id="community" className="border-b border-[color:var(--theme-border-subtle)]">
-        <div className="px-4 md:px-8">
-          <CommunitySection />
-        </div>
-      </section>
+      <div id="community">
+        <CommunitySection />
+      </div>
 
     </main>
   );

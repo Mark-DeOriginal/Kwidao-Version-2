@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -7,7 +10,12 @@ export default function HeroSection() {
       <div aria-hidden="true" className="pointer-events-none absolute -left-40 top-24 h-[420px] w-[420px] rounded-full bg-[#CAC3E7]/35 blur-[110px]" />
       <div aria-hidden="true" className="pointer-events-none absolute -right-28 top-0 h-[580px] w-[580px] rounded-full bg-[#4F6FD8]/10 blur-[130px]" />
       <div className="relative mx-auto grid w-full max-w-[1600px] items-start gap-5 px-6 pb-10 pt-8 sm:px-10 lg:min-h-[640px] lg:grid-cols-[1.1fr_0.9fr] lg:gap-0 lg:px-12 lg:pb-10 lg:pt-10 xl:px-16">
-        <div className="relative z-10 order-2 max-w-[790px] lg:order-1 lg:w-[112%] lg:pt-12">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+          className="relative z-10 order-2 max-w-[790px] lg:order-1 lg:w-[112%] lg:pt-12"
+        >
           <h1
             id="home-hero-title"
             className="text-[clamp(2.45rem,10vw,5.25rem)] font-bold leading-[0.98] tracking-[-0.06em] text-[#190B23]"
@@ -35,9 +43,15 @@ export default function HeroSection() {
               <span aria-hidden="true" className="text-lg transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5">&#8599;</span>
             </Link>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="relative order-1 mx-auto w-full max-w-[360px] sm:max-w-[460px] lg:order-2 lg:-ml-5 lg:-mt-8 lg:max-w-none" aria-hidden="true">
+        <motion.div
+          initial={{ opacity: 0, x: 28 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.9, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+          className="relative order-1 mx-auto w-full max-w-[360px] sm:max-w-[460px] lg:order-2 lg:-ml-5 lg:-mt-8 lg:max-w-none"
+          aria-hidden="true"
+        >
           <Image
             src="/kwidao-hero-loop.webp"
             alt=""
@@ -47,7 +61,7 @@ export default function HeroSection() {
             sizes="(max-width: 1023px) 90vw, 48vw"
             className="h-auto w-full mix-blend-multiply"
           />
-        </div>
+        </motion.div>
       </div>
     </section>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 
 interface PriceData {
   id: string;
@@ -214,7 +215,11 @@ export default function LiveMarketWidget() {
   if (isLoading && prices.length === 0) return <MarketSkeleton />;
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.4 }}
+      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
       className="market-ticker-mask group/ticker cursor-grab touch-pan-y select-none overflow-hidden bg-[color:var(--theme-surface)] active:cursor-grabbing"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -244,6 +249,6 @@ export default function LiveMarketWidget() {
           {prices.map((asset) => <MarketCard key={`duplicate-${asset.id}`} asset={asset} />)}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
